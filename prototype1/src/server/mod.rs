@@ -29,7 +29,7 @@ mod server {
       thread::sleep_ms(20);
       let now = SteadyTime::now();
 
-      if (now - last_cull).num_seconds() > 2 {
+      if (now - last_cull).num_seconds() > 5 {
         last_cull = now;
         let dead_users =
           connected_users

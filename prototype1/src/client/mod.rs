@@ -11,6 +11,8 @@ mod client {
   use state::ClientState;
 
   use std::thread;
+  use std::io::stdin;
+  use std::sync::mpsc::channel;
 
   use itertools::Itertools;
   use time::SteadyTime;
@@ -21,9 +23,26 @@ mod client {
     let app_network = ClientNet::new(client_params.addr, client_params.server_addr);
     println!("Hello client!");
     app_network.send_event(ClientEvent::Connect);
+    let (stdin_tx, stdin_rx) = channel();
     let mut last_sent = SteadyTime::now();
+
+    thread::spawn (move || {
+      let mut stdin = stdin();
+      println!("type your messages");
+      loop {
+        let mut message = String::new();
+        let _ = stdin.read_line(&mut message);
+        let _ = stdin_tx.send(message);
+      }
+    });
+
     loop {
       thread::sleep_ms(20);
+
+      let possible_chat = stdin_rx.try_recv().ok();
+      possible_chat.map (|_| {
+        app_network.send_event(ClientEvent::Chat);
+      });
 
       let now = SteadyTime::now();
       if (now - last_sent).num_seconds() > 1 {
@@ -38,7 +57,7 @@ mod client {
           match event {
             ServerEvent::Connected => println!("Connected"),
             ServerEvent::NotConnected => println!("Not Connected"),
-            ServerEvent::Chatted => println!("Someone chattted"),
+            ServerEvent::Chatted => println!("Someone chatted"),
             ServerEvent::Moved => println!("I moved"),
             ServerEvent::KeepAlive => println!("I LIVE"),
             //_ => ()
