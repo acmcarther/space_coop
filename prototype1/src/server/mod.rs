@@ -15,7 +15,7 @@ mod server {
 
     loop {
       thread::sleep_ms(20);
-      //app_network.integrate(&mut server_state);
+      let events = app_network.get_events();
     }
   }
 }

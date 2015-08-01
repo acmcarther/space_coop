@@ -9,4 +9,10 @@ mod state {
       ServerState
     }
   }
+
+  impl ClientState {
+    pub fn new() -> ClientState {
+      ClientState
+    }
+  }
 }

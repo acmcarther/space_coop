@@ -15,8 +15,10 @@ mod deserialize {
       .and_then(|value| {
         match *value {
           0 => Some(ClientEvent::KeepAlive),
-          1 => Some(ClientEvent::Chat),
-          2 => Some(ClientEvent::TryMove),
+          1 => Some(ClientEvent::Connect),
+          2 => Some(ClientEvent::Disconnect),
+          3 => Some(ClientEvent::Chat),
+          4 => Some(ClientEvent::TryMove),
           _ => None
         }
       })
@@ -28,8 +30,10 @@ mod deserialize {
       .and_then(|value| {
         match *value {
           0 => Some(ServerEvent::KeepAlive),
-          1 => Some(ServerEvent::Chatted),
-          2 => Some(ServerEvent::Moved),
+          1 => Some(ServerEvent::Connected),
+          2 => Some(ServerEvent::NotConnected),
+          3 => Some(ServerEvent::Chatted),
+          4 => Some(ServerEvent::Moved),
           _ => None
         }
       })

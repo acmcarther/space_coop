@@ -14,11 +14,17 @@ mod serialize {
       ClientEvent::KeepAlive => {
         vec![0]
       },
-      ClientEvent::Chat => {
+      ClientEvent::Connect => {
         vec![1]
       },
-      ClientEvent::TryMove => {
+      ClientEvent::Disconnect => {
         vec![2]
+      },
+      ClientEvent::Chat => {
+        vec![3]
+      },
+      ClientEvent::TryMove => {
+        vec![4]
       }
     }
   }
@@ -28,11 +34,17 @@ mod serialize {
       ServerEvent::KeepAlive => {
         vec![0]
       },
-      ServerEvent::Chatted => {
+      ServerEvent::Connected => {
         vec![1]
       },
-      ServerEvent::Moved => {
+      ServerEvent::NotConnected => {
         vec![2]
+      },
+      ServerEvent::Chatted => {
+        vec![3]
+      }
+      ServerEvent::Moved => {
+        vec![4]
       }
     }
   }
