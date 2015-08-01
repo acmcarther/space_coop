@@ -1,11 +1,12 @@
 pub use self::state::{ClientState, ServerState};
 
 mod state {
-  pub struct ClientState {
-    dummy: bool
-  }
+  pub struct ClientState;
+  pub struct ServerState;
 
-  pub struct ServerState {
-    dummy: bool
+  impl ServerState {
+    pub fn new() -> ServerState {
+      ServerState
+    }
   }
 }

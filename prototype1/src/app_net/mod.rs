@@ -4,6 +4,7 @@ pub use self::app_net::{
 };
 
 pub mod helpers;
+mod serialize;
 
 mod app_net {
   use std::net::SocketAddr;
@@ -25,6 +26,7 @@ mod app_net {
     }
 
     pub fn send_event(&self, event: ClientEvent) {
+
     }
 
     pub fn integrate(&self, state: &mut ClientState) {

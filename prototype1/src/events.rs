@@ -9,7 +9,7 @@ mod events {
 
   pub enum ServerEvent {
     KeepAlive,
-    Chat,
+    Chatted,
     Moved
   }
 }
