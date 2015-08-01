@@ -1,5 +1,6 @@
 # "Space Coop"
 [![Stories in Ready](https://badge.waffle.io/acmcarther/space_coop.png?label=ready&title=Ready)](http://waffle.io/acmcarther/space_coop)
+[![Build Status](https://travis-ci.org/acmcarther/space_coop.svg?branch=master)](https://travis-ci.org/acmcarther/space_coop)
 
 This really needs a new name.
 
