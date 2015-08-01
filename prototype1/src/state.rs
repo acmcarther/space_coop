@@ -1,15 +1,11 @@
-pub use self::state::{
-  Pos,
-  GameState
-};
+pub use self::state::{ClientState, ServerState};
 
 mod state {
-  pub struct Pos {
-    pub x: f32,
-    pub y: f32
+  pub struct ClientState {
+    dummy: bool
   }
 
-  pub struct GameState {
-    pub man_pos: Pos
+  pub struct ServerState {
+    dummy: bool
   }
 }

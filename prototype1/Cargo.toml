@@ -5,6 +5,7 @@ authors = ["Alex McArther <acmcarther@gmail.com>"]
 
 [dependencies]
 time = "*"
+itertools = "*"
 
 [dependencies.game_udp]
 git = "https://github.com/acmcarther/rust_game_udp"
