@@ -23,13 +23,14 @@ mod server {
     println!("Hello server!");
     let mut server_state = ServerState::new();
     let mut connected_users = HashMap::new();
-    let last_cull = SteadyTime::now();
+    let mut last_cull = SteadyTime::now();
 
     loop {
       thread::sleep_ms(20);
       let now = SteadyTime::now();
 
       if (now - last_cull).num_seconds() > 2 {
+        last_cull = now;
         let dead_users =
           connected_users
             .iter()
