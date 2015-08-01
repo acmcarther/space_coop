@@ -5,6 +5,7 @@ pub use self::app_net::{
 
 pub mod helpers;
 mod serialize;
+mod deserialize;
 
 mod app_net {
   use std::net::SocketAddr;

@@ -13,7 +13,7 @@ mod deserialize {
     data
       .get(0)
       .and_then(|value| {
-        match value {
+        match *value {
           0 => Some(ClientEvent::KeepAlive),
           1 => Some(ClientEvent::Chat),
           2 => Some(ClientEvent::TryMove),
@@ -26,7 +26,7 @@ mod deserialize {
     data
       .get(0)
       .and_then(|value| {
-        match value {
+        match *value {
           0 => Some(ServerEvent::KeepAlive),
           1 => Some(ServerEvent::Chatted),
           2 => Some(ServerEvent::Moved),
