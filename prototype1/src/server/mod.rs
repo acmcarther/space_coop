@@ -15,7 +15,7 @@ mod server {
 
     loop {
       thread::sleep_ms(20);
-      app_network.integrate(&mut server_state);
+      //app_network.integrate(&mut server_state);
     }
   }
 }

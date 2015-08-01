@@ -6,7 +6,7 @@ mod client {
 
   pub fn start() {
     let client_params = params::query_client_params();
-    let app_network = ClientNet::new(client_params.addr);
+    let app_network = ClientNet::new(client_params.addr, client_params.server_addr);
     println!("Hello client!");
   }
 }
