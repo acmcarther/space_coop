@@ -32,7 +32,10 @@ mod server {
         .foreach(|(source, event)| {
           if connected_users.contains_key(&source) {
             match event {
-              ClientEvent::KeepAlive => {app_network.send_event(source, ServerEvent::KeepAlive);},
+              ClientEvent::KeepAlive => {
+                app_network.send_event(source.clone(), ServerEvent::KeepAlive);
+                println!("{:?} LIVES!", source);
+              },
               ClientEvent::Connect => {app_network.send_event(source, ServerEvent::Connected);},
               ClientEvent::Disconnect => {
                 connected_users.remove(&source);

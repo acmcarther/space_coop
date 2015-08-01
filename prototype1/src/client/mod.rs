@@ -40,7 +40,8 @@ mod client {
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted => println!("Someone chattted"),
             ServerEvent::Moved => println!("I moved"),
-            _ => ()
+            ServerEvent::KeepAlive => println!("I LIVE"),
+            //_ => ()
           }
         })
     }
