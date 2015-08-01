@@ -2,4 +2,7 @@ language: rust
 sudo: false
 rust:
   - nightly
-
+script:
+  - cd prototype1
+  - cargo build --verbose
+  - cargo test --verbose
