@@ -1,8 +1,9 @@
 pub use self::app_net::{
   ClientNet,
-  ServerNet
+  ServerNet,
 };
 
+pub mod helpers;
 
 mod app_net {
   use std::net::SocketAddr;

@@ -5,7 +5,6 @@ extern crate game_udp;
 extern crate itertools;
 
 mod app_net;
-mod net_helpers;
 mod client;
 mod helpers;
 mod server;

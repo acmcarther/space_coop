@@ -7,7 +7,7 @@ pub use self::params::{
 
 mod params {
   use str_ops::default_string;
-  use net_helpers::{get_own_ip, get_ip};
+  use app_net::helpers::{get_own_ip, get_ip};
   use std::io::stdin;
   use std::net::{SocketAddr};
   use std::str::FromStr;

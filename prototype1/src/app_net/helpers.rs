@@ -1,6 +1,6 @@
-pub use self::net_helpers::{get_own_ip, get_ip};
+pub use self::helpers::{get_own_ip, get_ip};
 
-mod net_helpers {
+mod helpers {
   use std::net::{IpAddr, lookup_host, TcpStream, Shutdown};
   use std::str::FromStr;
   use std::io::Error;
