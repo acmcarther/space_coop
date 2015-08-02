@@ -40,8 +40,8 @@ mod client {
       thread::sleep_ms(20);
 
       let possible_chat = stdin_rx.try_recv().ok();
-      possible_chat.map (|_| {
-        app_network.send_event(ClientEvent::Chat);
+      possible_chat.map (|message| {
+        app_network.send_event(ClientEvent::Chat{message: message});
       });
 
       let now = SteadyTime::now();
@@ -57,10 +57,9 @@ mod client {
           match event {
             ServerEvent::Connected => println!("Connected"),
             ServerEvent::NotConnected => println!("Not Connected"),
-            ServerEvent::Chatted => println!("Someone chatted"),
+            ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
             ServerEvent::Moved => println!("I moved"),
-            ServerEvent::KeepAlive => println!("I LIVE"),
-            //_ => ()
+            _ => ()
           }
         })
     }

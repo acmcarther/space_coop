@@ -9,6 +9,8 @@ mod serialize {
     ServerEvent
   };
 
+  use std::iter::repeat;
+
   pub fn client_event(event: ClientEvent) -> Vec<u8> {
     match event {
       ClientEvent::KeepAlive => {
@@ -20,8 +22,11 @@ mod serialize {
       ClientEvent::Disconnect => {
         vec![2]
       },
-      ClientEvent::Chat => {
+      ClientEvent::Chat {message} => {
         vec![3]
+          .into_iter()
+          .chain(message.into_bytes().into_iter().take(200))
+          .collect()
       },
       ClientEvent::TryMove => {
         vec![4]
@@ -40,8 +45,13 @@ mod serialize {
       ServerEvent::NotConnected => {
         vec![2]
       },
-      ServerEvent::Chatted => {
+      ServerEvent::Chatted {subject, message} => {
         vec![3]
+          .into_iter()
+          .chain(subject.into_bytes().into_iter().chain(repeat(0)).take(20))
+          .chain(message.into_bytes().into_iter().take(200))
+          .collect()
+
       }
       ServerEvent::Moved => {
         vec![4]

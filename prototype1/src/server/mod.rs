@@ -55,14 +55,18 @@ mod server {
             match event {
               ClientEvent::KeepAlive => {
                 app_network.send_event(source.clone(), ServerEvent::KeepAlive);
-                println!("{:?} LIVES!", source);
               },
               ClientEvent::Connect => {app_network.send_event(source, ServerEvent::Connected);},
               ClientEvent::Disconnect => {
                 connected_users.remove(&source);
                 app_network.send_event(source, ServerEvent::NotConnected);
               },
-              ClientEvent::Chat => println!("{:?} chatted", source),
+              ClientEvent::Chat { message }  => {
+                let event = ServerEvent::Chatted {subject: source.to_string(), message: message };
+                connected_users.keys().foreach(|user_addr| {
+                  app_network.send_event(user_addr.clone(), event.clone());
+                })
+              },
               ClientEvent::TryMove => println!("{:?} tried to move", source),
             }
           } else {
