@@ -155,7 +155,7 @@ mod client {
     );
 
     let proj = cgmath::perspective(cgmath::deg(45.0f32),
-                                   stream.get_aspect_ratio(), 1.0, 10.0);
+                                   stream.get_aspect_ratio(), 1.0, 40.0);
 
     // loooop
     'main: loop {
