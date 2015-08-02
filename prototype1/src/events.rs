@@ -7,7 +7,7 @@ mod events {
     Connect,
     Disconnect,
     Chat { message: String },
-    TryMove,
+    TryMove { x: f32, y: f32 },
   }
 
   #[derive(Clone)]
@@ -16,6 +16,6 @@ mod events {
     Connected,
     NotConnected,
     Chatted { subject: String, message: String },
-    Moved
+    Moved { x: f32, y: f32 }
   }
 }

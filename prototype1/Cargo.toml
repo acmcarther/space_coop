@@ -5,6 +5,7 @@ authors = ["Alex McArther <acmcarther@gmail.com>"]
 
 [dependencies]
 time = "*"
+byteorder = "*"
 itertools = "*"
 
 [dependencies.game_udp]

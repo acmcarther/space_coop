@@ -8,6 +8,7 @@ mod deserialize {
     ClientEvent,
     ServerEvent
   };
+  use byteorder::{ByteOrder, BigEndian};
 
   pub fn client_event(data: Vec<u8>) -> Option<ClientEvent> {
     data
@@ -23,7 +24,17 @@ mod deserialize {
             let trimmed_msg = full_msg.trim_matches('\0').to_string();
             Some(ClientEvent::Chat{message: trimmed_msg})
           },
-          4 => Some(ClientEvent::TryMove),
+          4 => {
+            let x_bytes = data.iter().skip(1).take(4).cloned().collect::<Vec<u8>>();
+            let y_bytes = data.iter().skip(5).take(4).cloned().collect::<Vec<u8>>();
+            if x_bytes.len() == 4 && y_bytes.len() == 4 {
+              let x = BigEndian::read_f32(&x_bytes[..]);
+              let y = BigEndian::read_f32(&y_bytes[..]);
+              Some(ClientEvent::TryMove {x: x, y: y} )
+            } else {
+              None
+            }
+          },
           _ => None
         }
       })
@@ -52,7 +63,17 @@ mod deserialize {
 
             Some(ServerEvent::Chatted { subject: trimmed_sub, message: trimmed_msg})
           },
-          4 => Some(ServerEvent::Moved),
+          4 => {
+            let x_bytes = data.iter().skip(1).take(4).cloned().collect::<Vec<u8>>();
+            let y_bytes = data.iter().skip(5).take(4).cloned().collect::<Vec<u8>>();
+            if x_bytes.len() == 4 && y_bytes.len() == 4 {
+              let x = BigEndian::read_f32(&x_bytes[..]);
+              let y = BigEndian::read_f32(&y_bytes[..]);
+              Some(ServerEvent::Moved {x: x, y: y} )
+            } else {
+              None
+            }
+          }
           _ => None
         }
       })

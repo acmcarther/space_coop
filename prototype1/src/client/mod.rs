@@ -39,9 +39,13 @@ mod client {
     loop {
       thread::sleep_ms(20);
 
-      let possible_chat = stdin_rx.try_recv().ok();
-      possible_chat.map (|message| {
-        app_network.send_event(ClientEvent::Chat{message: message});
+      let possible_command = stdin_rx.try_recv().ok();
+      possible_command.map (|message| {
+        if message.starts_with("say ") {
+          app_network.send_event(ClientEvent::Chat{message: message[4..].to_string()});
+        } else if message.starts_with("move") {
+          app_network.send_event(ClientEvent::TryMove{x: 5.0, y: 5.0});
+        }
       });
 
       let now = SteadyTime::now();
@@ -58,7 +62,7 @@ mod client {
             ServerEvent::Connected => println!("Connected"),
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
-            ServerEvent::Moved => println!("I moved"),
+            ServerEvent::Moved { x, y } => println!("Moved to {:?}", (x, y)),
             _ => ()
           }
         })

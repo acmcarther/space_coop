@@ -67,7 +67,11 @@ mod server {
                   app_network.send_event(user_addr.clone(), event.clone());
                 })
               },
-              ClientEvent::TryMove => println!("{:?} tried to move", source),
+              ClientEvent::TryMove { x, y } => {
+                println!("{:?} is moving to {:?}", source.clone(), (x, y));
+                server_state.positions.insert(source, (x, y));
+                app_network.send_event(source, ServerEvent::Moved{x: x, y: y});
+              },
             }
           } else {
             match event {

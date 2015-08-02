@@ -1,6 +1,7 @@
 #![feature(lookup_host)]
 #![feature(ip_addr)]
 extern crate time;
+extern crate byteorder;
 extern crate game_udp;
 extern crate itertools;
 
