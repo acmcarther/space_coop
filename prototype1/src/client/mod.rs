@@ -13,6 +13,7 @@ mod client {
   use std::thread;
   use std::io::stdin;
   use std::sync::mpsc::channel;
+  use std::marker::PhantomData;
 
   use itertools::Itertools;
   use time::SteadyTime;
@@ -20,12 +21,35 @@ mod client {
   use glutin;
   use gfx_window_glutin;
   use gfx;
+  use cgmath;
 
-  use gfx::traits::{Stream, ToIndexSlice, ToSlice, FactoryExt};
+  use cgmath::FixedArray;
+  use cgmath::{Matrix, Point3, Vector3};
+  use cgmath::{Transform, AffineMatrix3};
+  use gfx::attrib::Floater;
+  use gfx::traits::{Factory, Stream, ToIndexSlice, ToSlice, FactoryExt};
 
+  // Declare the vertex format suitable for drawing.
+  // Notice the use of FixedPoint.
   gfx_vertex!( Vertex {
-      a_Pos@ pos: [f32; 2],
-      a_Color@ color: [f32; 3],
+      a_Pos@ pos: [Floater<i8>; 3],
+      a_TexCoord@ tex_coord: [Floater<u8>; 2],
+  });
+
+  impl Vertex {
+      fn new(p: [i8; 3], t: [u8; 2]) -> Vertex {
+          Vertex {
+              pos: Floater::cast3(p),
+              tex_coord: Floater::cast2(t),
+          }
+      }
+  }
+
+  // The shader_param attribute makes sure the following struct can be used to
+  // pass parameters to a shader.
+  gfx_parameters!( Params {
+      u_Transform@ transform: [[f32; 4]; 4],
+      t_Color@ color: gfx::shade::TextureParam<R>,
   });
 
   pub fn start() {
@@ -49,36 +73,104 @@ mod client {
       }
     });
 
+    // Glutin init
     let (mut stream, mut device, mut factory) = gfx_window_glutin::init(
       glutin::Window::new().unwrap());
     stream.out.window.set_title("Space Coop Client");
 
+    // gfx init
+
     let vertex_data = [
-        Vertex { pos: [ -0.5, -0.5 ], color: [1.0, 0.0, 0.0] },
-        Vertex { pos: [  0.5, -0.5 ], color: [0.0, 1.0, 0.0] },
-        Vertex { pos: [  0.0,  0.5 ], color: [0.0, 0.0, 1.0] },
+        // top (0, 0, 1)
+        Vertex::new([-1, -1,  1], [0, 0]),
+        Vertex::new([ 1, -1,  1], [1, 0]),
+        Vertex::new([ 1,  1,  1], [1, 1]),
+        Vertex::new([-1,  1,  1], [0, 1]),
+        // bottom (0, 0, -1)
+        Vertex::new([-1,  1, -1], [1, 0]),
+        Vertex::new([ 1,  1, -1], [0, 0]),
+        Vertex::new([ 1, -1, -1], [0, 1]),
+        Vertex::new([-1, -1, -1], [1, 1]),
+        // right (1, 0, 0)
+        Vertex::new([ 1, -1, -1], [0, 0]),
+        Vertex::new([ 1,  1, -1], [1, 0]),
+        Vertex::new([ 1,  1,  1], [1, 1]),
+        Vertex::new([ 1, -1,  1], [0, 1]),
+        // left (-1, 0, 0)
+        Vertex::new([-1, -1,  1], [1, 0]),
+        Vertex::new([-1,  1,  1], [0, 0]),
+        Vertex::new([-1,  1, -1], [0, 1]),
+        Vertex::new([-1, -1, -1], [1, 1]),
+        // front (0, 1, 0)
+        Vertex::new([ 1,  1, -1], [1, 0]),
+        Vertex::new([-1,  1, -1], [0, 0]),
+        Vertex::new([-1,  1,  1], [0, 1]),
+        Vertex::new([ 1,  1,  1], [1, 1]),
+        // back (0, -1, 0)
+        Vertex::new([ 1, -1,  1], [0, 0]),
+        Vertex::new([-1, -1,  1], [1, 0]),
+        Vertex::new([-1, -1, -1], [1, 1]),
+        Vertex::new([ 1, -1, -1], [0, 1]),
     ];
+
     let mesh = factory.create_mesh(&vertex_data);
-    let slice = mesh.to_slice(gfx::PrimitiveType::TriangleList);
+
+    let index_data: &[u8] = &[
+         0,  1,  2,  2,  3,  0, // top
+         4,  5,  6,  6,  7,  4, // bottom
+         8,  9, 10, 10, 11,  8, // right
+        12, 13, 14, 14, 15, 12, // left
+        16, 17, 18, 18, 19, 16, // front
+        20, 21, 22, 22, 23, 20, // back
+    ];
+
+    let texture = factory.create_texture_rgba8(1, 1).unwrap();
+    factory.update_texture(
+        &texture, &(*texture.get_info()).into(),
+        &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8],
+        None).unwrap();
+
+    let sampler = factory.create_sampler(
+        gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                   gfx::tex::WrapMode::Clamp)
+    );
 
     let program = {
         let vs = gfx::ShaderSource {
-            glsl_120: Some(include_bytes!("../../shaders/triangle_120.glslv")),
-            glsl_150: Some(include_bytes!("../../shaders/triangle_150.glslv")),
+            glsl_120: Some(include_bytes!("../../shaders/cube_120.glslv")),
+            glsl_150: Some(include_bytes!("../../shaders/cube_150.glslv")),
             .. gfx::ShaderSource::empty()
         };
         let fs = gfx::ShaderSource {
-            glsl_120: Some(include_bytes!("../../shaders/triangle_120.glslf")),
-            glsl_150: Some(include_bytes!("../../shaders/triangle_150.glslf")),
+            glsl_120: Some(include_bytes!("../../shaders/cube_120.glslf")),
+            glsl_150: Some(include_bytes!("../../shaders/cube_150.glslf")),
             .. gfx::ShaderSource::empty()
         };
         factory.link_program_source(vs, fs).unwrap()
     };
-    let state = gfx::DrawState::new();
 
+    let view: AffineMatrix3<f32> = Transform::look_at(
+        &Point3::new(1.5f32, -5.0, 3.0),
+        &Point3::new(0f32, 0.0, 0.0),
+        &Vector3::unit_z(),
+    );
+    let proj = cgmath::perspective(cgmath::deg(45.0f32),
+                                   stream.get_aspect_ratio(), 1.0, 10.0);
+
+    let data = Params {
+        transform: proj.mul_m(&view.mat).into_fixed(),
+        color: (texture, Some(sampler)),
+        _r: PhantomData,
+    };
+
+    let mut batch = gfx::batch::Full::new(mesh, program, data).unwrap();
+    batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
+    batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
+
+    // loooop
     'main: loop {
 
-      // quit when Esc is pressed.
+      // Event handling
       for event in stream.out.window.poll_events() {
           match event {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => break 'main,
@@ -94,15 +186,16 @@ mod client {
           }
       }
 
+      // Actual render
       stream.clear(gfx::ClearData {
           color: [0.3, 0.3, 0.3, 1.0],
           depth: 1.0,
           stencil: 0,
       });
-      stream.draw(&gfx::batch::bind(&state, &mesh, slice.clone(), &program, &None))
-            .unwrap();
+      stream.draw(&batch).unwrap();
       stream.present(&mut device);
 
+      // Networking
       let possible_command = stdin_rx.try_recv().ok();
       possible_command.map (|message| {app_network.send_event(ClientEvent::Chat{message: message});});
 
