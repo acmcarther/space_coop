@@ -56,9 +56,6 @@ mod serialize {
         vec![2]
       },
       ServerEvent::Chatted {subject, message} => {
-        let x_bytes = [0; 4];
-        let y_bytes = [0; 4];
-
         vec![3]
           .into_iter()
           .chain(subject.into_bytes().into_iter().chain(repeat(0)).take(20))

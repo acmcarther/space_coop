@@ -9,15 +9,13 @@ mod deserialize;
 
 mod app_net {
   use std::net::SocketAddr;
-  use std::sync::mpsc::{Receiver, SendError};
-  use std::thread::JoinHandle;
+  use std::sync::mpsc::SendError;
 
   use game_udp;
   use game_udp::types as game_udp_types;
   use game_udp::packet_types::Packet;
   use helpers::try_recv_all;
   use events::{ClientEvent, ServerEvent};
-  use state::{ClientState, ServerState};
 
   use app_net::{serialize, deserialize};
 

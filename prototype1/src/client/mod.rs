@@ -18,7 +18,7 @@ mod client {
   use time::SteadyTime;
 
   pub fn start() {
-    let state = ClientState::new();
+    let mut state = ClientState::new();
     let client_params = params::query_client_params();
     let app_network = ClientNet::new(client_params.addr, client_params.server_addr);
     println!("Hello client!");
@@ -62,11 +62,14 @@ mod client {
             ServerEvent::Connected => println!("Connected"),
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
-            ServerEvent::Moved { x, y } => println!("Moved to {:?}", (x, y)),
+            ServerEvent::Moved { x, y } => {
+              state.position = (x, y);
+              println!("Moved to {:?}", (x, y))
+            },
             _ => ()
           }
         })
     }
-    app_network.send_event(ClientEvent::Disconnect);
+    //app_network.send_event(ClientEvent::Disconnect);
   }
 }

@@ -4,7 +4,9 @@ mod state {
   use std::net::SocketAddr;
   use std::collections::HashMap;
 
-  pub struct ClientState;
+  pub struct ClientState {
+    pub position: (f32, f32)
+  }
 
   pub struct ServerState {
     pub positions: HashMap<SocketAddr, (f32, f32)>
@@ -18,7 +20,7 @@ mod state {
 
   impl ClientState {
     pub fn new() -> ClientState {
-      ClientState
+      ClientState { position: (0.0, 0.0) }
     }
   }
 }
