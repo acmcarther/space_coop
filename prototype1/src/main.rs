@@ -4,6 +4,11 @@ extern crate time;
 extern crate byteorder;
 extern crate game_udp;
 extern crate itertools;
+extern crate cgmath;
+extern crate glutin;
+#[macro_use]
+extern crate gfx;
+extern crate gfx_window_glutin;
 
 mod app_net;
 mod client;

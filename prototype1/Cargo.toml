@@ -7,6 +7,10 @@ authors = ["Alex McArther <acmcarther@gmail.com>"]
 time = "*"
 byteorder = "*"
 itertools = "*"
+glutin = "0.2.0"
+cgmath = "*"
+gfx = "*"
+gfx_window_glutin = "*"
 
 [dependencies.game_udp]
 git = "https://github.com/acmcarther/rust_game_udp"
