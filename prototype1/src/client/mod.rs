@@ -24,7 +24,7 @@ mod client {
   use cgmath;
 
   use cgmath::FixedArray;
-  use cgmath::{Matrix, Point3, Vector3};
+  use cgmath::{Matrix, Point3, Vector, Vector3, Vector4, Matrix4};
   use cgmath::{Transform, AffineMatrix3};
   use gfx::attrib::Floater;
   use gfx::traits::{Factory, Stream, ToIndexSlice, ToSlice, FactoryExt};
@@ -79,7 +79,6 @@ mod client {
     stream.out.window.set_title("Space Coop Client");
 
     // gfx init
-
     let vertex_data = [
         // top (0, 0, 1)
         Vertex::new([-1, -1,  1], [0, 0]),
@@ -148,24 +147,15 @@ mod client {
         };
         factory.link_program_source(vs, fs).unwrap()
     };
-
-    let view: AffineMatrix3<f32> = Transform::look_at(
-        &Point3::new(1.5f32, -5.0, 3.0),
+    let (mut eye_x, mut eye_y, mut eye_z) = (1.5f32, -5.0, 3.0);
+    let mut view: AffineMatrix3<f32> = Transform::look_at(
+        &Point3::new(eye_x, eye_y, eye_z),
         &Point3::new(0f32, 0.0, 0.0),
         &Vector3::unit_z(),
     );
+
     let proj = cgmath::perspective(cgmath::deg(45.0f32),
                                    stream.get_aspect_ratio(), 1.0, 10.0);
-
-    let data = Params {
-        transform: proj.mul_m(&view.mat).into_fixed(),
-        color: (texture, Some(sampler)),
-        _r: PhantomData,
-    };
-
-    let mut batch = gfx::batch::Full::new(mesh, program, data).unwrap();
-    batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
-    batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
 
     // loooop
     'main: loop {
@@ -174,19 +164,61 @@ mod client {
       for event in stream.out.window.poll_events() {
           match event {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => break 'main,
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => {
+                eye_x = eye_x - 0.1
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
+                eye_x = eye_x + 0.1
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
+                eye_y = eye_y - 0.1
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
+                eye_y = eye_y + 0.1
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::E)) => {
+                eye_z = eye_z - 0.1
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
+                eye_z = eye_z + 0.1
+              },
               glutin::Event::MouseMoved((x, y)) => {
                 mouse_x = x;
                 mouse_y = y;
               },
               glutin::Event::MouseInput(glutin::ElementState::Pressed, glutin::MouseButton::Left) => {
+                let (screen_x, screen_y) = stream.out.window.get_inner_size().unwrap();
+                println!("screen {:?}", (screen_x, screen_y));
+                let norm_x = 2.0 * (mouse_x as f32 - (0.5 * screen_x as f32))/(screen_x as f32);
+                let norm_y = 2.0 * (mouse_y as f32 - (0.5 * screen_y as f32))/(screen_y as f32);
+                let coord_vec = Vector4::new(norm_x, norm_y, -1.0, 1.0);
+                println!("screen pos {:?}", coord_vec);
+                let world_pos = (Matrix4::from(view) * proj).invert().unwrap().mul_v(&coord_vec);
+                let result_vec = world_pos.truncate().div_s(world_pos.w);
+                println!("world pos {:?}", result_vec);
                 app_network.send_event(ClientEvent::TryMove{x: mouse_x as f32, y: mouse_y as f32});
               },
               glutin::Event::Closed => break 'main,
               _ => {},
           }
       }
+      view = Transform::look_at(
+          &Point3::new(eye_x, eye_y, eye_z),
+          &Point3::new(0f32, 0.0, 0.0),
+          &Vector3::unit_z(),
+      );
 
       // Actual render
+      let data = Params {
+          transform: proj.mul_m(&view.mat).into_fixed(),
+          color: (texture.clone(), Some(sampler.clone())),
+          _r: PhantomData,
+      };
+
+      let mut batch = gfx::batch::Full::new(mesh.clone(), program.clone(), data).unwrap();
+      batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
+      batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
+
       stream.clear(gfx::ClearData {
           color: [0.3, 0.3, 0.3, 1.0],
           depth: 1.0,
