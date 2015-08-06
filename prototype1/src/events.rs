@@ -1,4 +1,8 @@
-pub use self::events::{ClientEvent, ServerEvent};
+pub use self::events::{
+  ClientEvent,
+  ServerEvent,
+  EntEvent
+};
 
 mod events {
   #[derive(Clone)]
@@ -7,17 +11,24 @@ mod events {
     Connect,
     Disconnect,
     Chat { message: String },
-    TryMove { x: f32, y: f32 },
-    SetColor { r: u8, g: u8, b: u8}
+    MoveSelf { x: f32, y: f32 },
+    SetOwnColor { r: u8, g: u8, b: u8}
   }
 
   #[derive(Clone)]
   pub enum ServerEvent {
     KeepAlive,
-    Connected,
+    Connected { eId: u8 },
     NotConnected,
     Chatted { subject: String, message: String },
+    EntEvent { eId: u8, event: EntEvent },
+  }
+
+  #[derive(Clone)]
+  pub enum EntEvent {
+    Spawned,
     Moved { x: f32, y: f32 },
-    ColorIs { r: u8, g: u8, b: u8}
+    Recolored { r: u8, g: u8, b: u8 },
+    Destroyed,
   }
 }

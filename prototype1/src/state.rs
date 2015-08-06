@@ -1,8 +1,18 @@
-pub use self::state::{ClientState, ServerState};
+pub use self::state::{
+  Primitive,
+  ClientState,
+  ServerState
+};
 
 mod state {
   use std::net::SocketAddr;
   use std::collections::HashMap;
+  use time::SteadyTime;
+
+  pub struct Primitive {
+    pub color: (u8, u8, u8),
+    pub pos: (f32, f32)
+  }
 
   pub struct ClientState {
     pub position: (f32, f32),
@@ -10,12 +20,18 @@ mod state {
   }
 
   pub struct ServerState {
-    pub positions: HashMap<SocketAddr, (f32, f32)>
+    pub connections: HashMap<SocketAddr, SteadyTime>,
+    pub connection_to_entity: HashMap<SocketAddr, u8>,
+    pub entities: HashMap<u8, Primitive>
   }
 
   impl ServerState {
     pub fn new() -> ServerState {
-      ServerState { positions: HashMap::new() }
+      ServerState {
+        connections: HashMap::new(),
+        entities: HashMap::new(),
+        connection_to_entity: HashMap::new()
+      }
     }
   }
 

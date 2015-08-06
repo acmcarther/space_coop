@@ -1,3 +1,4 @@
+#![feature(bitvec)]
 #![feature(lookup_host)]
 #![feature(ip_addr)]
 extern crate time;

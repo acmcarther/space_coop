@@ -6,14 +6,20 @@ mod client {
   use app_net::ClientNet;
   use events::{
     ClientEvent,
-    ServerEvent
+    ServerEvent,
+    EntEvent,
   };
-  use state::ClientState;
+  use state::{
+    ClientState,
+    Primitive
+  };
 
   use std::thread;
   use std::io::stdin;
   use std::sync::mpsc::channel;
   use std::marker::PhantomData;
+  use std::collections::HashMap;
+  use std::collections::hash_map::{Entry};
 
   use itertools::Itertools;
   use time::SteadyTime;
@@ -61,6 +67,7 @@ mod client {
     let (stdin_tx, stdin_rx) = channel();
     let mut last_sent = SteadyTime::now();
     let (mut mouse_x, mut mouse_y) = (0, 0);
+    let mut entities = HashMap::new();
 
     // Stdin handle
     thread::spawn (move || {
@@ -153,47 +160,41 @@ mod client {
       for event in stream.out.window.poll_events() {
           match event {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => break 'main,
-              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => {
-                eye_x = eye_x - 0.1
-              },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
-                eye_x = eye_x + 0.1
+                app_network.send_event(ClientEvent::MoveSelf{x: 0.0, y: 0.0});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
-                eye_y = eye_y - 0.1
+                app_network.send_event(ClientEvent::MoveSelf{x: 1.0, y: 0.0});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
-                eye_y = eye_y + 0.1
-              },
-              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::E)) => {
-                eye_z = eye_z - 0.1
+                app_network.send_event(ClientEvent::MoveSelf{x: 4.0, y: 0.0});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
-                eye_z = eye_z + 0.1
+                app_network.send_event(ClientEvent::MoveSelf{x: 0.0, y: 2.0});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::U)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r.saturating_add(1), g: g, b: b});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_add(1), g: g, b: b});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::J)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r.saturating_sub(1), g: g, b: b});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_sub(1), g: g, b: b});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::I)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r, g: g.saturating_add(1), b: b});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_add(1), b: b});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::K)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r, g: g.saturating_sub(1), b: b});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_sub(1), b: b});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::O)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r, g: g, b: b.saturating_add(1)});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_add(1)});
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::L)) => {
                 let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetColor{r: r, g: g, b: b.saturating_sub(1)});
+                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_sub(1)});
               },
               glutin::Event::MouseMoved((x, y)) => {
                 mouse_x = x;
@@ -209,7 +210,7 @@ mod client {
                 let world_pos = (Matrix4::from(view) * proj).invert().unwrap().mul_v(&coord_vec);
                 let result_vec = world_pos.truncate().div_s(world_pos.w);
                 println!("world pos {:?}", result_vec);
-                app_network.send_event(ClientEvent::TryMove{x: mouse_x as f32, y: mouse_y as f32});
+                //app_network.send_event(ClientEvent::TryMove{x: mouse_x as f32, y: mouse_y as f32});
               },
               glutin::Event::Closed => break 'main,
               _ => {},
@@ -221,37 +222,44 @@ mod client {
           &Vector3::unit_z(),
       );
 
-      let texture = factory.create_texture_rgba8(1, 1).unwrap();
-      let (r, g, b) = client_state.cube_color;
-      factory.update_texture(
-          &texture, &(*texture.get_info()).into(),
-          &[r, g, b, 0x00u8],
-          None).unwrap();
+      entities.iter().foreach( |(_, primitive): (_, &Primitive)| {
+        let texture = factory.create_texture_rgba8(1, 1).unwrap();
+        let (r, g, b) = primitive.color.clone();
+        let (x, y) = primitive.pos.clone();
+        let model_mat =
+          Matrix4::new(1.0, 0.0, 0.0 , x,
+                       0.0, 1.0, 0.0,  y,
+                       0.0, 0.0, 1.0, 0.0,
+                       0.0, 0.0, 0.0, 1.0);
+        factory.update_texture(
+            &texture, &(*texture.get_info()).into(),
+            &[r, g, b, 0x00u8],
+            None).unwrap();
 
-      let sampler = factory.create_sampler(
-          gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
-                                     gfx::tex::WrapMode::Clamp)
-      );
+        let sampler = factory.create_sampler(
+            gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                       gfx::tex::WrapMode::Clamp)
+        );
 
+        // Actual render
+        let data = Params {
+            transform: proj.mul_m(&view.mat.mul_m(&model_mat)).into_fixed(),
+            color: (texture.clone(), Some(sampler)),
+            _r: PhantomData,
+        };
 
-      // Actual render
-      let data = Params {
-          transform: proj.mul_m(&view.mat).into_fixed(),
-          color: (texture.clone(), Some(sampler)),
-          _r: PhantomData,
-      };
+        let mut batch = gfx::batch::Full::new(mesh.clone(), program.clone(), data).unwrap();
+        batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
+        batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
 
-      let mut batch = gfx::batch::Full::new(mesh.clone(), program.clone(), data).unwrap();
-      batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
-      batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
-
-      stream.clear(gfx::ClearData {
-          color: [0.3, 0.3, 0.3, 1.0],
-          depth: 1.0,
-          stencil: 0,
+        stream.clear(gfx::ClearData {
+            color: [0.3, 0.3, 0.3, 1.0],
+            depth: 1.0,
+            stencil: 0,
+        });
+        stream.draw(&batch).unwrap();
+        stream.present(&mut device);
       });
-      stream.draw(&batch).unwrap();
-      stream.present(&mut device);
 
       // Networking
       let possible_command = stdin_rx.try_recv().ok();
@@ -268,16 +276,32 @@ mod client {
         .into_iter()
         .foreach(|event| {
           match event {
-            ServerEvent::Connected => println!("Connected"),
+            ServerEvent::Connected { eId } => println!("Connected as entId: {}", eId),
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
-            ServerEvent::Moved { x, y } => {
-              client_state.position = (x, y);
-              println!("Moved to {:?}", (x, y))
-            },
-            ServerEvent::ColorIs {r, g, b} => {
-              println!("coloris {:?}", (r, g, b));
-              client_state.cube_color = (r, g, b)
+            ServerEvent::EntEvent {eId, event} => {
+              match event {
+                EntEvent::Spawned  => {entities.insert(eId, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
+                EntEvent::Moved { x, y } => {
+                  match entities.entry(eId) {
+                    Entry::Occupied(mut value) => {
+                      let primitive = value.get_mut();
+                      primitive.pos = (x, y);
+                    },
+                    _ => ()
+                  }
+                },
+                EntEvent::Recolored {r, g, b} => {
+                  match entities.entry(eId) {
+                    Entry::Occupied(mut value) => {
+                      let primitive = value.get_mut();
+                      primitive.color = (r, g, b);
+                    },
+                    _ => ()
+                  };
+                },
+                EntEvent::Destroyed => {entities.remove(&eId);}
+              };
             },
             _ => ()
           }
