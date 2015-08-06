@@ -8,6 +8,7 @@ mod events {
     Disconnect,
     Chat { message: String },
     TryMove { x: f32, y: f32 },
+    SetColor { r: u8, g: u8, b: u8}
   }
 
   #[derive(Clone)]
@@ -16,6 +17,7 @@ mod events {
     Connected,
     NotConnected,
     Chatted { subject: String, message: String },
-    Moved { x: f32, y: f32 }
+    Moved { x: f32, y: f32 },
+    ColorIs { r: u8, g: u8, b: u8}
   }
 }

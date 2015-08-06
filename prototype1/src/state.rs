@@ -5,7 +5,8 @@ mod state {
   use std::collections::HashMap;
 
   pub struct ClientState {
-    pub position: (f32, f32)
+    pub position: (f32, f32),
+    pub cube_color: (u8, u8, u8)
   }
 
   pub struct ServerState {
@@ -20,7 +21,7 @@ mod state {
 
   impl ClientState {
     pub fn new() -> ClientState {
-      ClientState { position: (0.0, 0.0) }
+      ClientState { position: (0.0, 0.0), cube_color: (5, 5, 5) }
     }
   }
 }

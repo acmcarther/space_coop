@@ -35,6 +35,7 @@ mod deserialize {
               None
             }
           },
+          5 => Some(ClientEvent::SetColor { r: 0xFFu8, g: 0x00u8, b: 0x00u8 }),
           _ => None
         }
       })
@@ -74,6 +75,7 @@ mod deserialize {
               None
             }
           }
+          5 => Some(ServerEvent::ColorIs { r: 0xFFu8, g: 0x00u8, b: 0x00u8 }),
           _ => None
         }
       })

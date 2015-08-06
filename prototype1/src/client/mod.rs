@@ -123,17 +123,6 @@ mod client {
         20, 21, 22, 22, 23, 20, // back
     ];
 
-    let texture = factory.create_texture_rgba8(1, 1).unwrap();
-    factory.update_texture(
-        &texture, &(*texture.get_info()).into(),
-        &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8],
-        None).unwrap();
-
-    let sampler = factory.create_sampler(
-        gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
-                                   gfx::tex::WrapMode::Clamp)
-    );
-
     let program = {
         let vs = gfx::ShaderSource {
             glsl_120: Some(include_bytes!("../../shaders/cube_120.glslv")),
@@ -182,6 +171,9 @@ mod client {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
                 eye_z = eye_z + 0.1
               },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::P)) => {
+                app_network.send_event(ClientEvent::SetColor{r: 5, g: 5, b: 5});
+              },
               glutin::Event::MouseMoved((x, y)) => {
                 mouse_x = x;
                 mouse_y = y;
@@ -208,10 +200,23 @@ mod client {
           &Vector3::unit_z(),
       );
 
+      let texture = factory.create_texture_rgba8(1, 1).unwrap();
+      let (r, g, b) = client_state.cube_color;
+      factory.update_texture(
+          &texture, &(*texture.get_info()).into(),
+          &[r, g, b, 0x00u8],
+          None).unwrap();
+
+      let sampler = factory.create_sampler(
+          gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                     gfx::tex::WrapMode::Clamp)
+      );
+
+
       // Actual render
       let data = Params {
           transform: proj.mul_m(&view.mat).into_fixed(),
-          color: (texture.clone(), Some(sampler.clone())),
+          color: (texture.clone(), Some(sampler)),
           _r: PhantomData,
       };
 
@@ -248,6 +253,9 @@ mod client {
             ServerEvent::Moved { x, y } => {
               client_state.position = (x, y);
               println!("Moved to {:?}", (x, y))
+            },
+            ServerEvent::ColorIs {r, g, b} => {
+              client_state.cube_color = (r, g, b)
             },
             _ => ()
           }

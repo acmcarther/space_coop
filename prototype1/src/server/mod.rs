@@ -72,6 +72,11 @@ mod server {
                 server_state.positions.insert(source, (x, y));
                 app_network.send_event(source, ServerEvent::Moved{x: x, y: y});
               },
+              ClientEvent::SetColor { r, g, b } => {
+                connected_users.keys().foreach(|user_addr| {
+                  app_network.send_event(user_addr.clone(), ServerEvent::ColorIs{ r: r, g: g, b: b });
+                })
+              }
             }
           } else {
             match event {

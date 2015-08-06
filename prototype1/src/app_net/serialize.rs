@@ -40,7 +40,10 @@ mod serialize {
           .chain(x_bytes.iter().cloned())
           .chain(y_bytes.iter().cloned())
           .collect()
-      }
+      },
+      ClientEvent::SetColor {r, g, b} => {
+        vec![5]
+      },
     }
   }
 
@@ -75,6 +78,9 @@ mod serialize {
           .chain(y_bytes.iter().cloned())
           .collect()
       }
+      ServerEvent::ColorIs {r, g, b} => {
+        vec![5]
+      },
     }
   }
 }
