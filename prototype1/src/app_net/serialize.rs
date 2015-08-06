@@ -42,7 +42,7 @@ mod serialize {
           .collect()
       },
       ClientEvent::SetColor {r, g, b} => {
-        vec![5]
+        vec![5, r, g, b]
       },
     }
   }
@@ -79,7 +79,7 @@ mod serialize {
           .collect()
       }
       ServerEvent::ColorIs {r, g, b} => {
-        vec![5]
+        vec![5, r, g, b]
       },
     }
   }

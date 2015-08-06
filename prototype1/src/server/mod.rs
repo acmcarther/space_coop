@@ -73,6 +73,7 @@ mod server {
                 app_network.send_event(source, ServerEvent::Moved{x: x, y: y});
               },
               ClientEvent::SetColor { r, g, b } => {
+                println!("set color {:?}", (r, g, b));
                 connected_users.keys().foreach(|user_addr| {
                   app_network.send_event(user_addr.clone(), ServerEvent::ColorIs{ r: r, g: g, b: b });
                 })

@@ -35,7 +35,14 @@ mod deserialize {
               None
             }
           },
-          5 => Some(ClientEvent::SetColor { r: 0xFFu8, g: 0x00u8, b: 0x00u8 }),
+          5 => {
+            let has_colors = [data.get(1), data.get(2), data.get(3)].into_iter().cloned().filter(Option::is_some).count() == 3;
+            if has_colors {
+              Some(ClientEvent::SetColor { r: data.get(1).unwrap().clone(), g: data.get(2).unwrap().clone(), b: data.get(3).unwrap().clone()})
+            } else {
+              None
+            }
+          },
           _ => None
         }
       })
@@ -75,7 +82,14 @@ mod deserialize {
               None
             }
           }
-          5 => Some(ServerEvent::ColorIs { r: 0xFFu8, g: 0x00u8, b: 0x00u8 }),
+          5 => {
+            let has_colors = [data.get(1), data.get(2), data.get(3)].into_iter().cloned().filter(Option::is_some).count() == 3;
+            if has_colors {
+              Some(ServerEvent::ColorIs { r: data.get(1).unwrap().clone(), g: data.get(2).unwrap().clone(), b: data.get(3).unwrap().clone()})
+            } else {
+              None
+            }
+          },
           _ => None
         }
       })

@@ -171,8 +171,29 @@ mod client {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
                 eye_z = eye_z + 0.1
               },
-              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::P)) => {
-                app_network.send_event(ClientEvent::SetColor{r: 5, g: 5, b: 5});
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::U)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r.saturating_add(1), g: g, b: b});
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::J)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r.saturating_sub(1), g: g, b: b});
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::I)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r, g: g.saturating_add(1), b: b});
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::K)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r, g: g.saturating_sub(1), b: b});
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::O)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r, g: g, b: b.saturating_add(1)});
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::L)) => {
+                let (r, g, b) = client_state.cube_color;
+                app_network.send_event(ClientEvent::SetColor{r: r, g: g, b: b.saturating_sub(1)});
               },
               glutin::Event::MouseMoved((x, y)) => {
                 mouse_x = x;
@@ -255,6 +276,7 @@ mod client {
               println!("Moved to {:?}", (x, y))
             },
             ServerEvent::ColorIs {r, g, b} => {
+              println!("coloris {:?}", (r, g, b));
               client_state.cube_color = (r, g, b)
             },
             _ => ()
