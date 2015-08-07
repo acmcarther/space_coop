@@ -17,7 +17,8 @@ mod state {
 
   pub struct ClientState {
     pub entities: HashMap<u8, Primitive>,
-    pub own_id: Option<u8>
+    pub own_id: Option<u8>,
+    pub zoom_level: u8
   }
 
   pub struct ServerState {
@@ -40,7 +41,8 @@ mod state {
     pub fn new() -> ClientState {
       ClientState {
         entities: HashMap::new(),
-        own_id: None
+        own_id: None,
+        zoom_level: 1
       }
     }
   }

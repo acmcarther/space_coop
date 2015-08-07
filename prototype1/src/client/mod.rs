@@ -29,7 +29,7 @@ mod client {
   use cgmath;
 
   use cgmath::FixedArray;
-  use cgmath::{Matrix, Point3, Vector, Vector3, Vector4, Matrix4};
+  use cgmath::{Matrix, Point, Point3, Vector, Vector3, Vector4, Matrix4};
   use cgmath::{Transform, AffineMatrix3};
   use gfx::attrib::Floater;
   use gfx::traits::{Factory, Stream, ToIndexSlice, ToSlice, FactoryExt};
@@ -149,7 +149,10 @@ mod client {
     );
 
     let proj = cgmath::perspective(cgmath::deg(45.0f32),
-                                   stream.get_aspect_ratio(), 1.0, 40.0);
+                                   stream.get_aspect_ratio(), 1.0, 400.0);
+
+    let origin_primitive = Primitive { pos: (0.0, 0.0), color: (0, 255, 0) };
+    let origin_entity = (&0u8, &origin_primitive);
 
     // loooop
     'main: loop {
@@ -244,6 +247,12 @@ mod client {
                 mouse_x = x;
                 mouse_y = y;
               },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Z)) => {
+                client_state.zoom_level = client_state.zoom_level.saturating_add(1);
+              },
+              glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::X)) => {
+                client_state.zoom_level = client_state.zoom_level.saturating_sub(1);
+              },
               glutin::Event::MouseInput(glutin::ElementState::Pressed, glutin::MouseButton::Left) => {
                 let (screen_x, screen_y) = stream.out.window.get_inner_size().unwrap();
                 println!("screen {:?}", (screen_x, screen_y));
@@ -261,49 +270,49 @@ mod client {
           }
       }
       view = Transform::look_at(
-          &Point3::new(eye_x, eye_y, eye_z),
+          &Point3::new(eye_x, eye_y, eye_z).mul_s(client_state.zoom_level as f32),
           &Point3::new(0f32, 0.0, 0.0),
           &Vector3::unit_z(),
       );
 
-      println!("starting iter");
       stream.clear(gfx::ClearData {
           color: [0.3, 0.3, 0.3, 1.0],
           depth: 1.0,
           stencil: 0,
       });
-      client_state.entities.iter().foreach( |(id, primitive): (&u8, &Primitive)| {
-        println!("ents {} {:?}", id, primitive);
-        let texture = factory.create_texture_rgba8(1, 1).unwrap();
-        let (r, g, b) = primitive.color.clone();
-        let (x, y) = primitive.pos.clone();
-        let model_mat =
-          Matrix4::new(1.0, 0.0, 0.0 , 0.0,
-                       0.0, 1.0, 0.0,  0.0,
-                       0.0, 0.0, 1.0, 0.0,
-                       x, y, 0.0, 1.0);
-        factory.update_texture(
-            &texture, &(*texture.get_info()).into(),
-            &[r, g, b, 0x00u8],
-            None).unwrap();
+      client_state.entities.iter()
+        .chain(vec![origin_entity].into_iter())
+        .foreach( |(_, primitive): (&u8, &Primitive)| {
+            let texture = factory.create_texture_rgba8(1, 1).unwrap();
+            let (r, g, b) = primitive.color.clone();
+            let (x, y) = primitive.pos.clone();
+            let model_mat =
+              Matrix4::new(1.0, 0.0, 0.0 , 0.0,
+                           0.0, 1.0, 0.0,  0.0,
+                           0.0, 0.0, 1.0, 0.0,
+                           x, y, 0.0, 1.0);
+            factory.update_texture(
+                &texture, &(*texture.get_info()).into(),
+                &[r, g, b, 0x00u8],
+                None).unwrap();
 
-        let sampler = factory.create_sampler(
-            gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
-                                       gfx::tex::WrapMode::Clamp)
-        );
+            let sampler = factory.create_sampler(
+                gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                           gfx::tex::WrapMode::Clamp)
+            );
 
-        // Actual render
-        let data = Params {
-            transform: proj.mul_m(&view.mat.mul_m(&model_mat)).into_fixed(),
-            color: (texture.clone(), Some(sampler)),
-            _r: PhantomData,
-        };
+            // Actual render
+            let data = Params {
+                transform: proj.mul_m(&view.mat.mul_m(&model_mat)).into_fixed(),
+                color: (texture.clone(), Some(sampler)),
+                _r: PhantomData,
+            };
 
-        let mut batch = gfx::batch::Full::new(mesh.clone(), program.clone(), data).unwrap();
-        batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
-        batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
+            let mut batch = gfx::batch::Full::new(mesh.clone(), program.clone(), data).unwrap();
+            batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
+            batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
 
-        stream.draw(&batch).unwrap();
+            stream.draw(&batch).unwrap();
       });
       stream.present(&mut device);
 
