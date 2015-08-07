@@ -11,6 +11,7 @@ glutin = "0.2.0"
 cgmath = "*"
 gfx = "*"
 gfx_window_glutin = "*"
+bit-vec = "*"
 
 [dependencies.game_udp]
 git = "https://github.com/acmcarther/rust_game_udp"
