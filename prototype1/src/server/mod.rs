@@ -2,10 +2,9 @@ pub use self::server::{start};
 
 mod server {
   use std::thread;
-  use std::collections::HashMap;
   use std::net::SocketAddr;
-  use std::collections::BitVec;
   use std::collections::hash_map::{Entry};
+  use bit_vec::BitVec;
 
   use app_net::ServerNet;
   use params;
@@ -47,12 +46,12 @@ mod server {
           .iter()
           .foreach(|dead_user_addr| {
             server_state.connections.remove(&dead_user_addr);
-            let eId = server_state.connection_to_entity.remove(&dead_user_addr);
-            eId.map(|eId| {
+            let eid = server_state.connection_to_entity.remove(&dead_user_addr);
+            eid.map(|eid| {
               server_state.connection_to_entity.remove(&dead_user_addr);
-              server_state.entities.remove(&eId);
+              server_state.entities.remove(&eid);
               server_state.connections.keys().foreach(|user_addr| {
-                app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eId: eId, event: EntEvent::Destroyed });
+                app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eid: eid, event: EntEvent::Destroyed });
               });
             });
           });
@@ -70,16 +69,16 @@ mod server {
                 app_network.send_event(source.clone(), ServerEvent::KeepAlive);
               },
               ClientEvent::Connect => {
-                server_state.connection_to_entity.get(&source).map(|eId| {
-                  app_network.send_event(source, ServerEvent::Connected {eId: eId.clone()} );
+                server_state.connection_to_entity.get(&source).map(|eid| {
+                  app_network.send_event(source, ServerEvent::Connected {eid: eid.clone()} );
                 });
               },
               ClientEvent::Disconnect => {
                 server_state.connections.remove(&source);
-                server_state.connection_to_entity.remove(&source).map(|eId| {
-                  server_state.entities.remove(&eId);
+                server_state.connection_to_entity.remove(&source).map(|eid| {
+                  server_state.entities.remove(&eid);
                   server_state.connections.keys().foreach(|user_addr| {
-                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eId: eId, event: EntEvent::Destroyed });
+                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eid: eid, event: EntEvent::Destroyed });
                   });
                 });
                 app_network.send_event(source, ServerEvent::NotConnected);
@@ -95,8 +94,8 @@ mod server {
                 let connection_to_entity = &server_state.connection_to_entity;
                 let connections = &server_state.connections;
                 let entities = &mut server_state.entities;
-                connection_to_entity.get(&source).map(|eId| {
-                  match entities.entry(eId.clone()) {
+                connection_to_entity.get(&source).map(|eid| {
+                  match entities.entry(eid.clone()) {
                     Entry::Occupied(mut value) => {
                       let primitive = value.get_mut();
                       primitive.pos = (x, y);
@@ -105,7 +104,7 @@ mod server {
                   }
                   connections.keys().foreach(|user_addr| {
                     println!("moving is getting sent");
-                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eId: eId.clone(), event: EntEvent::Moved { x: x, y: y }});
+                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eid: eid.clone(), event: EntEvent::Moved { x: x, y: y }});
                   })
                 });
               },
@@ -114,8 +113,8 @@ mod server {
                 let connection_to_entity = &server_state.connection_to_entity;
                 let connections = &server_state.connections;
                 let entities = &mut server_state.entities;
-                connection_to_entity.get(&source).map(|eId| {
-                  match entities.entry(eId.clone()) {
+                connection_to_entity.get(&source).map(|eid| {
+                  match entities.entry(eid.clone()) {
                     Entry::Occupied(mut value) => {
                       let primitive = value.get_mut();
                       primitive.color = (r, g, b);
@@ -123,7 +122,7 @@ mod server {
                     _ => ()
                   }
                   connections.keys().foreach(|user_addr| {
-                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eId: eId.clone(), event: EntEvent::Recolored { r: r, g: g, b: b }});
+                    app_network.send_event(user_addr.clone(), ServerEvent::EntEvent{ eid: eid.clone(), event: EntEvent::Recolored { r: r, g: g, b: b }});
                   })
                 });
               }
@@ -132,19 +131,19 @@ mod server {
             match event {
               ClientEvent::Connect => {
                 println!("connecting");
-                let mut eId_in_use = BitVec::from_elem(256, false);
-                let first_open_eId = server_state.connection_to_entity.values().cloned().foreach(|eId| {
-                  eId_in_use.set(eId as usize, true);
+                let mut eid_in_use = BitVec::from_elem(256, false);
+                server_state.connection_to_entity.values().cloned().foreach(|eid| {
+                  eid_in_use.set(eid as usize, true);
                 });
-                println!("eId in use {:?}", eId_in_use);
-                match eId_in_use.iter().enumerate().filter(|&(_, x)| !x).next() {
-                  Some((eId, _)) => {
-                    println!("got an eId {}", eId);
-                    let eId = eId.clone() as u8;
+                println!("eid in use {:?}", eid_in_use);
+                match eid_in_use.iter().enumerate().filter(|&(_, x)| !x).next() {
+                  Some((eid, _)) => {
+                    println!("got an eid {}", eid);
+                    let eid = eid.clone() as u8;
                     server_state.connections.insert(source.clone(), SteadyTime::now());
-                    server_state.connection_to_entity.insert(source.clone(), eId.clone());
-                    server_state.entities.insert(eId.clone(), Primitive { color: (0, 0, 0), pos: (0.0, 0.0)});
-                    app_network.send_event(source, ServerEvent::Connected {eId: eId} );
+                    server_state.connection_to_entity.insert(source.clone(), eid.clone());
+                    server_state.entities.insert(eid.clone(), Primitive { color: (0, 0, 0), pos: (0.0, 0.0)});
+                    app_network.send_event(source, ServerEvent::Connected {eid: eid} );
                   },
                   None => {
                     println!("no eid avail");

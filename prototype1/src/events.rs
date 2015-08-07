@@ -18,10 +18,10 @@ mod events {
   #[derive(Clone)]
   pub enum ServerEvent {
     KeepAlive,
-    Connected { eId: u8 },
+    Connected { eid: u8 },
     NotConnected,
     Chatted { subject: String, message: String },
-    EntEvent { eId: u8, event: EntEvent },
+    EntEvent { eid: u8, event: EntEvent },
   }
 
   #[derive(Clone)]

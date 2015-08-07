@@ -18,7 +18,6 @@ mod client {
   use std::io::stdin;
   use std::sync::mpsc::channel;
   use std::marker::PhantomData;
-  use std::collections::HashMap;
   use std::collections::hash_map::{Entry};
 
   use itertools::Itertools;
@@ -142,7 +141,7 @@ mod client {
         };
         factory.link_program_source(vs, fs).unwrap()
     };
-    let (mut eye_x, mut eye_y, mut eye_z) = (1.5f32, -5.0, 3.0);
+    let (eye_x, eye_y, eye_z) = (1.5f32, -5.0, 3.0);
     let mut view: AffineMatrix3<f32> = Transform::look_at(
         &Point3::new(eye_x, eye_y, eye_z),
         &Point3::new(0f32, 0.0, 0.0),
@@ -323,23 +322,23 @@ mod client {
         .into_iter()
         .foreach(|event| {
           match event {
-            ServerEvent::Connected { eId } => {
-              println!("Connected as entId: {}", eId);
-              client_state.own_id = Some(eId.clone());
-              client_state.entities.insert(eId, Primitive {pos: (0.0, 0.0), color: (200, 200, 200)});
+            ServerEvent::Connected { eid } => {
+              println!("Connected as entId: {}", eid);
+              client_state.own_id = Some(eid.clone());
+              client_state.entities.insert(eid, Primitive {pos: (0.0, 0.0), color: (200, 200, 200)});
             },
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
-            ServerEvent::EntEvent {eId, event} => {
+            ServerEvent::EntEvent {eid, event} => {
               match event {
-                EntEvent::Spawned  => {client_state.entities.insert(eId, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
+                EntEvent::Spawned  => {client_state.entities.insert(eid, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
                 EntEvent::Moved { x, y } => {
                   println!("got an ent moved {:?}", (x, y));
-                  let entity = client_state.entities.entry(eId).or_insert(Primitive{pos: (0.0, 0.0), color: (200, 200, 200)}); 
+                  let entity = client_state.entities.entry(eid).or_insert(Primitive{pos: (0.0, 0.0), color: (200, 200, 200)});
                   entity.pos = (x, y);
                 },
                 EntEvent::Recolored {r, g, b} => {
-                  match client_state.entities.entry(eId) {
+                  match client_state.entities.entry(eid) {
                     Entry::Occupied(mut value) => {
                       let primitive = value.get_mut();
                       primitive.color = (r, g, b);
@@ -347,7 +346,7 @@ mod client {
                     _ => ()
                   };
                 },
-                EntEvent::Destroyed => {client_state.entities.remove(&eId);}
+                EntEvent::Destroyed => {client_state.entities.remove(&eid);}
               };
             },
             _ => ()
