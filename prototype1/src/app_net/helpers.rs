@@ -8,7 +8,7 @@ mod helpers {
   // TODO: Use a non-hacky solution
   pub fn get_own_ip() -> IpAddr {
     host_lookup("google.com")
-      .and_then(|external_ip| TcpStream::connect((external_ip, 8000)))
+      .and_then(|external_ip| TcpStream::connect((external_ip, 80)))
       .and_then(|stream| {
         let addr = stream.local_addr();
         stream.shutdown(Shutdown::Both);
