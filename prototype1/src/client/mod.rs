@@ -304,8 +304,8 @@ mod client {
         batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
 
         stream.draw(&batch).unwrap();
-        stream.present(&mut device);
       });
+      stream.present(&mut device);
 
       // Networking
       let possible_command = stdin_rx.try_recv().ok();
