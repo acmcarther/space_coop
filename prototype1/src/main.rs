@@ -1,4 +1,3 @@
-#![feature(bitvec)]
 #![feature(lookup_host)]
 #![feature(ip_addr)]
 extern crate time;
@@ -7,6 +6,7 @@ extern crate game_udp;
 extern crate itertools;
 extern crate cgmath;
 extern crate glutin;
+extern crate bit_vec;
 #[macro_use]
 extern crate gfx;
 extern crate gfx_window_glutin;

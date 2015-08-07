@@ -53,8 +53,8 @@ mod serialize {
       ServerEvent::KeepAlive => {
         vec![0]
       },
-      ServerEvent::Connected { eId } => {
-        vec![1, eId]
+      ServerEvent::Connected { eid } => {
+        vec![1, eid]
       },
       ServerEvent::NotConnected => {
         vec![2]
@@ -67,8 +67,8 @@ mod serialize {
           .collect()
 
       }
-      ServerEvent::EntEvent { eId, event } => {
-        let proto_msg = vec![4, eId];
+      ServerEvent::EntEvent { eid, event } => {
+        let proto_msg = vec![4, eid];
 
         match event {
           EntEvent::Spawned => {
