@@ -267,7 +267,14 @@ mod client {
           &Vector3::unit_z(),
       );
 
-      client_state.entities.iter().foreach( |(_, primitive): (_, &Primitive)| {
+      println!("starting iter");
+      stream.clear(gfx::ClearData {
+          color: [0.3, 0.3, 0.3, 1.0],
+          depth: 1.0,
+          stencil: 0,
+      });
+      client_state.entities.iter().foreach( |(id, primitive): (&u8, &Primitive)| {
+        println!("ents {} {:?}", id, primitive);
         let texture = factory.create_texture_rgba8(1, 1).unwrap();
         let (r, g, b) = primitive.color.clone();
         let (x, y) = primitive.pos.clone();
@@ -297,11 +304,6 @@ mod client {
         batch.slice = index_data.to_slice(&mut factory, gfx::PrimitiveType::TriangleList);
         batch.state = batch.state.depth(gfx::state::Comparison::LessEqual, true);
 
-        stream.clear(gfx::ClearData {
-            color: [0.3, 0.3, 0.3, 1.0],
-            depth: 1.0,
-            stencil: 0,
-        });
         stream.draw(&batch).unwrap();
         stream.present(&mut device);
       });
@@ -333,13 +335,8 @@ mod client {
                 EntEvent::Spawned  => {client_state.entities.insert(eId, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
                 EntEvent::Moved { x, y } => {
                   println!("got an ent moved {:?}", (x, y));
-                  match client_state.entities.entry(eId) {
-                    Entry::Occupied(mut value) => {
-                      let primitive = value.get_mut();
-                      primitive.pos = (x, y);
-                    },
-                    _ => ()
-                  }
+                  let entity = client_state.entities.entry(eId).or_insert(Primitive{pos: (0.0, 0.0), color: (200, 200, 200)}); 
+                  entity.pos = (x, y);
                 },
                 EntEvent::Recolored {r, g, b} => {
                   match client_state.entities.entry(eId) {
