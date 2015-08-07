@@ -9,14 +9,15 @@ mod state {
   use std::collections::HashMap;
   use time::SteadyTime;
 
+  #[derive(Debug)]
   pub struct Primitive {
     pub color: (u8, u8, u8),
     pub pos: (f32, f32)
   }
 
   pub struct ClientState {
-    pub position: (f32, f32),
-    pub cube_color: (u8, u8, u8)
+    pub entities: HashMap<u8, Primitive>,
+    pub own_id: Option<u8>
   }
 
   pub struct ServerState {
@@ -37,7 +38,10 @@ mod state {
 
   impl ClientState {
     pub fn new() -> ClientState {
-      ClientState { position: (0.0, 0.0), cube_color: (5, 5, 5) }
+      ClientState {
+        entities: HashMap::new(),
+        own_id: None
+      }
     }
   }
 }

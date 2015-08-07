@@ -73,13 +73,15 @@ mod deserialize {
             Some(ServerEvent::Chatted { subject: trimmed_sub, message: trimmed_msg})
           },
           4 => {
-            data.get(2).and_then (|eId| {
+            data.get(1).and_then (|eId| {
               data
-                .get(3)
+                .get(2)
                 .map(|ent_event_marker| ent_event_marker.clone())
                 .and_then(|value| {
                   match value {
-                    0 => Some(ServerEvent::EntEvent {eId: eId.clone(), event: EntEvent::Spawned}),
+                    0 => {
+                      Some(ServerEvent::EntEvent {eId: eId.clone(), event: EntEvent::Spawned})
+                    },
                     1 => {
                       let x_bytes = data.iter().skip(3).take(4).cloned().collect::<Vec<u8>>();
                       let y_bytes = data.iter().skip(7).take(4).cloned().collect::<Vec<u8>>();

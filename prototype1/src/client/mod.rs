@@ -67,7 +67,6 @@ mod client {
     let (stdin_tx, stdin_rx) = channel();
     let mut last_sent = SteadyTime::now();
     let (mut mouse_x, mut mouse_y) = (0, 0);
-    let mut entities = HashMap::new();
 
     // Stdin handle
     thread::spawn (move || {
@@ -161,40 +160,86 @@ mod client {
           match event {
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => break 'main,
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
-                app_network.send_event(ClientEvent::MoveSelf{x: 0.0, y: 0.0});
+                println!("own id {:?}", client_state.own_id);
+                println!("entities {:?}", client_state.entities);
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (x, y) = primitive.pos;
+                    app_network.send_event(ClientEvent::MoveSelf{x: x + 1.0, y: y});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
-                app_network.send_event(ClientEvent::MoveSelf{x: 1.0, y: 0.0});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (x, y) = primitive.pos;
+                    app_network.send_event(ClientEvent::MoveSelf{x: x, y: y + 1.0});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
-                app_network.send_event(ClientEvent::MoveSelf{x: 4.0, y: 0.0});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (x, y) = primitive.pos;
+                    app_network.send_event(ClientEvent::MoveSelf{x: x, y: y - 1.0});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
-                app_network.send_event(ClientEvent::MoveSelf{x: 0.0, y: 2.0});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (x, y) = primitive.pos;
+                    app_network.send_event(ClientEvent::MoveSelf{x: x - 1.0, y: y});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::U)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_add(1), g: g, b: b});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_add(1), g: g, b: b});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::J)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_sub(1), g: g, b: b});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r.saturating_sub(1), g: g, b: b});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::I)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_add(1), b: b});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_add(1), b: b});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::K)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_sub(1), b: b});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g.saturating_sub(1), b: b});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::O)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_add(1)});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_add(1)});
+                  });
+                });
               },
               glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::L)) => {
-                let (r, g, b) = client_state.cube_color;
-                app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_sub(1)});
+                client_state.own_id.map(|id| {
+                  client_state.entities.get(&id).map(|primitive| {
+                    let (r, g, b) = primitive.color;
+                    app_network.send_event(ClientEvent::SetOwnColor{r: r, g: g, b: b.saturating_sub(1)});
+                  });
+                });
               },
               glutin::Event::MouseMoved((x, y)) => {
                 mouse_x = x;
@@ -222,15 +267,15 @@ mod client {
           &Vector3::unit_z(),
       );
 
-      entities.iter().foreach( |(_, primitive): (_, &Primitive)| {
+      client_state.entities.iter().foreach( |(_, primitive): (_, &Primitive)| {
         let texture = factory.create_texture_rgba8(1, 1).unwrap();
         let (r, g, b) = primitive.color.clone();
         let (x, y) = primitive.pos.clone();
         let model_mat =
-          Matrix4::new(1.0, 0.0, 0.0 , x,
-                       0.0, 1.0, 0.0,  y,
+          Matrix4::new(1.0, 0.0, 0.0 , 0.0,
+                       0.0, 1.0, 0.0,  0.0,
                        0.0, 0.0, 1.0, 0.0,
-                       0.0, 0.0, 0.0, 1.0);
+                       x, y, 0.0, 1.0);
         factory.update_texture(
             &texture, &(*texture.get_info()).into(),
             &[r, g, b, 0x00u8],
@@ -276,14 +321,19 @@ mod client {
         .into_iter()
         .foreach(|event| {
           match event {
-            ServerEvent::Connected { eId } => println!("Connected as entId: {}", eId),
+            ServerEvent::Connected { eId } => {
+              println!("Connected as entId: {}", eId);
+              client_state.own_id = Some(eId.clone());
+              client_state.entities.insert(eId, Primitive {pos: (0.0, 0.0), color: (200, 200, 200)});
+            },
             ServerEvent::NotConnected => println!("Not Connected"),
             ServerEvent::Chatted {subject, message} => println!("{}: {}", subject, message.trim()),
             ServerEvent::EntEvent {eId, event} => {
               match event {
-                EntEvent::Spawned  => {entities.insert(eId, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
+                EntEvent::Spawned  => {client_state.entities.insert(eId, Primitive {color: (200, 200, 200), pos: (0.0, 0.0)});},
                 EntEvent::Moved { x, y } => {
-                  match entities.entry(eId) {
+                  println!("got an ent moved {:?}", (x, y));
+                  match client_state.entities.entry(eId) {
                     Entry::Occupied(mut value) => {
                       let primitive = value.get_mut();
                       primitive.pos = (x, y);
@@ -292,7 +342,7 @@ mod client {
                   }
                 },
                 EntEvent::Recolored {r, g, b} => {
-                  match entities.entry(eId) {
+                  match client_state.entities.entry(eId) {
                     Entry::Occupied(mut value) => {
                       let primitive = value.get_mut();
                       primitive.color = (r, g, b);
@@ -300,7 +350,7 @@ mod client {
                     _ => ()
                   };
                 },
-                EntEvent::Destroyed => {entities.remove(&eId);}
+                EntEvent::Destroyed => {client_state.entities.remove(&eId);}
               };
             },
             _ => ()
