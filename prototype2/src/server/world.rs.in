@@ -1,0 +1,56 @@
+use std::collections::HashMap;
+
+use uuid::Uuid;
+use server::network;
+use common::world::{
+  Entity,
+  RenderAspect,
+  ClientWorld,
+};
+
+// A high fidelity version of the client world
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ServerWorld {
+  pub players: Vec<Player>,
+  pub entities: Vec<Entity>,
+  pub rendered: HashMap<Entity, RenderAspect>,
+  pub physical: HashMap<Entity, PhysicalAspect>,
+  pub controlled: HashMap<Entity, ControlledAspect>
+}
+
+impl ServerWorld {
+  pub fn new() -> ServerWorld {
+    ServerWorld {
+      players: Vec::new(),
+      entities: Vec::new(),
+      rendered: HashMap::new(),
+      physical: HashMap::new(),
+      controlled: HashMap::new()
+    }
+  }
+
+  pub fn as_client_world(&self) -> ClientWorld {
+    ClientWorld {
+      entities: self.entities.clone(),
+      rendered: self.rendered.clone(),
+    }
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Player {
+  uuid: Uuid,
+  address: network::Address,
+  connected: bool
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PhysicalAspect {
+  pos: (f32, f32, f32),
+  anchored: bool
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ControlledAspect {
+  player: Uuid
+}

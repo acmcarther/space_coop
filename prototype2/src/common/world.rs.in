@@ -1,0 +1,25 @@
+use std::collections::HashMap;
+
+use uuid::Uuid;
+
+// A lower fidelity version of the server world
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientWorld {
+  pub entities: Vec<Entity>,
+  pub rendered: HashMap<Entity, RenderAspect>
+}
+
+pub type Entity = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RenderAspect {
+  model: String
+}
+
+#[cfg(test)]
+mod tests {
+  #[test]
+  fn f() {
+    assert_eq!(1,2)
+  }
+}

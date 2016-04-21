@@ -2,10 +2,22 @@
 name = "prototype2"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
+build = "build.rs"
+
+[build-dependencies]
+serde_codegen = "*"
+syntex = "*"
+itertools = "*"
 
 [dependencies.gaffer_udp]
 git = "https://github.com/acmcarther/gaffer_udp"
 rev = "65f0d2a999a3470fcab34d19cc1a2caee480a63e"
+
+[dependencies]
+uuid = { version = "0.2.1", features = ["serde"] }
+serde = "0.7.0"
+serde_json = "0.7.0"
+time = "0.1.35"
 
 [[bin]]
 name = "space_coop"
