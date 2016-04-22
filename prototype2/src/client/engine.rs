@@ -42,6 +42,11 @@ impl Engine {
 
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
+    outbound.append(&mut self.controller.recv_pending_net());
+
+
+    self.renderer.render_world(&self.world.as_ref());
+
     outbound
   }
 
@@ -50,6 +55,7 @@ impl Engine {
 
     match event {
       DomainEvent(ServerEvent::FullSnapshot {series, idx, count, state_fragment}) => {
+        // TODO: clean up this mess
         let mut result = None;
         if self.other_snapshot_newer(series) {
           match self.partial_snapshot.as_mut() {

@@ -4,6 +4,11 @@ use serde_json;
 use itertools::Itertools;
 
 #[derive(Clone, Debug)]
+pub enum ClientLocalEvent {
+  CameraAdjust
+}
+
+#[derive(Clone, Debug)]
 pub struct PartialSnapshot {
   pub series: u16,
   pieces: Vec<Option<Vec<u8>>>
@@ -38,11 +43,10 @@ impl PartialSnapshot {
       // TODO: Take another look here, this is not efficient because of cloned
       self.pieces.iter().cloned().foreach(|mut p| full_buffer.append(&mut p.unwrap()));
       str::from_utf8(full_buffer.as_ref()).ok().and_then(|s| {
-        println!("{}", s);
         serde_json::from_str(s).ok()
       })
     } else {
-      println!("couldnt colate");
+      println!("couldnt collate");
       None
     }
   }

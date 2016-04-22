@@ -21,8 +21,7 @@ impl Network {
     Network {
       socket: sock,
       port: port,
-      server_addr:
-      server_addr
+      server_addr: server_addr
     }
   }
 
@@ -41,31 +40,22 @@ impl Network {
   }
 
   pub fn connect(&mut self) -> bool {
-    let mut tries_remaining = 5;
-    self.send(ClientNetworkEvent::Connect);
-    thread::sleep(StdDuration::from_millis(200));
-
-    while tries_remaining > 0 {
-      let success = self.recv_pending().into_iter().any(|payload| payload == ServerNetworkEvent::Connected);
-      if success {return true}
-      println!("not a success");
-      tries_remaining = tries_remaining - 1;
-      self.send(ClientNetworkEvent::Connect);
-      thread::sleep(StdDuration::from_millis(200));
-    }
-
-    false
+    self.try_send(ClientNetworkEvent::Connect, ServerNetworkEvent::Connected, 5)
   }
   pub fn disconnect(&mut self) -> bool {
-    let mut tries_remaining = 5;
-    self.send(ClientNetworkEvent::Connect);
+    self.try_send(ClientNetworkEvent::Disconnect, ServerNetworkEvent::Disconnected, 5)
+  }
+
+  fn try_send(&mut self, event: ClientNetworkEvent, expected_event: ServerNetworkEvent, tries: u32) -> bool {
+    let mut tries_remaining = tries;
+    self.send(event.clone());
     thread::sleep(StdDuration::from_millis(200));
 
     while tries_remaining > 0 {
-      let success = self.recv_pending().into_iter().any(|payload| payload == ServerNetworkEvent::Disconnected);
+      let success = self.recv_pending().into_iter().any(|payload| payload == expected_event);
       if success {return true}
       tries_remaining = tries_remaining - 1;
-      self.send(ClientNetworkEvent::Disconnect);
+      self.send(event.clone());
       thread::sleep(StdDuration::from_millis(200));
     }
 
