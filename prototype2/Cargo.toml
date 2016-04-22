@@ -11,10 +11,11 @@ itertools = "*"
 
 [dependencies.gaffer_udp]
 git = "https://github.com/acmcarther/gaffer_udp"
-rev = "65f0d2a999a3470fcab34d19cc1a2caee480a63e"
+rev = "9ad0a1b1527fa1800922320954bd75b4cb8cd5dc"
 
 [dependencies]
-uuid = { version = "0.2.1", features = ["serde"] }
+itertools = "*"
+uuid = { version = "0.2.1", features = ["serde", "v4"] }
 serde = "0.7.0"
 serde_json = "0.7.0"
 time = "0.1.35"

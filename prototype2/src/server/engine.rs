@@ -1,132 +1,112 @@
 use std::collections::HashMap;
 use std::mem;
 
-use server::state::GameState;
-use server::world::ServerWorld;
-use server::event::{
-  GameEvent,
-  EntEvent,
-  WorldEvent,
-  ClientEvent,
-  CommandEvent,
-  OutboundEvent,
-  Command,
-  InvalidCommand,
+use uuid::{
+  Uuid, UuidVersion
 };
 
+use serde_json;
+
+use common::protocol::{
+  ClientEvent,
+  ClientNetworkEvent,
+  ClientPayload,
+  ServerPayload,
+  ServerEvent,
+  ServerNetworkEvent,
+};
+use server::protocol::{
+  OutboundEvent,
+};
+use server::world::ServerWorld;
+use itertools::Itertools;
+
 pub struct Engine {
-  game: GameState,
   world: ServerWorld,
-  events: Vec<GameEvent>
+  events: Vec<ClientPayload>,
+  snapshot_idx: u32,
 }
 
 impl Engine {
-  pub fn push_event(&mut self, event: GameEvent) { self.events.push(event) }
+  pub fn push_event(&mut self, event: ClientPayload) { self.events.push(event) }
 
   pub fn new() -> Engine {
     Engine {
       world: ServerWorld::new(),
-      game: GameState::new(),
-      events: Vec::new()
+      events: Vec::new(),
+      snapshot_idx: 0
     }
   }
 
-  pub fn tick(&mut self) -> Vec<OutboundEvent> {
+  pub fn tick(&mut self) -> Vec<ServerPayload> {
     let mut event_buf = Vec::new();
     // Yank all the events off the queue, replacing with a new queue
     mem::swap(&mut self.events, &mut event_buf);
 
-    let mut outbound = Vec::new();
+    let mut outbound: Vec<OutboundEvent> = Vec::new();
 
-    for event in event_buf.drain(..) {
-      match event {
-        GameEvent::Ent(e) => outbound.append(&mut self.incorporate_ent_event(e)),
-        GameEvent::World(e) => outbound.append(&mut self.incorporate_world_event(e)),
-        GameEvent::Command(e) => outbound.append(&mut self.incorporate_command_event(e))
-      }
-    }
+    event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
-    outbound
+    let client_snapshot = serde_json::to_string(&self.world.as_client_world()).unwrap();
+    let mut snapshot_bytes = client_snapshot.into_bytes();
+    let mut snapshot_byte_sets = snapshot_bytes.chunks(512 /*bytes*/).enumerate();
+    let set_count = snapshot_byte_sets.len();
+    self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
+
+    outbound.append(&mut snapshot_byte_sets.map(|(idx, bytes)| {
+      OutboundEvent::Undirected(ServerNetworkEvent::DomainEvent(ServerEvent::FullSnapshot {
+        series: self.snapshot_idx,
+        idx: idx as u32,
+        count: set_count as u32,
+        state_fragment: bytes.to_vec()
+      }))
+    }).collect::<Vec<OutboundEvent>>());
+
+    // TODO: optimize this iter usage, its inefficient because of the trnaformations
+    //   to vector and back
+    outbound.into_iter()
+      .flat_map(|outbound| outbound.to_server_payloads(&|uuid| { self.world.get_player_addr_from_uuid(&uuid).map(|addr| addr.clone())}))
+      .collect::<Vec<ServerPayload>>()
   }
 
-  fn incorporate_ent_event(&mut self, _: EntEvent) -> Vec<OutboundEvent> {
-    Vec::new()
-  }
 
-  fn incorporate_world_event(&mut self, e: WorldEvent) -> Vec<OutboundEvent> {
-    match e {
-      WorldEvent::StartGame => {
-        self.game.start();
-        vec![OutboundEvent::Undirected(ClientEvent::StartGame)]
+  fn handle(&mut self, payload: ClientPayload) -> Vec<OutboundEvent> {
+    use common::protocol::ClientNetworkEvent::*;
+
+    let addr = payload.address;
+    match payload.event {
+      Connect => {
+        println!("A person connected: {}", addr);
+        let player_uuid = self.world.get_player_uuid_from_addr(&addr)
+          .map(|v| v.clone())
+          .unwrap_or_else(|| self.world.add_player(addr));
+
+        let player = self.world.get_mut_player(&player_uuid).unwrap(); // Safe, because of above insertion
+        player.set_connected(true);
+        vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Connected}]
       },
-      WorldEvent::EndGame => {
-        self.game.end();
-        vec![OutboundEvent::Undirected(ClientEvent::EndGame)]
-      }
-    }
-  }
-
-  fn incorporate_command_event(&mut self, e: CommandEvent) -> Vec<OutboundEvent> {
-    match e.command {
-      Command::Join => {
-        let existing_player = self.game.get_player(e.source);
-        if existing_player.is_some() {
-          let player = existing_player.unwrap();
-          vec![
-            OutboundEvent::DirectedOOB{
-              destination: e.source,
-              event: ClientEvent::Invalid(InvalidCommand::AlreadyJoinedAs(player.uuid()))
-            }
-          ]
-        } else {
-          let new_player = self.game.add_player(e.source);
-          vec![
-            OutboundEvent::Directed{destination: new_player.uuid(), event: ClientEvent::Join(new_player.uuid())},
-            OutboundEvent::Undirected(ClientEvent::PlayerJoined(new_player.uuid()))
-          ]
-        }
-      },
-      Command::Connect => {
-        let existing_player = self.game.get_mut_player(e.source);
-        match existing_player {
+      Disconnect => {
+        println!("A person disconnected: {}", addr);
+        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone())
+          .and_then(|uuid| self.world.get_mut_player(&uuid));
+        match player_opt {
+          None => vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Error("Tried to disconnect, but not connected to server".to_owned())}],
           Some(player) => {
-            player.connect();
-            vec![
-              OutboundEvent::Directed{destination: player.uuid(), event: ClientEvent::Join(player.uuid())},
-              OutboundEvent::Undirected(ClientEvent::PlayerJoined(player.uuid()))
-            ]
-          },
-          None => {
-            vec![
-              OutboundEvent::DirectedOOB{
-                destination: e.source,
-                event: ClientEvent::Invalid(InvalidCommand::NotJoined)
-              }
-            ]
+            player.set_connected(false);
+            vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Disconnected}]
           }
         }
       },
-      Command::Disconnect => {
-        let existing_player = self.game.get_mut_player(e.source);
-        match existing_player {
-          Some(player) => {
-            player.disconnect();
-            vec![
-              OutboundEvent::Directed{destination: player.uuid(), event: ClientEvent::Left},
-              OutboundEvent::Undirected(ClientEvent::PlayerLeft(player.uuid()))
-            ]
-          }
-          None => {
-            vec![
-              OutboundEvent::DirectedOOB{
-                destination: e.source,
-                event: ClientEvent::Invalid(InvalidCommand::NotJoined)
-              }
-            ]
-          }
+      KeepAlive => {
+        println!("{} is keeping alive", addr);
+        let player_opt = self.world.get_player_uuid_from_addr(&addr)
+          .and_then(|uuid| self.world.get_player(uuid));
+        match player_opt {
+          Some(player) => vec![OutboundEvent::Directed{dest: player.uuid().clone(), event: ServerNetworkEvent::KeepAlive}],
+          _ => Vec::new()
         }
-      }
-      _ => Vec::new()
+      },
+      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => Vec::new(),
     }
   }
 }

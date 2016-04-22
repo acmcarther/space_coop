@@ -16,10 +16,8 @@ pub struct RenderAspect {
   model: String
 }
 
-#[cfg(test)]
-mod tests {
-  #[test]
-  fn f() {
-    assert_eq!(1,2)
+impl RenderAspect {
+  pub fn new() -> RenderAspect {
+    RenderAspect { model: "dummy".to_owned() }
   }
 }

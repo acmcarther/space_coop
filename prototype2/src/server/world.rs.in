@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
-use uuid::Uuid;
-use server::network;
+use uuid::{
+  Uuid,
+  UuidVersion
+};
+use common::network;
 use common::world::{
   Entity,
   RenderAspect,
@@ -11,17 +14,19 @@ use common::world::{
 // A high fidelity version of the client world
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ServerWorld {
-  pub players: Vec<Player>,
-  pub entities: Vec<Entity>,
-  pub rendered: HashMap<Entity, RenderAspect>,
-  pub physical: HashMap<Entity, PhysicalAspect>,
-  pub controlled: HashMap<Entity, ControlledAspect>
+  addr_to_player: HashMap<network::Address, Uuid>,
+  players: HashMap<Uuid, Player>,
+  entities: Vec<Entity>,
+  rendered: HashMap<Entity, RenderAspect>,
+  physical: HashMap<Entity, PhysicalAspect>,
+  controlled: HashMap<Entity, ControlledAspect>
 }
 
 impl ServerWorld {
   pub fn new() -> ServerWorld {
     ServerWorld {
-      players: Vec::new(),
+      addr_to_player: HashMap::new(),
+      players: HashMap::new(),
       entities: Vec::new(),
       rendered: HashMap::new(),
       physical: HashMap::new(),
@@ -35,6 +40,36 @@ impl ServerWorld {
       rendered: self.rendered.clone(),
     }
   }
+
+  pub fn get_player_uuid_from_addr(&self, address: &network::Address) -> Option<&Uuid> {
+    self.addr_to_player.get(address)
+  }
+
+  pub fn get_player_addr_from_uuid(&self, uuid: &Uuid) -> Option<&network::Address> {
+    self.get_player(uuid).map(|p| &p.address)
+  }
+
+  pub fn get_player(&self, uuid: &Uuid) -> Option<&Player> {
+    self.players.get(uuid)
+  }
+
+  pub fn get_mut_player(&mut self, uuid: &Uuid) -> Option<&mut Player> {
+    self.players.get_mut(uuid)
+  }
+
+  pub fn add_player(&mut self, addr: network::Address) -> Uuid {
+    let player = Player::new(addr.clone());
+    let player_ent_uuid = Uuid::new_v4();
+    self.entities.push(player_ent_uuid.clone());
+    self.rendered.insert(player_ent_uuid.clone(), RenderAspect::new());
+    self.physical.insert(player_ent_uuid.clone(), PhysicalAspect::new((0.0,0.0,0.0), false));
+    self.controlled.insert(player_ent_uuid.clone(), ControlledAspect::new(player.uuid().clone()));
+
+    let uuid = player.uuid().clone();
+    self.addr_to_player.insert(addr, uuid.clone());
+    self.players.insert(uuid.clone(), player);
+    uuid
+  }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -44,13 +79,44 @@ pub struct Player {
   connected: bool
 }
 
+impl Player {
+  pub fn new(addr: network::Address) -> Player {
+    Player {
+      uuid: Uuid::new_v4(),
+      address: addr,
+      connected: false,
+    }
+  }
+
+  pub fn set_connected(&mut self, connected: bool) {
+    self.connected = connected
+  }
+
+  pub fn uuid(&self) -> &Uuid {
+    &self.uuid
+  }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PhysicalAspect {
   pos: (f32, f32, f32),
   anchored: bool
 }
 
+impl PhysicalAspect{
+  pub fn new(pos: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
+    PhysicalAspect { pos: pos, anchored: anchored }
+  }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ControlledAspect {
   player: Uuid
 }
+
+impl ControlledAspect {
+  pub fn new(player: Uuid) -> ControlledAspect {
+    ControlledAspect { player: player }
+  }
+}
+

@@ -1,0 +1,27 @@
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ClientNetworkEvent {
+  Connect,
+  Disconnect,
+  KeepAlive,
+  DomainEvent(ClientEvent),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ClientEvent {
+  SelfMove {x_d: f32, y_d: f32, z_d: f32}
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ServerNetworkEvent {
+  Connected,
+  Disconnected,
+  KeepAlive,
+  Error(String),
+  DomainEvent(ServerEvent),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum ServerEvent {
+  FullSnapshot {series: u32, idx: u32, count: u32, state_fragment: Vec<u8>}
+}
+

@@ -2,7 +2,7 @@
 name = "prototype2"
 version = "0.1.0"
 dependencies = [
- "gaffer_udp 0.1.0 (git+https://github.com/acmcarther/gaffer_udp?rev=65f0d2a999a3470fcab34d19cc1a2caee480a63e)",
+ "gaffer_udp 0.1.0 (git+https://github.com/acmcarther/gaffer_udp?rev=9ad0a1b1527fa1800922320954bd75b4cb8cd5dc)",
  "itertools 0.4.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_codegen 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -48,7 +48,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "gaffer_udp"
 version = "0.1.0"
-source = "git+https://github.com/acmcarther/gaffer_udp?rev=65f0d2a999a3470fcab34d19cc1a2caee480a63e#65f0d2a999a3470fcab34d19cc1a2caee480a63e"
+source = "git+https://github.com/acmcarther/gaffer_udp?rev=9ad0a1b1527fa1800922320954bd75b4cb8cd5dc#9ad0a1b1527fa1800922320954bd75b4cb8cd5dc"
 dependencies = [
  "byteorder 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.13 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -183,6 +183,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand"
+version = "0.3.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "rustc-serialize"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -268,6 +276,7 @@ name = "uuid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
