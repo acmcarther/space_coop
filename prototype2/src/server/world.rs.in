@@ -9,7 +9,10 @@ use common::world::{
   Entity,
   RenderAspect,
   ClientWorld,
+  PhysicalAspect,
 };
+
+use std::net::SocketAddr;
 
 // A high fidelity version of the client world
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,6 +41,7 @@ impl ServerWorld {
     ClientWorld {
       entities: self.entities.clone(),
       rendered: self.rendered.clone(),
+      physical: self.physical.clone(),
     }
   }
 
@@ -55,6 +59,13 @@ impl ServerWorld {
 
   pub fn get_mut_player(&mut self, uuid: &Uuid) -> Option<&mut Player> {
     self.players.get_mut(uuid)
+  }
+
+  pub fn all_connected_addrs(&self) -> Vec<SocketAddr> {
+    self.players.values()
+      .filter(|p| p.connected)
+      .map(|p| p.address.clone())
+      .collect()
   }
 
   pub fn add_player(&mut self, addr: network::Address) -> Uuid {
@@ -94,18 +105,6 @@ impl Player {
 
   pub fn uuid(&self) -> &Uuid {
     &self.uuid
-  }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PhysicalAspect {
-  pos: (f32, f32, f32),
-  anchored: bool
-}
-
-impl PhysicalAspect{
-  pub fn new(pos: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
-    PhysicalAspect { pos: pos, anchored: anchored }
   }
 }
 

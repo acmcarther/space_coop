@@ -6,6 +6,7 @@ use gaffer_udp::GafferPacket;
 use serde_json;
 use std::str;
 
+#[derive(Clone, Debug)]
 pub struct ServerPayload {
   pub address: network::Address,
   pub event: ServerNetworkEvent

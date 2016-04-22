@@ -24,7 +24,7 @@ use itertools::Itertools;
 pub struct Engine {
   world: ServerWorld,
   events: Vec<ClientPayload>,
-  snapshot_idx: u32,
+  snapshot_idx: u16,
 }
 
 impl Engine {
@@ -49,8 +49,10 @@ impl Engine {
 
     let client_snapshot = serde_json::to_string(&self.world.as_client_world()).unwrap();
     let mut snapshot_bytes = client_snapshot.into_bytes();
-    let mut snapshot_byte_sets = snapshot_bytes.chunks(512 /*bytes*/).enumerate();
+    println!("snapshot_bytes_len:{}", snapshot_bytes.len());
+    let mut snapshot_byte_sets = snapshot_bytes.chunks(128 /*bytes*/).enumerate();
     let set_count = snapshot_byte_sets.len();
+    println!("sets: {}", set_count);
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
     outbound.append(&mut snapshot_byte_sets.map(|(idx, bytes)| {
@@ -64,8 +66,9 @@ impl Engine {
 
     // TODO: optimize this iter usage, its inefficient because of the trnaformations
     //   to vector and back
+    let all_addrs = self.world.all_connected_addrs();
     outbound.into_iter()
-      .flat_map(|outbound| outbound.to_server_payloads(&|uuid| { self.world.get_player_addr_from_uuid(&uuid).map(|addr| addr.clone())}))
+      .flat_map(|outbound| outbound.to_server_payloads(&all_addrs, &|uuid| { self.world.get_player_addr_from_uuid(&uuid).map(|addr| addr.clone())}))
       .collect::<Vec<ServerPayload>>()
   }
 
@@ -98,7 +101,7 @@ impl Engine {
         }
       },
       KeepAlive => {
-        println!("{} is keeping alive", addr);
+        //println!("{} is keeping alive", addr);
         let player_opt = self.world.get_player_uuid_from_addr(&addr)
           .and_then(|uuid| self.world.get_player(uuid));
         match player_opt {

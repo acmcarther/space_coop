@@ -6,7 +6,8 @@ use uuid::Uuid;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClientWorld {
   pub entities: Vec<Entity>,
-  pub rendered: HashMap<Entity, RenderAspect>
+  pub rendered: HashMap<Entity, RenderAspect>,
+  pub physical: HashMap<Entity, PhysicalAspect>
 }
 
 pub type Entity = Uuid;
@@ -21,3 +22,16 @@ impl RenderAspect {
     RenderAspect { model: "dummy".to_owned() }
   }
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PhysicalAspect {
+  pos: (f32, f32, f32),
+  anchored: bool
+}
+
+impl PhysicalAspect{
+  pub fn new(pos: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
+    PhysicalAspect { pos: pos, anchored: anchored }
+  }
+}
+
