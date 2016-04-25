@@ -14,8 +14,8 @@ use server::protocol::{
   OutboundEvent,
 };
 
-use server::players::PlayerView;
 use server::world::ServerWorld;
+use server::world::views::player::PlayerView;
 use itertools::Itertools;
 
 pub struct Engine {
@@ -61,15 +61,13 @@ impl Engine {
       })))
     }).collect::<Vec<OutboundEvent>>());
 
-    // TODO: optimize this iter usage, its inefficient because of the trnaformations
+    // TODO: optimize this iter usage, its inefficient because of the transformations
     //   to vector and back
     let all_addrs = self.world.all_connected_addrs();
-    let player_view = PlayerView::new(&mut self.world);
     outbound.into_iter()
-      .flat_map(|outbound| outbound.to_server_payloads(&all_addrs, &|uuid| { player_view.get_player_addr_from_uuid(&uuid).map(|addr| addr.clone())}))
+      .flat_map(|outbound| outbound.to_server_payloads(&all_addrs, &|uuid| { self.world.get_player_addr_from_uuid(&uuid).map(|addr| addr.clone())}))
       .collect::<Vec<ServerPayload>>()
   }
-
 
   fn handle(&mut self, payload: ClientPayload) -> Vec<OutboundEvent> {
     use common::protocol::ClientNetworkEvent::*;
@@ -77,20 +75,18 @@ impl Engine {
     let addr = payload.address;
     match payload.event {
       Connect => {
-        let mut player_view = PlayerView::new(&mut self.world);
         println!("A person connected: {}", addr);
-        let player_uuid = player_view.get_player_uuid_from_addr(&addr)
+        let player_uuid = self.world.get_player_uuid_from_addr(&addr)
           .map(|v| v.clone())
-          .unwrap_or_else(|| player_view.add_player(addr));
+          .unwrap_or_else(|| self.world.add_player(addr));
 
-        let player = player_view.get_mut_player(&player_uuid).unwrap(); // Safe, because of above insertion
+        let player = self.world.get_mut_player(&player_uuid).unwrap(); // Safe, because of above insertion
         player.set_connected(true);
         vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Connected}]
       },
       Disconnect => {
-        let mut player_view = PlayerView::new(&mut self.world);
-        let player_opt = player_view.get_player_uuid_from_addr(&addr).map(|v| v.clone())
-          .and_then(|uuid| player_view.get_mut_player(&uuid));
+        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone())
+          .and_then(|uuid| self.world.get_mut_player(&uuid));
         match player_opt {
           None => vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Error("Tried to disconnect, but not connected to server".to_owned())}],
           Some(player) => {
@@ -100,19 +96,17 @@ impl Engine {
         }
       },
       KeepAlive => {
-        let player_view = PlayerView::new(&mut self.world);
-        let player_opt = player_view.get_player_uuid_from_addr(&addr)
-          .and_then(|uuid| player_view.get_player(uuid));
+        let player_opt = self.world.get_player_uuid_from_addr(&addr)
+          .and_then(|uuid| self.world.get_player(uuid));
         match player_opt {
           Some(player) => vec![OutboundEvent::Directed{dest: player.uuid().clone(), event: ServerNetworkEvent::KeepAlive}],
           _ => Vec::new()
         }
       },
       DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => {
-        let mut player_view = PlayerView::new(&mut self.world);
-        let player_opt = player_view.get_player_uuid_from_addr(&addr).map(|v| v.clone());
+        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone());
         match player_opt {
-          Some(uuid) => player_view.move_player_ent(&uuid, x_d, y_d, z_d),
+          Some(uuid) => self.world.move_player_ent(&uuid, x_d, y_d, z_d),
           _ => {}
         }
         Vec::new()

@@ -11,6 +11,22 @@ use common::world::{
 
 use std::net::SocketAddr;
 
+// A trait for Views to depend on
+pub trait WorldContainer {
+  fn world(&self) -> &ServerWorld;
+  fn mut_world(&mut self) -> &mut ServerWorld;
+}
+
+impl WorldContainer for ServerWorld {
+  fn world(&self) -> &ServerWorld {
+    self
+  }
+
+  fn mut_world(&mut self) -> &mut ServerWorld {
+    self
+  }
+}
+
 // A high fidelity version of the client world
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ServerWorld {
