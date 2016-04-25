@@ -1,6 +1,8 @@
 use common::world::ClientWorld;
 use client::renderer::Renderer;
 
+use itertools::Itertools;
+
 use gfx::traits::FactoryExt;
 use gfx::Device;
 use gfx;
@@ -12,6 +14,9 @@ pub use gfx_app::{ColorFormat, DepthFormat};
 use gfx_app;
 use gfx_app::shade;
 use gfx_app::DEFAULT_CONFIG;
+
+use cgmath::Matrix4;
+use cgmath::AffineMatrix3;
 
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
@@ -50,6 +55,9 @@ pub struct OpenGlRenderer {
   data: Data<gfx_device_gl::Resources>,
   slice: gfx::Slice<gfx_device_gl::Resources>,
 
+  view: AffineMatrix3<f32>,
+  proj: Matrix4<f32>,
+
   encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
   window: glutin::Window,
   device: gfx_device_gl::Device,
@@ -61,7 +69,7 @@ impl OpenGlRenderer {
     use gfx::traits::Device;
     use gfx::Factory;
     use cgmath;
-    use cgmath::{Point3, Vector3};
+    use cgmath::{Point3, Matrix4, Vector3};
     use cgmath::{Transform, AffineMatrix3};
 
     let builder = glutin::WindowBuilder::new()
@@ -75,6 +83,20 @@ impl OpenGlRenderer {
     let (width, height) = window.get_inner_size().unwrap();
 
     let aspect_ratio = width as f32 / height as f32;
+
+    let backend = shade::Backend::Glsl(device.get_info().shading_language);
+
+
+    let vs = gfx_app::shade::Source {
+        glsl_120: include_bytes!("shader/cube_120.glslv"),
+        glsl_150: include_bytes!("shader/cube_150.glslv"),
+        .. gfx_app::shade::Source::empty()
+    };
+    let ps = gfx_app::shade::Source {
+        glsl_120: include_bytes!("shader/cube_120.glslf"),
+        glsl_150: include_bytes!("shader/cube_150.glslf"),
+        .. gfx_app::shade::Source::empty()
+    };
 
     ///////////////////////////////////////////////////////////////////////////////////////////
     let vertex_data = [
@@ -133,8 +155,8 @@ impl OpenGlRenderer {
         gfx::tex::WrapMode::Clamp);
 
     let pso = factory.create_pipeline_simple(
-        include_bytes!("shader/cube_150.glslv"),
-        include_bytes!("shader/cube_150.glslf"),
+        vs.select(backend).unwrap(),
+        ps.select(backend).unwrap(),
         gfx::state::CullFace::Back,
         pipe::new()
     ).unwrap();
@@ -147,18 +169,22 @@ impl OpenGlRenderer {
     let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 10.0);
 
     let data = pipe::Data {
-        vbuf: vbuf,
-        transform: (proj * view.mat).into(),
+        vbuf: vbuf.clone(),
+        transform: (proj * view.mat).into(), // Totally useless value, is overwritten
         locals: factory.create_constant_buffer(1),
-        color: (texture_view, factory.create_sampler(sinfo)),
-        out_color: main_color,
-        out_depth: main_depth,
+        color: (texture_view.clone(), factory.create_sampler(sinfo)),
+        out_color: main_color.clone(),
+        out_depth: main_depth.clone(),
     };
+
 
     OpenGlRenderer {
       pso: pso,
       data: data,
       slice: slice,
+
+      view: view,
+      proj: proj,
 
       encoder: encoder,
       window: window,
@@ -166,13 +192,12 @@ impl OpenGlRenderer {
     }
   }
 
-  pub fn render_world(&mut self, _: &Option<&ClientWorld>) {
-    // TODO: world
-    self.render()
+  pub fn mut_window(&mut self) -> &mut glutin::Window {
+    &mut self.window
   }
 
-  fn render(&mut self) {
-    use cgmath::{Transform, AffineMatrix3};
+  pub fn render_world(&mut self, world_opt: &Option<&ClientWorld>) {
+    use cgmath::{Transform, Matrix4, AffineMatrix3};
     use cgmath::{Point3, Vector3};
 
     println!("render");
@@ -180,7 +205,25 @@ impl OpenGlRenderer {
     self.encoder.update_constant_buffer(&self.data.locals, &locals);
     self.encoder.clear(&self.data.out_color, [0.1, 0.2, 0.3, 1.0]);
     self.encoder.clear_depth(&self.data.out_depth, 1.0);
-    self.encoder.draw(&self.slice, &self.pso, &self.data);
+
+    // Blot each entity
+    if world_opt.is_some() {
+      let world = world_opt.unwrap();
+      world.physical.values().foreach(|physical_aspect| {
+        let (x,y,z) = physical_aspect.pos;
+        let model =
+          Matrix4::new(1.0, 0.0, 0.0 , 0.0,
+                       0.0, 1.0, 0.0,  0.0,
+                       0.0, 0.0, 1.0, 0.0,
+                       x, y, z, 1.0);
+        self.data.transform = (model * self.proj * self.view.mat).into();
+
+        self.encoder.draw(&self.slice, &self.pso, &self.data);
+      });
+    }
+
+
+    // Render
     self.encoder.flush(&mut self.device);
 
     self.window.swap_buffers().unwrap();
