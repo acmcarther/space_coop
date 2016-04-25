@@ -14,6 +14,7 @@ use common::protocol::{
   ServerPayload,
   ServerEvent,
   ServerNetworkEvent,
+  PartialClientSnapshot
 };
 use server::protocol::{
   OutboundEvent,
@@ -56,12 +57,12 @@ impl Engine {
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
     outbound.append(&mut snapshot_byte_sets.map(|(idx, bytes)| {
-      OutboundEvent::Undirected(ServerNetworkEvent::DomainEvent(ServerEvent::FullSnapshot {
+      OutboundEvent::Undirected(ServerNetworkEvent::DomainEvent(ServerEvent::PartialSnapshot(PartialClientSnapshot {
         series: self.snapshot_idx,
         idx: idx as u32,
         count: set_count as u32,
         state_fragment: bytes.to_vec()
-      }))
+      })))
     }).collect::<Vec<OutboundEvent>>());
 
     // TODO: optimize this iter usage, its inefficient because of the trnaformations

@@ -4,8 +4,8 @@ pub trait Newness {
 
 impl Newness for u16 {
   // Defined as "is large than other by less than 1/2 u16::MAX, arithmetically wrapped"
-  pub fn is_newer_than(&self, other: &u16) -> bool {
-    let pos_diff = other.wrapping_sub(*self);
+  fn is_newer_than(&self, other: &u16) -> bool {
+    let pos_diff = self.wrapping_sub(*other);
     pos_diff != 0 && pos_diff < 32000
   }
 }

@@ -2,7 +2,6 @@ use common::protocol::{
   ClientNetworkEvent,
   ClientEvent
 };
-use client::protocol::ClientLocalEvent;
 
 use glutin;
 
@@ -39,10 +38,5 @@ impl Controller {
       }
     }
     buf
-  }
-
-  pub fn recv_pending_local(&mut self) -> Vec<ClientLocalEvent> {
-    // Quit
-    Vec::new()
   }
 }

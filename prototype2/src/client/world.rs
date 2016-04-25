@@ -18,23 +18,29 @@ impl ClientWorldBuffer {
   }
 
   pub fn integrate(&mut self, partial: PartialClientSnapshot) {
-    match *self {
-      ClientWorldBuffer::None => self.replace_self_with_partial(partial),
-      ClientWorldBuffer::Partial { series, pieces } => {
+    let mut replace_self = false;
+    match self {
+      &mut ClientWorldBuffer::None => replace_self = true,
+      &mut ClientWorldBuffer::Partial { ref series, ref mut pieces } => {
         if partial.series.is_newer_than(&series) {
-          self.replace_self_with_partial(partial)
-        } else if partial.series == series {
+          replace_self = true;
+        } else if partial.series == *series {
           // TODO: This is very slightly unsafe, reflect in type
-          pieces[partial.idx as usize] = Some(partial.state_fragment);
+          // TODO: Additionally, this clone is unnecessary, include because
+          //   I was too lazy to dodge the borrow checker
+          pieces[partial.idx as usize] = Some(partial.state_fragment.clone());
         }
       }
     }
+
+    // Dodging borrow checker
+    if replace_self { self.replace_self_with_partial(partial) }
   }
 
   pub fn try_collate(&mut self) -> Option<ClientWorld> {
-    match *self {
-      ClientWorldBuffer::None => None,
-      ClientWorldBuffer::Partial { series, pieces } => {
+    match self {
+      &mut ClientWorldBuffer::None => None,
+      &mut ClientWorldBuffer::Partial { ref mut series, ref mut pieces } => {
         // TODO: optimize this -- iterates twice
         if pieces.iter().all(|p| p.is_some()) {
           let mut full_buffer = Vec::new();

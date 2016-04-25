@@ -2,7 +2,6 @@ pub mod renderer;
 pub mod controller;
 pub mod network;
 pub mod engine;
-pub mod protocol;
 pub mod world;
 
 use std::env;

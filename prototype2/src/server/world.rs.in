@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use uuid::{
-  Uuid,
-  UuidVersion
-};
+use uuid::Uuid;
 use common::network;
 use common::world::{
   Entity,

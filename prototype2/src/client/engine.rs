@@ -2,10 +2,10 @@ use std::mem;
 
 use itertools::Itertools;
 
-use client::protocol::PartialSnapshot;
+use client::world::ClientWorldBuffer;
 
 use common::world::ClientWorld;
-use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, ServerEvent};
+use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, ServerEvent, PartialClientSnapshot};
 
 use client::renderer::Renderer;
 use client::controller::Controller;
@@ -14,7 +14,7 @@ pub struct Engine {
   renderer: Renderer,
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
-  partial_snapshot: Option<PartialSnapshot>,
+  partial_snapshot: ClientWorldBuffer,
   last_snapshot: Option<u16>,
   world: Option<ClientWorld>
 }
@@ -27,7 +27,7 @@ impl Engine {
       renderer: Renderer::new(),
       controller: Controller::new(),
       events: Vec::new(),
-      partial_snapshot: None,
+      partial_snapshot: ClientWorldBuffer::None,
       last_snapshot: None,
       world: None,
     }
@@ -54,56 +54,10 @@ impl Engine {
     use common::protocol::ServerNetworkEvent::*;
 
     match event {
-      DomainEvent(ServerEvent::FullSnapshot {series, idx, count, state_fragment}) => {
-        // TODO: clean up this mess
-        let mut result = None;
-        if self.other_snapshot_newer(series) {
-          match self.partial_snapshot.as_mut() {
-            None => {
-              let partial_snapshot = PartialSnapshot::new(series, idx, count, state_fragment);
-              if partial_snapshot.is_complete() {
-                match partial_snapshot.collate() {
-                  None => println!("weird, could not collate a snapshot. Thats extra weird because this is a one shot snapshot"),
-                  Some(world) => {
-                    self.world = Some(world);
-                    result = Some(None);
-                  }
-                };
-              } else {
-                result = Some(Some(partial_snapshot));
-              }
-            },
-            Some(existing_partial) => {
-              if existing_partial.series == series {
-                existing_partial.append(idx, state_fragment);
-                if existing_partial.is_complete() {
-                  match existing_partial.collate() {
-                    None => println!("weird, could not collate a snapshot"),
-                    Some(world) => {
-                      self.world = Some(world);
-                      result = Some(None);
-                    }
-                  };
-                }
-              } else if existing_partial.other_series_newer(series) {
-                let partial_snapshot = PartialSnapshot::new(series, idx, count, state_fragment);
-                if partial_snapshot.is_complete() {
-                  match partial_snapshot.collate() {
-                    None => println!("weird, could not collate a snapshot. Thats extra weird because this is a one shot snapshot"),
-                    Some(world) => {
-                      self.world = Some(world);
-                      result = Some(None);
-                    }
-                  };
-                } else {
-                  result = Some(Some(partial_snapshot));
-                }
-              }
-            }
-          }
-        }
-        if result.is_some() { self.partial_snapshot = result.unwrap() }
-        // TODO: Eventually, tell server we got their snapshot
+      DomainEvent(ServerEvent::PartialSnapshot(data)) => {
+        self.partial_snapshot.integrate(data);
+        let world_opt = self.partial_snapshot.try_collate();
+        if world_opt.is_some() { self.world = world_opt; }
         Vec::new()
       },
       KeepAlive => {
