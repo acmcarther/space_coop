@@ -1,0 +1,257 @@
+use common::world::ClientWorld;
+
+use uuid::Uuid;
+use gfx;
+use cgmath;
+use glutin;
+use gfx_window_glutin;
+use gfx_device_gl;
+use gfx::Device;
+pub use gfx_app::{self, shade, Init, Config, Application, ColorFormat, DepthFormat};
+use client;
+
+use itertools::Itertools;
+
+gfx_vertex_struct!( Vertex {
+  pos: [i8; 4] = "a_Pos",
+  tex_coord: [i8; 2] = "a_TexCoord",
+});
+
+impl Vertex {
+  fn new(p: [i8;3], t: [i8; 2]) -> Vertex {
+    Vertex {
+      pos: [p[0], p[1], p[2], 1],
+      tex_coord: t,
+    }
+  }
+}
+
+
+gfx_constant_struct!( Locals {
+    transform: [[f32; 4]; 4] = "u_Transform",
+});
+
+
+gfx_pipeline!( pipe {
+    vbuf: gfx::VertexBuffer<Vertex> = (),
+    transform: gfx::Global<[[f32; 4]; 4]> = "u_Transform",
+    locals: gfx::ConstantBuffer<Locals> = "Locals",
+    color: gfx::TextureSampler<[f32; 4]> = "t_Color",
+    out_color: gfx::RenderTarget<ColorFormat> = "Target0",
+    out_depth: gfx::DepthTarget<DepthFormat> =
+        gfx::preset::depth::LESS_EQUAL_WRITE,
+});
+
+
+//----------------------------------------
+struct App<R: gfx::Resources, F: gfx::Factory<R>>{
+    //bundle: pipe::Bundle<R>,
+    world: Option<ClientWorld>,
+    init: gfx_app::Init<R>,
+    vbuf: gfx::handle::Buffer<R, Vertex>,
+    locals: gfx::handle::Buffer<R, Locals>,
+    color: (gfx::handle::ShaderResourceView<R, [f32; 4]>, gfx::handle::Sampler<R>),
+    factory: Box<F>,
+    pso: gfx::pso::PipelineState<R, pipe::Meta>,
+    slice: gfx::Slice<R>
+}
+
+impl<R: gfx::Resources, F: gfx::Factory<R>> gfx_app::Application<R> for App<R, F> {
+    fn new<T: gfx::Factory<R>>(mut factory: T, init: gfx_app::Init<R>) -> Self {
+        use cgmath::{Point3, Vector3};
+        use cgmath::{Transform, AffineMatrix3};
+        use gfx::traits::FactoryExt;
+
+        let vs = gfx_app::shade::Source {
+            glsl_120: include_bytes!("shader/cube_120.glslv"),
+            glsl_150: include_bytes!("shader/cube_150.glslv"),
+            .. gfx_app::shade::Source::empty()
+        };
+        let ps = gfx_app::shade::Source {
+            glsl_120: include_bytes!("shader/cube_120.glslf"),
+            glsl_150: include_bytes!("shader/cube_150.glslf"),
+            .. gfx_app::shade::Source::empty()
+        };
+
+        let vertex_data = [
+            // top (0, 0, 1)
+            Vertex::new([-1, -1,  1], [0, 0]),
+            Vertex::new([ 1, -1,  1], [1, 0]),
+            Vertex::new([ 1,  1,  1], [1, 1]),
+            Vertex::new([-1,  1,  1], [0, 1]),
+            // bottom (0, 0, -1)
+            Vertex::new([-1,  1, -1], [1, 0]),
+            Vertex::new([ 1,  1, -1], [0, 0]),
+            Vertex::new([ 1, -1, -1], [0, 1]),
+            Vertex::new([-1, -1, -1], [1, 1]),
+            // right (1, 0, 0)
+            Vertex::new([ 1, -1, -1], [0, 0]),
+            Vertex::new([ 1,  1, -1], [1, 0]),
+            Vertex::new([ 1,  1,  1], [1, 1]),
+            Vertex::new([ 1, -1,  1], [0, 1]),
+            // left (-1, 0, 0)
+            Vertex::new([-1, -1,  1], [1, 0]),
+            Vertex::new([-1,  1,  1], [0, 0]),
+            Vertex::new([-1,  1, -1], [0, 1]),
+            Vertex::new([-1, -1, -1], [1, 1]),
+            // front (0, 1, 0)
+            Vertex::new([ 1,  1, -1], [1, 0]),
+            Vertex::new([-1,  1, -1], [0, 0]),
+            Vertex::new([-1,  1,  1], [0, 1]),
+            Vertex::new([ 1,  1,  1], [1, 1]),
+            // back (0, -1, 0)
+            Vertex::new([ 1, -1,  1], [0, 0]),
+            Vertex::new([-1, -1,  1], [1, 0]),
+            Vertex::new([-1, -1, -1], [1, 1]),
+            Vertex::new([ 1, -1, -1], [0, 1]),
+        ];
+
+        let index_data: &[u16] = &[
+             0,  1,  2,  2,  3,  0, // top
+             4,  5,  6,  6,  7,  4, // bottom
+             8,  9, 10, 10, 11,  8, // right
+            12, 13, 14, 14, 15, 12, // left
+            16, 17, 18, 18, 19, 16, // front
+            20, 21, 22, 22, 23, 20, // back
+        ];
+
+        let (vbuf, slice) = factory.create_vertex_buffer_indexed(&vertex_data, index_data);
+
+        let texels = [[0x20, 0xA0, 0xC0, 0x00]];
+        let (_, texture_view) = factory.create_texture_const::<gfx::format::Rgba8>(
+            gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&texels]
+            ).unwrap();
+
+        let sinfo = gfx::tex::SamplerInfo::new(
+            gfx::tex::FilterMethod::Bilinear,
+            gfx::tex::WrapMode::Clamp);
+
+        let pso = factory.create_pipeline_simple(
+            vs.select(init.backend).unwrap(),
+            ps.select(init.backend).unwrap(),
+            gfx::state::CullFace::Back,
+            pipe::new()
+        ).unwrap();
+
+        let locals = factory.create_constant_buffer(1);
+        let color = (texture_view, factory.create_sampler(sinfo));
+        App {
+          vbuf: vbuf,
+          locals: locals,
+          color: color,
+          world: None,
+          init: init,
+          pso: pso,
+          factory: Box::new(factory),
+          slice: slice
+          //bundles: vec![pipe::bundle(slice, pso, data)],
+        }
+    }
+
+    fn render<C: gfx::CommandBuffer<R>>(&mut self, encoder: &mut gfx::Encoder<R, C>) {
+        use cgmath::{Point3, Vector3};
+        use cgmath::{Transform, AffineMatrix3};
+        use gfx::traits::FactoryExt;
+
+        if self.world.is_none() { return; }
+        let world = self.world.as_ref().unwrap();
+        let renderable_poseable_ents: Vec<Uuid> = world.entities.iter()
+          .filter(|uuid| world.physical.contains_key(uuid) && world.rendered.contains_key(uuid))
+          .map(|uuid| uuid.clone())
+          .collect();
+
+        renderable_poseable_ents.into_iter().foreach(|ent| {
+          let (x, y, z) = world.physical.get(&ent).unwrap().pos.clone();
+
+          let view: AffineMatrix3<f32> = Transform::look_at(
+              Point3::new(1.5f32, -5.0, 3.0),
+              Point3::new(0f32, 0.0, 0.0),
+              Vector3::unit_z(),
+          );
+          let proj = cgmath::perspective(cgmath::deg(45.0f32), self.init.aspect_ratio, 1.0, 10.0);
+
+          let data = pipe::Data {
+              vbuf: self.vbuf.clone(),
+              transform: (proj * view.mat).into(),
+              locals: self.locals.clone(),
+              color: self.color.clone(),
+              out_color: self.init.color.clone(),
+              out_depth: self.init.depth.clone(),
+          };
+
+          let bundle = pipe::bundle(self.slice.clone(), self.pso, data);
+          let locals = Locals { transform: bundle.data.transform };
+          encoder.update_constant_buffer(&bundle.data.locals, &locals);
+          encoder.clear(&bundle.data.out_color, [0.1, 0.2, 0.3, 1.0]);
+          encoder.clear_depth(&bundle.data.out_depth, 1.0);
+          bundle.encode(encoder);
+        });
+    }
+}
+
+impl<R: gfx::Resources, F: gfx::Factory<R>> App<R, F> {
+  fn set_world(&mut self, world: ClientWorld) {
+    self.world = Some(world);
+  }
+}
+
+pub struct Renderer {
+  app: App<gfx_device_gl::Resources, gfx_device_gl::Factory>,
+  window: glutin::Window,
+  device: gfx_device_gl::Device,
+  encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>
+}
+
+
+pub const DEFAULT_CONFIG: Config = Config {
+    //backend: Backend::OpenGL2,
+    size: (800, 520),
+};
+
+impl Renderer {
+  pub fn new() -> Renderer {
+    use gfx::traits::Device;
+
+    //env_logger::init().unwrap();
+    let builder = glutin::WindowBuilder::new()
+        .with_title("Space Cubes 2".to_owned())
+        .with_dimensions(DEFAULT_CONFIG.size.0 as u32, DEFAULT_CONFIG.size.1 as u32)
+        .with_vsync();
+    let (window, mut device, mut factory, main_color, main_depth) =
+        gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
+    let (width, height) = window.get_inner_size().unwrap();
+    let encoder = factory.create_command_buffer().into();
+
+    let mut app = App::new(factory, Init {
+        backend: shade::Backend::Glsl(device.get_info().shading_language),
+        color: main_color,
+        depth: main_depth,
+        aspect_ratio: width as f32 / height as f32,
+    });
+
+    Renderer {
+      app: app,
+      window: window,
+      encoder: encoder,
+      device: device,
+    }
+  }
+
+  pub fn mut_window(&mut self) -> &mut glutin::Window { &mut self.window }
+
+  pub fn render_world(&mut self, world: &Option<&ClientWorld>) {
+    match world {
+      &Some(world_ref) => self.app.set_world(world_ref.clone()),
+      _ => {}
+    }
+    self.app.render(&mut self.encoder);
+    self.window.swap_buffers().unwrap();
+    self.device.cleanup();
+    match world {
+      &Some(world) => {
+        println!("world: {:?}",world)
+      }
+      &None => println!("No World")
+    }
+  }
+}

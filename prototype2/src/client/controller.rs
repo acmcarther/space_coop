@@ -1,5 +1,10 @@
-use common::protocol::ClientNetworkEvent;
+use common::protocol::{
+  ClientNetworkEvent,
+  ClientEvent
+};
 use client::protocol::ClientLocalEvent;
+
+use glutin;
 
 pub struct Controller;
 
@@ -8,11 +13,36 @@ impl Controller {
     Controller
   }
 
-  pub fn recv_pending_net(&mut self) -> Vec<ClientNetworkEvent> {
-    Vec::new()
+  pub fn recv_pending_net(&mut self, window: &mut glutin::Window) -> Vec<ClientNetworkEvent> {
+    let mut buf = Vec::new();
+    for event in window.poll_events() {
+      match event {
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 1.0, y_d: 0.0, z_d: 0.0 }))
+        },
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 1.0, z_d: 0.0 }))
+        },
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: -1.0, y_d: 0.0, z_d: 0.0 }))
+        },
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: -1.0, z_d: 0.0 }))
+        },
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: 1.0 }))
+        },
+        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::E)) => {
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: -1.0 }))
+        },
+        _ => {},
+      }
+    }
+    buf
   }
 
   pub fn recv_pending_local(&mut self) -> Vec<ClientLocalEvent> {
+    // Quit
     Vec::new()
   }
 }

@@ -14,7 +14,7 @@ pub type Entity = Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RenderAspect {
-  model: String
+  pub model: String
 }
 
 impl RenderAspect {
@@ -25,8 +25,8 @@ impl RenderAspect {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PhysicalAspect {
-  pos: (f32, f32, f32),
-  anchored: bool
+  pub pos: (f32, f32, f32),
+  pub anchored: bool
 }
 
 impl PhysicalAspect{

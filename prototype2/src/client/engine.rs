@@ -42,7 +42,7 @@ impl Engine {
 
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
-    outbound.append(&mut self.controller.recv_pending_net());
+    //outbound.append(&mut self.controller.recv_pending_net(self.renderer.mut_window()));
 
 
     self.renderer.render_world(&self.world.as_ref());

@@ -19,7 +19,12 @@ uuid = { version = "0.2.1", features = ["serde", "v4"] }
 serde = "0.7.0"
 serde_json = "0.7.0"
 time = "0.1.35"
-gfx = "*"
+gfx = "0.10.1"
+cgmath = "*"
+gfx_app = "*"
+gfx_device_gl = "*"
+gfx_window_glutin = "*"
+glutin = "*"
 
 [[bin]]
 name = "space_coop"

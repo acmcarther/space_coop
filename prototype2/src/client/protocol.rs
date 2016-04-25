@@ -42,9 +42,7 @@ impl PartialSnapshot {
     if self.pieces.iter().all(|p| p.is_some()) {
       // TODO: Take another look here, this is not efficient because of cloned
       self.pieces.iter().cloned().foreach(|mut p| full_buffer.append(&mut p.unwrap()));
-      str::from_utf8(full_buffer.as_ref()).ok().and_then(|s| {
-        serde_json::from_str(s).ok()
-      })
+      str::from_utf8(full_buffer.as_ref()).ok().and_then(|s| serde_json::from_str(s).ok())
     } else {
       println!("couldnt collate");
       None

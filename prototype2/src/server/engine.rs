@@ -109,7 +109,14 @@ impl Engine {
           _ => Vec::new()
         }
       },
-      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => Vec::new(),
+      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => {
+        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone());
+        match player_opt {
+          Some(uuid) => self.world.move_player_ent(&uuid, x_d, y_d, z_d),
+          _ => {}
+        }
+        Vec::new()
+      }
     }
   }
 }
