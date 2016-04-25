@@ -17,22 +17,22 @@ impl Controller {
     for event in window.poll_events() {
       match event {
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.01, y_d: 0.0, z_d: 0.0 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.1, y_d: 0.0, z_d: 0.0 }))
         },
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.01, z_d: 0.0 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.1, z_d: 0.0 }))
         },
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: -0.01, y_d: 0.0, z_d: 0.0 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: -0.1, y_d: 0.0, z_d: 0.0 }))
         },
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: -0.01, z_d: 0.0 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: -0.1, z_d: 0.0 }))
         },
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: 0.01 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: 0.1 }))
         },
         glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::E)) => {
-          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: -0.01 }))
+          buf.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: -0.1 }))
         },
         _ => {},
       }

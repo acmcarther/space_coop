@@ -21,31 +21,31 @@ use cgmath::AffineMatrix3;
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
 gfx_vertex_struct!( Vertex {
-    pos: [i8; 4] = "a_Pos",
-    tex_coord: [i8; 2] = "a_TexCoord",
+  pos: [i8; 4] = "a_Pos",
+  tex_coord: [i8; 2] = "a_TexCoord",
 });
 
 impl Vertex {
-    fn new(p: [i8; 3], t: [i8; 2]) -> Vertex {
-        Vertex {
-            pos: [p[0], p[1], p[2], 1],
-            tex_coord: t,
-        }
+  fn new(p: [i8; 3], t: [i8; 2]) -> Vertex {
+    Vertex {
+      pos: [p[0], p[1], p[2], 1],
+      tex_coord: t,
     }
+  }
 }
 
 gfx_constant_struct!( Locals {
-    transform: [[f32; 4]; 4] = "u_Transform",
+  transform: [[f32; 4]; 4] = "u_Transform",
 });
 
 gfx_pipeline!( pipe {
-    vbuf: gfx::VertexBuffer<Vertex> = (),
-    transform: gfx::Global<[[f32; 4]; 4]> = "u_Transform",
-    locals: gfx::ConstantBuffer<Locals> = "Locals",
-    color: gfx::TextureSampler<[f32; 4]> = "t_Color",
-    out_color: gfx::RenderTarget<ColorFormat> = "Target0",
-    out_depth: gfx::DepthTarget<DepthFormat> =
-        gfx::preset::depth::LESS_EQUAL_WRITE,
+  vbuf: gfx::VertexBuffer<Vertex> = (),
+  transform: gfx::Global<[[f32; 4]; 4]> = "u_Transform",
+  locals: gfx::ConstantBuffer<Locals> = "Locals",
+  color: gfx::TextureSampler<[f32; 4]> = "t_Color",
+  out_color: gfx::RenderTarget<ColorFormat> = "Target0",
+  out_depth: gfx::DepthTarget<DepthFormat> =
+    gfx::preset::depth::LESS_EQUAL_WRITE,
 });
 
 use client::renderer::opengl::pipe::{Data, Meta};
@@ -166,7 +166,7 @@ impl OpenGlRenderer {
         Point3::new(0f32, 0.0, 0.0),
         Vector3::unit_z(),
     );
-    let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 10.0);
+    let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 400.0);
 
     let data = pipe::Data {
         vbuf: vbuf.clone(),
@@ -200,7 +200,6 @@ impl OpenGlRenderer {
     use cgmath::{Transform, Matrix4, AffineMatrix3};
     use cgmath::{Point3, Vector3};
 
-    println!("render");
     let locals = Locals { transform: self.data.transform };
     self.encoder.update_constant_buffer(&self.data.locals, &locals);
     self.encoder.clear(&self.data.out_color, [0.1, 0.2, 0.3, 1.0]);
@@ -217,7 +216,7 @@ impl OpenGlRenderer {
                        0.0, 1.0, 0.0,  0.0,
                        0.0, 0.0, 1.0, 0.0,
                        x, y, z, 1.0);
-        self.data.transform = (model * self.proj * self.view.mat).into();
+        self.data.transform = (self.proj * self.view.mat * model).into();
 
         self.encoder.draw(&self.slice, &self.pso, &self.data);
       });

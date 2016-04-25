@@ -14,6 +14,8 @@ use server::protocol::{
   OutboundEvent,
 };
 
+use common::network;
+
 use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
 use itertools::Itertools;
@@ -74,43 +76,44 @@ impl Engine {
 
     let addr = payload.address;
     match payload.event {
-      Connect => {
-        println!("A person connected: {}", addr);
-        let player_uuid = self.world.get_player_uuid_from_addr(&addr)
-          .map(|v| v.clone())
-          .unwrap_or_else(|| self.world.add_player(addr));
-
-        let player = self.world.get_mut_player(&player_uuid).unwrap(); // Safe, because of above insertion
-        player.set_connected(true);
-        vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Connected}]
-      },
-      Disconnect => {
-        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone())
-          .and_then(|uuid| self.world.get_mut_player(&uuid));
-        match player_opt {
-          None => vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Error("Tried to disconnect, but not connected to server".to_owned())}],
-          Some(player) => {
-            player.set_connected(false);
-            vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Disconnected}]
-          }
-        }
-      },
-      KeepAlive => {
-        let player_opt = self.world.get_player_uuid_from_addr(&addr)
-          .and_then(|uuid| self.world.get_player(uuid));
-        match player_opt {
-          Some(player) => vec![OutboundEvent::Directed{dest: player.uuid().clone(), event: ServerNetworkEvent::KeepAlive}],
-          _ => Vec::new()
-        }
-      },
-      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => {
-        let player_opt = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone());
-        match player_opt {
-          Some(uuid) => self.world.move_player_ent(&uuid, x_d, y_d, z_d),
-          _ => {}
-        }
-        Vec::new()
-      }
+      Connect => self.on_connect(payload.address),
+      Disconnect => self.on_disconnect(payload.address),
+      KeepAlive => self.on_keep_alive(payload.address),
+      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
     }
+  }
+
+  fn on_connect(&mut self, addr: network::Address) -> Vec<OutboundEvent> {
+    println!("A person connected: {}", addr);
+    self.world.get_or_add_player(addr).set_connected(true);
+    vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Connected}]
+  }
+
+  fn on_disconnect(&mut self, addr: network::Address) -> Vec<OutboundEvent> {
+    let player_opt = self.world.get_mut_player_from_addr(&addr);
+    match player_opt {
+      Some(player) => {
+        player.set_connected(false);
+        vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Disconnected}]
+      },
+      None => vec![OutboundEvent::External{dest: addr, event: ServerNetworkEvent::Error("Tried to disconnect, but not connected to server".to_owned())}]
+    }
+  }
+
+  fn on_keep_alive(&self, addr: network::Address) -> Vec<OutboundEvent> {
+    let player_opt = self.world.get_player_from_addr(&addr);
+    match player_opt {
+      Some(player) => vec![OutboundEvent::Directed{dest: player.uuid().clone(), event: ServerNetworkEvent::KeepAlive}],
+      _ => Vec::new()
+    }
+  }
+
+
+  fn on_self_move(&mut self, addr: network::Address, pos: (f32, f32, f32)) -> Vec<OutboundEvent> {
+    let (x_d, y_d, z_d) = pos;
+    if let Some(uuid) = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone()) {
+      self.world.move_player_ent(&uuid, x_d, y_d, z_d)
+    }
+    Vec::new()
   }
 }

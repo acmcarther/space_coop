@@ -84,17 +84,9 @@ impl Player {
     }
   }
 
-  pub fn address(&self) -> &network::Address {
-    &self.address
-  }
-
-  pub fn set_connected(&mut self, connected: bool) {
-    self.connected = connected
-  }
-
-  pub fn uuid(&self) -> &Uuid {
-    &self.uuid
-  }
+  pub fn address(&self) -> &network::Address { &self.address }
+  pub fn set_connected(&mut self, connected: bool) { self.connected = connected }
+  pub fn uuid(&self) -> &Uuid { &self.uuid }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
