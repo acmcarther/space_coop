@@ -1,15 +1,9 @@
-use std::collections::HashMap;
 use std::mem;
-
-use uuid::{
-  Uuid, UuidVersion
-};
 
 use serde_json;
 
 use common::protocol::{
   ClientEvent,
-  ClientNetworkEvent,
   ClientPayload,
   ServerPayload,
   ServerEvent,
@@ -49,9 +43,9 @@ impl Engine {
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
     let client_snapshot = serde_json::to_string(&self.world.as_client_world()).unwrap();
-    let mut snapshot_bytes = client_snapshot.into_bytes();
+    let snapshot_bytes = client_snapshot.into_bytes();
     println!("snapshot_bytes_len:{}", snapshot_bytes.len());
-    let mut snapshot_byte_sets = snapshot_bytes.chunks(128 /*bytes*/).enumerate();
+    let snapshot_byte_sets = snapshot_bytes.chunks(128 /*bytes*/).enumerate();
     let set_count = snapshot_byte_sets.len();
     println!("sets: {}", set_count);
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);

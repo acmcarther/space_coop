@@ -5,13 +5,19 @@ use itertools::Itertools;
 use client::world::ClientWorldBuffer;
 
 use common::world::ClientWorld;
-use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, ServerEvent, PartialClientSnapshot};
+use common::protocol::{
+  ClientNetworkEvent,
+  ServerNetworkEvent,
+  ServerEvent
+};
 
 use client::renderer::Renderer;
+use client::renderer::opengl::OpenGlRenderer;
+
 use client::controller::Controller;
 
 pub struct Engine {
-  renderer: Renderer,
+  renderer: OpenGlRenderer,
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
   partial_snapshot: ClientWorldBuffer,
@@ -24,7 +30,7 @@ impl Engine {
 
   pub fn new() -> Engine {
     Engine {
-      renderer: Renderer::new(),
+      renderer: OpenGlRenderer::new(),
       controller: Controller::new(),
       events: Vec::new(),
       partial_snapshot: ClientWorldBuffer::None,
@@ -44,7 +50,6 @@ impl Engine {
 
     //outbound.append(&mut self.controller.recv_pending_net(self.renderer.mut_window()));
 
-
     self.renderer.render_world(&self.world.as_ref());
 
     outbound
@@ -60,14 +65,7 @@ impl Engine {
         if world_opt.is_some() { self.world = world_opt; }
         Vec::new()
       },
-      KeepAlive => {
-        //println!("Server acknowledged our keepalive");
-        Vec::new()
-      },
-      _ => {
-        println!("got something else");
-        Vec::new()
-      }
+      _ => Vec::new()
     }
   }
 

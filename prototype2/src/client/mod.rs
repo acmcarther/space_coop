@@ -4,8 +4,6 @@ pub mod network;
 pub mod engine;
 pub mod world;
 
-use std::env;
-
 use time::{self, Duration};
 
 use common::protocol::ClientNetworkEvent;
@@ -31,11 +29,11 @@ pub fn start(port: u16, server_addr: SocketAddr) {
   println!("Trying to connect");
   let success = network.connect();
   if !success { println!("Could not connect to {}", server_addr.to_string()); return }
-  println!("Client Started!");
 
   let mut next_time = time::now();
   let mut next_keepalive_time = time::now();
 
+  println!("Client Started!");
   while running {
     if time::now() > next_time {
       network.recv_pending().into_iter()
@@ -49,6 +47,7 @@ pub fn start(port: u16, server_addr: SocketAddr) {
       engine.tick().into_iter()
         .foreach(|client_payload| network.send(client_payload));
 
+      next_time = next_time + Duration::milliseconds((time_step * 1000.0) as i64);
     } else {
       thread::sleep(StdDuration::from_millis(2))
     }

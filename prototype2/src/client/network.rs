@@ -1,6 +1,6 @@
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
-use itertools::{Itertools, Unfold};
+use itertools::Unfold;
 use serde_json;
 
 use std::net::SocketAddr;

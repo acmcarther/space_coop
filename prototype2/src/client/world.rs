@@ -40,11 +40,11 @@ impl ClientWorldBuffer {
   pub fn try_collate(&mut self) -> Option<ClientWorld> {
     match self {
       &mut ClientWorldBuffer::None => None,
-      &mut ClientWorldBuffer::Partial { ref mut series, ref mut pieces } => {
+      &mut ClientWorldBuffer::Partial { series: _, ref mut pieces } => {
         // TODO: optimize this -- iterates twice
         if pieces.iter().all(|p| p.is_some()) {
           let mut full_buffer = Vec::new();
-          pieces.iter().cloned().foreach(|mut p| full_buffer.append(&mut p.unwrap()));
+          pieces.iter().cloned().foreach(|p| full_buffer.append(&mut p.unwrap()));
           str::from_utf8(full_buffer.as_ref()).ok().and_then(|s| serde_json::from_str(s).ok())
         } else {
           None
