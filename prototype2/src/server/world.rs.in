@@ -14,13 +14,13 @@ use std::net::SocketAddr;
 // A high fidelity version of the client world
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ServerWorld {
-  addr_to_player: HashMap<network::Address, Uuid>,
-  players: HashMap<Uuid, Player>,
-  entities: Vec<Entity>,
-  rendered: HashMap<Entity, RenderAspect>,
-  physical: HashMap<Entity, PhysicalAspect>,
-  controlled: HashMap<Entity, ControlledAspect>,
-  controlled_inverse: HashMap<Uuid, ControlledAspect>
+  pub addr_to_player: HashMap<network::Address, Uuid>,
+  pub players: HashMap<Uuid, Player>,
+  pub entities: Vec<Entity>,
+  pub rendered: HashMap<Entity, RenderAspect>,
+  pub physical: HashMap<Entity, PhysicalAspect>,
+  pub controlled: HashMap<Entity, ControlledAspect>,
+  pub controlled_inverse: HashMap<Uuid, ControlledAspect>
 }
 
 impl ServerWorld {
@@ -44,58 +44,11 @@ impl ServerWorld {
     }
   }
 
-  pub fn get_player_uuid_from_addr(&self, address: &network::Address) -> Option<&Uuid> {
-    self.addr_to_player.get(address)
-  }
-
-  pub fn get_player_addr_from_uuid(&self, uuid: &Uuid) -> Option<&network::Address> {
-    self.get_player(uuid).map(|p| &p.address)
-  }
-
-  pub fn get_player(&self, uuid: &Uuid) -> Option<&Player> {
-    self.players.get(uuid)
-  }
-
-  pub fn get_mut_player(&mut self, uuid: &Uuid) -> Option<&mut Player> {
-    self.players.get_mut(uuid)
-  }
-
-  pub fn move_player_ent(&mut self, uuid: &Uuid, x_d: f32, y_d: f32, z_d: f32) {
-
-    let uuid = self.controlled_inverse.get(uuid).map(|a| a.uuid.clone());
-
-    if uuid.is_none() { return; }
-
-    match self.physical.get_mut(&uuid.unwrap()) {
-      Some(aspect) => {
-        aspect.pos.0 = aspect.pos.0 + x_d;
-        aspect.pos.1 = aspect.pos.1 + y_d;
-        aspect.pos.2 = aspect.pos.2 + z_d;
-      },
-      None => {}
-    }
-  }
-
   pub fn all_connected_addrs(&self) -> Vec<SocketAddr> {
     self.players.values()
       .filter(|p| p.connected)
       .map(|p| p.address.clone())
       .collect()
-  }
-
-  pub fn add_player(&mut self, addr: network::Address) -> Uuid {
-    let player = Player::new(addr.clone());
-    let player_ent_uuid = Uuid::new_v4();
-    self.entities.push(player_ent_uuid.clone());
-    self.rendered.insert(player_ent_uuid.clone(), RenderAspect::new());
-    self.physical.insert(player_ent_uuid.clone(), PhysicalAspect::new((0.0,0.0,0.0), false));
-    self.controlled.insert(player_ent_uuid.clone(), ControlledAspect::new(player.uuid().clone()));
-    self.controlled_inverse.insert(player.uuid().clone(), ControlledAspect::new(player_ent_uuid.clone()));
-
-    let uuid = player.uuid().clone();
-    self.addr_to_player.insert(addr, uuid.clone());
-    self.players.insert(uuid.clone(), player);
-    uuid
   }
 }
 
@@ -113,6 +66,10 @@ impl Player {
       address: addr,
       connected: false,
     }
+  }
+
+  pub fn address(&self) -> &network::Address {
+    &self.address
   }
 
   pub fn set_connected(&mut self, connected: bool) {

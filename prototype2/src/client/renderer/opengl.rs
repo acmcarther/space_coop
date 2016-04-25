@@ -210,6 +210,7 @@ impl OpenGlRenderer {
     if world_opt.is_some() {
       let world = world_opt.unwrap();
       world.physical.values().foreach(|physical_aspect| {
+        // TODO: use rendered_aspect to determine model
         let (x,y,z) = physical_aspect.pos;
         let model =
           Matrix4::new(1.0, 0.0, 0.0 , 0.0,
@@ -222,8 +223,6 @@ impl OpenGlRenderer {
       });
     }
 
-
-    // Render
     self.encoder.flush(&mut self.device);
 
     self.window.swap_buffers().unwrap();

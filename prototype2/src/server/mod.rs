@@ -2,6 +2,7 @@ pub mod engine;
 pub mod network;
 pub mod world;
 pub mod protocol;
+pub mod players;
 
 use time::{self, Duration};
 
