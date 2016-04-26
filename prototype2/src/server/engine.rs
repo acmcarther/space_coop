@@ -6,9 +6,9 @@ use common::protocol::{
   ClientEvent,
   ClientPayload,
   ServerPayload,
-  ServerEvent,
+  SnapshotEvent,
   ServerNetworkEvent,
-  PartialClientSnapshot
+  FullClientSnapshotFragment
 };
 use server::protocol::{
   OutboundEvent,
@@ -61,8 +61,8 @@ impl Engine {
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
     outbound.append(&mut snapshot_byte_sets.map(|(idx, bytes)| {
-      OutboundEvent::Undirected(ServerNetworkEvent::DomainEvent(ServerEvent::PartialSnapshot(PartialClientSnapshot {
-        series: self.snapshot_idx,
+      OutboundEvent::Undirected(ServerNetworkEvent::Snapshot(SnapshotEvent::PartialSnapshot(FullClientSnapshotFragment {
+        seq_num: self.snapshot_idx,
         idx: idx as u32,
         count: set_count as u32,
         state_fragment: bytes.to_vec()
@@ -84,6 +84,7 @@ impl Engine {
       Connect => self.on_connect(payload.address),
       Disconnect => self.on_disconnect(payload.address),
       KeepAlive => self.on_keep_alive(payload.address),
+      SnapshotAck(seq_num) => Vec::new(),
       DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
     }
   }

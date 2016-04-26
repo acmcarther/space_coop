@@ -3,6 +3,7 @@ pub enum ClientNetworkEvent {
   Connect,
   Disconnect,
   KeepAlive,
+  SnapshotAck(u16),
   DomainEvent(ClientEvent),
 }
 
@@ -17,17 +18,17 @@ pub enum ServerNetworkEvent {
   Disconnected,
   KeepAlive,
   Error(String),
-  DomainEvent(ServerEvent),
+  Snapshot(SnapshotEvent),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum ServerEvent {
-  PartialSnapshot(PartialClientSnapshot)
+pub enum SnapshotEvent {
+  PartialSnapshot(FullClientSnapshotFragment)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct PartialClientSnapshot {
-  pub series: u16,
+pub struct FullClientSnapshotFragment {
+  pub seq_num: u16,
   pub idx: u32,
   pub count: u32,
   pub state_fragment: Vec<u8>

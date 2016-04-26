@@ -3,19 +3,24 @@ use std::mem;
 use itertools::Itertools;
 
 use client::world::ClientWorldBuffer;
-use client::protocol::InternalClientEvent;
+use client::protocol::{
+  InternalClientEvent,
+  CameraDir
+};
 
 use common::world::ClientWorld;
 use common::protocol::{
   ClientNetworkEvent,
   ServerNetworkEvent,
-  ServerEvent
+  SnapshotEvent
 };
 
 use client::renderer::Renderer;
 use client::renderer::opengl::OpenGlRenderer;
 
 use client::controller::Controller;
+
+use cgmath::Quaternion;
 
 pub struct Engine {
   renderer: OpenGlRenderer,
@@ -24,7 +29,9 @@ pub struct Engine {
   events: Vec<ServerNetworkEvent>,
   partial_snapshot: ClientWorldBuffer,
   last_snapshot: Option<u16>,
-  world: Option<ClientWorld>
+  world: Option<ClientWorld>,
+  camera_pos: (f32, f32, f32),
+  camera_orient: Quaternion<f32>
 }
 
 impl Engine {
@@ -38,6 +45,8 @@ impl Engine {
       partial_snapshot: ClientWorldBuffer::None,
       last_snapshot: None,
       world: None,
+      camera_pos: (1.5, -5.0, 3.0),
+      camera_orient: Quaternion::one()
     }
   }
 
@@ -53,7 +62,17 @@ impl Engine {
     outbound_events.append(&mut self.controller.collect_outbound_events());
     internal_events.append(&mut self.controller.collect_internal_events());
 
-    self.renderer.render_world(&self.world.as_ref());
+    internal_events.iter().foreach(|event| {
+      match event {
+        &InternalClientEvent::CameraMove(CameraDir::Forward) => self.camera_pos.0 = self.camera_pos.0 + 0.1,
+        &InternalClientEvent::CameraMove(CameraDir::Backward) => self.camera_pos.0 = self.camera_pos.0 - 0.1,
+        &InternalClientEvent::CameraMove(CameraDir::Left) => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+        &InternalClientEvent::CameraMove(CameraDir::Right) => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+        _ => {}
+      }
+    });
+
+    self.renderer.render_world(&self.world.as_ref(), &self.camera_pos, &self.camera_orient);
 
     (internal_events, outbound_events)
   }
@@ -62,7 +81,7 @@ impl Engine {
     use common::protocol::ServerNetworkEvent::*;
 
     match event {
-      DomainEvent(ServerEvent::PartialSnapshot(data)) => {
+      Snapshot(SnapshotEvent::PartialSnapshot(data)) => {
         self.partial_snapshot.integrate(data);
         let world_opt = self.partial_snapshot.try_collate();
         if world_opt.is_some() { self.world = world_opt; }

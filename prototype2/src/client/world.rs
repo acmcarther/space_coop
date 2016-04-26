@@ -5,14 +5,14 @@ use std::mem;
 
 use common::world::ClientWorld;
 use common::util::Newness;
-use common::protocol::PartialClientSnapshot;
+use common::protocol::FullClientSnapshotFragment;
 
 use flate2::read::GzDecoder;
 use std::io::Read;
 
 pub enum ClientWorldBuffer {
   None,
-  Partial { series: u16, pieces: Vec<Option<Vec<u8>>> }
+  Partial { seq_num: u16, pieces: Vec<Option<Vec<u8>>> }
 }
 
 impl ClientWorldBuffer {
@@ -20,14 +20,14 @@ impl ClientWorldBuffer {
     ClientWorldBuffer::None
   }
 
-  pub fn integrate(&mut self, partial: PartialClientSnapshot) {
+  pub fn integrate(&mut self, partial: FullClientSnapshotFragment) {
     let mut replace_self = false;
     match self {
       &mut ClientWorldBuffer::None => replace_self = true,
-      &mut ClientWorldBuffer::Partial { ref series, ref mut pieces } => {
-        if partial.series.is_newer_than(&series) {
+      &mut ClientWorldBuffer::Partial { ref seq_num, ref mut pieces } => {
+        if partial.seq_num.is_newer_than(&seq_num) {
           replace_self = true;
-        } else if partial.series == *series {
+        } else if partial.seq_num == *seq_num {
           // TODO: This is very slightly unsafe, reflect in type
           // TODO: Additionally, this clone is unnecessary, include because
           //   I was too lazy to dodge the borrow checker
@@ -43,7 +43,7 @@ impl ClientWorldBuffer {
   pub fn try_collate(&mut self) -> Option<ClientWorld> {
     match self {
       &mut ClientWorldBuffer::None => None,
-      &mut ClientWorldBuffer::Partial { series: _, ref mut pieces } => {
+      &mut ClientWorldBuffer::Partial { seq_num: _, ref mut pieces } => {
         // TODO: optimize this -- iterates twice
         if pieces.iter().all(|p| p.is_some()) {
           let mut full_buffer = Vec::new();
@@ -60,11 +60,11 @@ impl ClientWorldBuffer {
     }
   }
 
-  fn replace_self_with_partial(&mut self, partial: PartialClientSnapshot) {
+  fn replace_self_with_partial(&mut self, partial: FullClientSnapshotFragment) {
     let mut pieces = vec![None; partial.count as usize];
     pieces[partial.idx as usize] = Some(partial.state_fragment);
 
     // Assignment to self ref to change enum variant
-    mem::swap(self, &mut ClientWorldBuffer::Partial { series: partial.series, pieces: pieces })
+    mem::swap(self, &mut ClientWorldBuffer::Partial { seq_num: partial.seq_num, pieces: pieces })
   }
 }

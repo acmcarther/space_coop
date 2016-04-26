@@ -5,7 +5,11 @@ use common::protocol::{
   ClientEvent
 };
 
-use client::protocol::InternalClientEvent;
+use client::protocol::{
+  InternalClientEvent,
+  CameraDir,
+  CameraOrient
+};
 
 use itertools::Itertools;
 
@@ -35,6 +39,18 @@ impl Controller {
     match event {
       &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => {
         self.internal_events.push(InternalClientEvent::Exit)
+      },
+      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::I)) => {
+        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Forward))
+      },
+      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::J)) => {
+        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Left))
+      },
+      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::K)) => {
+        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Backward))
+      },
+      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::L)) => {
+        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Right))
       },
       _ => {}
     }

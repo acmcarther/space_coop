@@ -16,7 +16,8 @@ use gfx_app::shade;
 use gfx_app::DEFAULT_CONFIG;
 
 use cgmath::Matrix4;
-use cgmath::AffineMatrix3; 
+use cgmath::AffineMatrix3;
+use cgmath::Quaternion;
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
 gfx_vertex_struct!( Vertex {
@@ -195,7 +196,7 @@ impl OpenGlRenderer {
     &mut self.window
   }
 
-  pub fn render_world(&mut self, world_opt: &Option<&ClientWorld>) {
+  pub fn render_world(&mut self, world_opt: &Option<&ClientWorld>, camera_pos: &(f32, f32, f32), camera_orient: &Quaternion<f32>) {
     use cgmath::{Transform, Matrix4, AffineMatrix3};
     use cgmath::{Point3, Vector3};
 
@@ -203,6 +204,12 @@ impl OpenGlRenderer {
     self.encoder.update_constant_buffer(&self.data.locals, &locals);
     self.encoder.clear(&self.data.out_color, [0.1, 0.2, 0.3, 1.0]);
     self.encoder.clear_depth(&self.data.out_depth, 1.0);
+
+    let view: AffineMatrix3<f32> = Transform::look_at(
+        Point3::new(camera_pos.0, camera_pos.1, camera_pos.2),
+        Point3::new(0f32, 0.0, 0.0),
+        Vector3::unit_z(),
+    );
 
     // Blot each entity
     if world_opt.is_some() {
@@ -217,7 +224,7 @@ impl OpenGlRenderer {
                            0.0, 1.0, 0.0,  0.0,
                            0.0, 0.0, 1.0, 0.0,
                            x, y, z, 1.0);
-            self.data.transform = (self.proj * self.view.mat * model).into();
+            self.data.transform = (self.proj * view.mat * model).into();
 
             self.encoder.draw(&self.slice, &self.pso, &self.data);
           }
