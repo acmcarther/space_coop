@@ -74,7 +74,6 @@ impl Engine {
   fn handle(&mut self, payload: ClientPayload) -> Vec<OutboundEvent> {
     use common::protocol::ClientNetworkEvent::*;
 
-    let addr = payload.address;
     match payload.event {
       Connect => self.on_connect(payload.address),
       Disconnect => self.on_disconnect(payload.address),

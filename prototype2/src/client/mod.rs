@@ -3,6 +3,7 @@ pub mod controller;
 pub mod network;
 pub mod engine;
 pub mod world;
+pub mod protocol;
 
 use time::{self, Duration};
 

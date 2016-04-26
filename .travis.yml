@@ -1,8 +1,8 @@
 language: rust
 sudo: false
 rust:
-  - nightly
+  - stable
 script:
-  - cd prototype1
+  - cd prototype2
   - cargo build --verbose
   - cargo test --verbose
