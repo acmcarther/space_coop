@@ -1,3 +1,3 @@
 pub mod views;
 
-include!(concat!(env!("OUT_DIR"), "/server/world.rs"));
+include!(concat!(env!("OUT_DIR"), "/server/world/mod.rs"));
