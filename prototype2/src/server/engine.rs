@@ -2,6 +2,8 @@ use std::mem;
 
 use serde_json;
 
+use std::collections::HashMap;
+
 use common::protocol::{
   ClientEvent,
   ClientPayload,
@@ -15,6 +17,8 @@ use server::protocol::{
 };
 
 use common::network;
+use common::world::ClientWorld;
+use uuid::Uuid;
 
 use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
@@ -24,10 +28,16 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::io::Write;
 
+pub struct ClientSnapshotHistory {
+  pub last_ack: u16,
+  pub past_snapshots: HashMap<u16, ClientWorld>
+}
+
 pub struct Engine {
   world: ServerWorld,
   events: Vec<ClientPayload>,
   snapshot_idx: u16,
+  client_snapshot_histories: HashMap<Uuid, ClientSnapshotHistory>
 }
 
 impl Engine {
@@ -37,7 +47,8 @@ impl Engine {
     Engine {
       world: ServerWorld::new(),
       events: Vec::new(),
-      snapshot_idx: 0
+      snapshot_idx: 0,
+      client_snapshot_histories: HashMap::new(),
     }
   }
 
@@ -84,7 +95,7 @@ impl Engine {
       Connect => self.on_connect(payload.address),
       Disconnect => self.on_disconnect(payload.address),
       KeepAlive => self.on_keep_alive(payload.address),
-      SnapshotAck(seq_num) => Vec::new(),
+      SnapshotAck(seq_num) => self.on_snapshot_ack(payload.address),
       DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
     }
   }
@@ -117,6 +128,10 @@ impl Engine {
     if let Some(uuid) = self.world.get_player_uuid_from_addr(&addr).map(|v| v.clone()) {
       self.world.move_player_ent(&uuid, x_d, y_d, z_d)
     }
+    Vec::new()
+  }
+
+  fn on_snapshot_ack(&mut self, addr: network::Address) -> Vec<OutboundEvent> {
     Vec::new()
   }
 }
