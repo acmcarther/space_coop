@@ -21,6 +21,8 @@ use common::world::ClientWorld;
 use server::protocol::OutboundEvent;
 use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
+use server::world::views::client_world::ClientWorldView;
+use server::network::Fragmentable;
 
 pub struct ClientSnapshotHistory {
   pub last_ack: u16,
@@ -55,24 +57,10 @@ impl Engine {
 
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
-    let client_snapshot = serde_json::to_string(&self.world.as_client_world()).unwrap();
-    let mut encoder = GzEncoder::new(Vec::new(), Compression::Default);
-    encoder.write(client_snapshot.as_bytes());
-    let snapshot_bytes = encoder.finish().unwrap(); // Assumed to be safe because I control the format
-    println!("snapshot_bytes_len:{}", snapshot_bytes.len());
-    let snapshot_byte_sets = snapshot_bytes.chunks(128 /*bytes*/).enumerate();
-    let set_count = snapshot_byte_sets.len();
-    println!("sets: {}", set_count);
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
-    outbound.append(&mut snapshot_byte_sets.map(|(idx, bytes)| {
-      OutboundEvent::Undirected(ServerNetworkEvent::Snapshot(SnapshotEvent::PartialSnapshot(FullClientSnapshotFragment {
-        seq_num: self.snapshot_idx,
-        idx: idx as u32,
-        count: set_count as u32,
-        state_fragment: bytes.to_vec()
-      })))
-    }).collect::<Vec<OutboundEvent>>());
+    outbound.extend(self.world.as_client_world().fragment_to_events(self.snapshot_idx)
+      .into_iter().map(|e| OutboundEvent::Undirected(e)));
 
     // TODO: optimize this iter usage, its inefficient because of the transformations
     //   to vector and back

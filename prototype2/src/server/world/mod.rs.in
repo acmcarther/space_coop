@@ -18,13 +18,8 @@ pub trait WorldContainer {
 }
 
 impl WorldContainer for ServerWorld {
-  fn world(&self) -> &ServerWorld {
-    self
-  }
-
-  fn mut_world(&mut self) -> &mut ServerWorld {
-    self
-  }
+  fn world(&self) -> &ServerWorld { self }
+  fn mut_world(&mut self) -> &mut ServerWorld { self }
 }
 
 // A high fidelity version of the client world
@@ -57,16 +52,6 @@ impl ServerWorld {
       player: HashMap::new()
     }
   }
-
-  pub fn as_client_world(&self) -> ClientWorld {
-    ClientWorld {
-      entities: self.entities.clone(),
-      rendered: self.rendered.clone(),
-      physical: self.physical.clone(),
-      disabled: self.disabled.clone(),
-    }
-  }
-
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
