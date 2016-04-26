@@ -1,8 +1,12 @@
 use std::mem;
-
-use serde_json;
-
+use std::io::Write;
 use std::collections::HashMap;
+
+use itertools::Itertools;
+use flate2::write::GzEncoder;
+use flate2::Compression;
+use uuid::Uuid;
+use serde_json;
 
 use common::protocol::{
   ClientEvent,
@@ -12,21 +16,11 @@ use common::protocol::{
   ServerNetworkEvent,
   FullClientSnapshotFragment
 };
-use server::protocol::{
-  OutboundEvent,
-};
-
 use common::network;
 use common::world::ClientWorld;
-use uuid::Uuid;
-
+use server::protocol::OutboundEvent;
 use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
-use itertools::Itertools;
-
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use std::io::Write;
 
 pub struct ClientSnapshotHistory {
   pub last_ack: u16,

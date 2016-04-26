@@ -1,10 +1,11 @@
-include!(concat!(env!("OUT_DIR"), "/common/protocol.rs"));
-
-use common::network;
+use std::str;
 
 use gaffer_udp::GafferPacket;
 use serde_json;
-use std::str;
+
+use common::network;
+
+include!(concat!(env!("OUT_DIR"), "/common/protocol.rs"));
 
 #[derive(Clone, Debug)]
 pub struct ServerPayload {

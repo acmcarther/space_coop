@@ -1,19 +1,10 @@
 use std::mem;
 
-use common::protocol::{
-  ClientNetworkEvent,
-  ClientEvent
-};
-
-use client::protocol::{
-  InternalClientEvent,
-  CameraDir,
-  CameraOrient
-};
-
+use glutin;
 use itertools::Itertools;
 
-use glutin;
+use client::protocol::{InternalClientEvent, CameraDir, CameraOrient};
+use common::protocol::{ClientNetworkEvent, ClientEvent};
 
 pub struct Controller {
   internal_events: Vec<InternalClientEvent>,
@@ -36,46 +27,33 @@ impl Controller {
   }
 
   fn handle_internal(&mut self, event: &glutin::Event) {
+    use glutin::Event::*;
+    use glutin::VirtualKeyCode::*;
+    use client::protocol::InternalClientEvent::{CameraMove, Exit};
+
     match event {
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => {
-        self.internal_events.push(InternalClientEvent::Exit)
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::I)) => {
-        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Forward))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::J)) => {
-        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Left))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::K)) => {
-        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Backward))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::L)) => {
-        self.internal_events.push(InternalClientEvent::CameraMove(CameraDir::Right))
-      },
+      &KeyboardInput(_, _, Some(Escape)) => self.internal_events.push(Exit),
+      &KeyboardInput(_, _, Some(I)) => self.internal_events.push(CameraMove(CameraDir::Forward)),
+      &KeyboardInput(_, _, Some(J)) => self.internal_events.push(CameraMove(CameraDir::Left)),
+      &KeyboardInput(_, _, Some(K)) => self.internal_events.push(CameraMove(CameraDir::Backward)),
+      &KeyboardInput(_, _, Some(L)) => self.internal_events.push(CameraMove(CameraDir::Right)),
       _ => {}
     }
   }
 
   fn handle_outbound(&mut self, event: &glutin::Event) {
+    use glutin::Event::*;
+    use glutin::VirtualKeyCode::*;
+    use common::protocol::ClientNetworkEvent::DomainEvent;
+    use common::protocol::ClientEvent::SelfMove;
+
     match event {
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::W)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.1, y_d: 0.0, z_d: 0.0 }))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::A)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.1, z_d: 0.0 }))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::S)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: -0.1, y_d: 0.0, z_d: 0.0 }))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::D)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: -0.1, z_d: 0.0 }))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Q)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: 0.1 }))
-      },
-      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::E)) => {
-        self.outbound_events.push(ClientNetworkEvent::DomainEvent(ClientEvent::SelfMove { x_d: 0.0, y_d: 0.0, z_d: -0.1 }))
-      },
+      &KeyboardInput(_, _, Some(W)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.1, y_d: 0.0, z_d: 0.0 })),
+      &KeyboardInput(_, _, Some(A)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.1, z_d: 0.0 })),
+      &KeyboardInput(_, _, Some(S)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: -0.1, y_d: 0.0, z_d: 0.0 })),
+      &KeyboardInput(_, _, Some(D)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: -0.1, z_d: 0.0 })),
+      &KeyboardInput(_, _, Some(Q)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.0, z_d: 0.1 })),
+      &KeyboardInput(_, _, Some(E)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.0, z_d: -0.1 })),
       _ => {},
     }
   }

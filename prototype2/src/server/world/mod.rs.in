@@ -1,9 +1,8 @@
-use std::collections::{
-  HashMap,
-  HashSet
-};
+use std::collections::{HashMap, HashSet};
+use std::net::SocketAddr;
 
 use uuid::Uuid;
+
 use common::network;
 use common::world::{
   Entity,
@@ -11,8 +10,6 @@ use common::world::{
   ClientWorld,
   PhysicalAspect,
 };
-
-use std::net::SocketAddr;
 
 // A trait for Views to depend on
 pub trait WorldContainer {

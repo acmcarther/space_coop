@@ -1,6 +1,3 @@
-use common::world::ClientWorld;
-use client::renderer::Renderer;
-
 use itertools::Itertools;
 
 use gfx::traits::FactoryExt;
@@ -11,13 +8,13 @@ use gfx_window_glutin;
 use gfx_device_gl;
 
 pub use gfx_app::{ColorFormat, DepthFormat};
-use gfx_app;
-use gfx_app::shade;
-use gfx_app::DEFAULT_CONFIG;
+use gfx_app::{self, shade, DEFAULT_CONFIG};
 
-use cgmath::Matrix4;
-use cgmath::AffineMatrix3;
-use cgmath::Quaternion;
+use cgmath::{AffineMatrix3, Matrix4, Quaternion};
+
+use common::world::ClientWorld;
+use client::renderer::Renderer;
+
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
 gfx_vertex_struct!( Vertex {

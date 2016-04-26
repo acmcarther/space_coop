@@ -1,11 +1,11 @@
+use std::net::SocketAddr;
+use std::thread;
+use std::time::Duration as StdDuration;
+
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
 use itertools::Unfold;
 use serde_json;
-
-use std::net::SocketAddr;
-use std::thread;
-use std::time::Duration as StdDuration;
 
 use common::protocol::{ClientNetworkEvent, ServerPayload, ServerNetworkEvent};
 

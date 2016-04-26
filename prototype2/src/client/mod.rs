@@ -5,20 +5,17 @@ pub mod engine;
 pub mod world;
 pub mod protocol;
 
-use time::{self, Duration};
-
-use client::protocol::InternalClientEvent;
-use common::protocol::ClientNetworkEvent;
-
+use std::thread;
 use std::net::SocketAddr;
+use std::time::Duration as StdDuration;
 
-use self::engine::Engine;
-use self::network::Network;
+use time::{self, Duration};
 use itertools::Itertools;
 
-use std::thread;
-
-use std::time::Duration as StdDuration;
+use client::protocol::InternalClientEvent;
+use client::engine::Engine;
+use client::network::Network;
+use common::protocol::ClientNetworkEvent;
 
 pub fn start(port: u16, server_addr: SocketAddr) {
   println!("Starting client on {}", port);

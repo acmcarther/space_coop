@@ -3,17 +3,15 @@ pub mod network;
 pub mod world;
 pub mod protocol;
 
-use time::{self, Duration};
-
-use self::engine::Engine;
-use self::network::Network;
-use itertools::Itertools;
-
 use std::thread;
-
 use std::time::Duration as StdDuration;
 
-// TODO: Tick rate
+use time::{self, Duration};
+use itertools::Itertools;
+
+use server::engine::Engine;
+use server::network::Network;
+
 pub fn start(port: u16) {
   println!("Starting server on {}", port);
   let mut engine = Engine::new();

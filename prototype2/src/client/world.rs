@@ -1,14 +1,14 @@
 use std::str;
-use serde_json;
-use itertools::Itertools;
+use std::io::Read;
 use std::mem;
 
-use common::world::ClientWorld;
-use common::util::Newness;
-use common::protocol::FullClientSnapshotFragment;
-
 use flate2::read::GzDecoder;
-use std::io::Read;
+use serde_json;
+use itertools::Itertools;
+
+use common::protocol::FullClientSnapshotFragment;
+use common::util::Newness;
+use common::world::ClientWorld;
 
 pub enum ClientWorldBuffer {
   None,

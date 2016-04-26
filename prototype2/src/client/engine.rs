@@ -1,26 +1,16 @@
 use std::mem;
 
 use itertools::Itertools;
-
-use client::world::ClientWorldBuffer;
-use client::protocol::{
-  InternalClientEvent,
-  CameraDir
-};
-
-use common::world::ClientWorld;
-use common::protocol::{
-  ClientNetworkEvent,
-  ServerNetworkEvent,
-  SnapshotEvent
-};
-
-use client::renderer::Renderer;
-use client::renderer::opengl::OpenGlRenderer;
+use cgmath::Quaternion;
 
 use client::controller::Controller;
+use client::renderer::Renderer;
+use client::renderer::opengl::OpenGlRenderer;
+use client::protocol::{InternalClientEvent, CameraDir};
+use client::world::ClientWorldBuffer;
 
-use cgmath::Quaternion;
+use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, SnapshotEvent};
+use common::world::ClientWorld;
 
 pub struct Engine {
   renderer: OpenGlRenderer,
@@ -63,11 +53,13 @@ impl Engine {
     internal_events.append(&mut self.controller.collect_internal_events());
 
     internal_events.iter().foreach(|event| {
+      use client::protocol::InternalClientEvent::CameraMove;
+
       match event {
-        &InternalClientEvent::CameraMove(CameraDir::Forward) => self.camera_pos.0 = self.camera_pos.0 + 0.1,
-        &InternalClientEvent::CameraMove(CameraDir::Backward) => self.camera_pos.0 = self.camera_pos.0 - 0.1,
-        &InternalClientEvent::CameraMove(CameraDir::Left) => self.camera_pos.1 = self.camera_pos.1 - 0.1,
-        &InternalClientEvent::CameraMove(CameraDir::Right) => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+        &CameraMove(CameraDir::Forward)  => self.camera_pos.0 = self.camera_pos.0 + 0.1,
+        &CameraMove(CameraDir::Backward) => self.camera_pos.0 = self.camera_pos.0 - 0.1,
+        &CameraMove(CameraDir::Left)     => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+        &CameraMove(CameraDir::Right)    => self.camera_pos.1 = self.camera_pos.1 - 0.1,
         _ => {}
       }
     });

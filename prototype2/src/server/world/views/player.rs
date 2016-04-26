@@ -1,15 +1,8 @@
-use common::network;
 use uuid::Uuid;
 
-use common::world::{
-  RenderAspect,
-  PhysicalAspect,
-};
-use server::world::{
-  ControllerAspect,
-  PlayerAspect,
-};
-use server::world::WorldContainer;
+use common::network;
+use common::world::{RenderAspect, PhysicalAspect};
+use server::world::{ControllerAspect, PlayerAspect, WorldContainer};
 
 pub trait PlayerView {
   fn player_connect(&mut self, address: network::Address);

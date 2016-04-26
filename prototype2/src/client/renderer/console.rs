@@ -1,5 +1,5 @@
-use common::world::ClientWorld;
 use client::renderer::Renderer;
+use common::world::ClientWorld;
 
 pub struct ConsoleRenderer;
 
