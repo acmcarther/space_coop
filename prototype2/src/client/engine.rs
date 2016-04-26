@@ -41,7 +41,7 @@ impl Engine {
     }
   }
 
-  pub fn tick(&mut self) -> Vec<ClientNetworkEvent> {
+  pub fn tick(&mut self) -> (Vec<InternalClientEvent>, Vec<ClientNetworkEvent>) {
     let mut event_buf = Vec::new();
     // Yank all the events off the queue, replacing with a new queue
     mem::swap(&mut self.events, &mut event_buf);
@@ -55,7 +55,7 @@ impl Engine {
 
     self.renderer.render_world(&self.world.as_ref());
 
-    outbound_events
+    (internal_events, outbound_events)
   }
 
   fn handle(&mut self, event: ServerNetworkEvent) -> Vec<ClientNetworkEvent> {

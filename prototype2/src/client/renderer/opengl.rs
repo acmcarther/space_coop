@@ -16,8 +16,7 @@ use gfx_app::shade;
 use gfx_app::DEFAULT_CONFIG;
 
 use cgmath::Matrix4;
-use cgmath::AffineMatrix3;
-
+use cgmath::AffineMatrix3; 
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
 gfx_vertex_struct!( Vertex {
@@ -208,17 +207,22 @@ impl OpenGlRenderer {
     // Blot each entity
     if world_opt.is_some() {
       let world = world_opt.unwrap();
-      world.physical.values().foreach(|physical_aspect| {
-        // TODO: use rendered_aspect to determine model
-        let (x,y,z) = physical_aspect.pos;
-        let model =
-          Matrix4::new(1.0, 0.0, 0.0 , 0.0,
-                       0.0, 1.0, 0.0,  0.0,
-                       0.0, 0.0, 1.0, 0.0,
-                       x, y, z, 1.0);
-        self.data.transform = (self.proj * self.view.mat * model).into();
+      world.entities.iter().foreach(|uuid| {
+        match (world.physical.get(uuid), world.rendered.get(uuid), world.disabled.contains(uuid)) {
+          (Some(physical_aspect), Some(rendered_aspect), false) => {
+            // TODO: use rendered_aspect to determine model
+            let (x,y,z) = physical_aspect.pos;
+            let model =
+              Matrix4::new(1.0, 0.0, 0.0 , 0.0,
+                           0.0, 1.0, 0.0,  0.0,
+                           0.0, 0.0, 1.0, 0.0,
+                           x, y, z, 1.0);
+            self.data.transform = (self.proj * self.view.mat * model).into();
 
-        self.encoder.draw(&self.slice, &self.pso, &self.data);
+            self.encoder.draw(&self.slice, &self.pso, &self.data);
+          }
+          _ => {}
+        }
       });
     }
 

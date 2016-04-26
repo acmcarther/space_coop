@@ -33,7 +33,10 @@ impl Controller {
 
   fn handle_internal(&mut self, event: &glutin::Event) {
     match event {
-      _ => {},
+      &glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) => {
+        self.internal_events.push(InternalClientEvent::Exit)
+      },
+      _ => {}
     }
   }
 

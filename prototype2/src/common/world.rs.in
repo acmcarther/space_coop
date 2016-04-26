@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
 
@@ -7,7 +7,8 @@ use uuid::Uuid;
 pub struct ClientWorld {
   pub entities: Vec<Entity>,
   pub rendered: HashMap<Entity, RenderAspect>,
-  pub physical: HashMap<Entity, PhysicalAspect>
+  pub physical: HashMap<Entity, PhysicalAspect>,
+  pub disabled: HashSet<Entity>
 }
 
 pub type Entity = Uuid;

@@ -7,6 +7,7 @@ pub mod protocol;
 
 use time::{self, Duration};
 
+use client::protocol::InternalClientEvent;
 use common::protocol::ClientNetworkEvent;
 
 use std::net::SocketAddr;
@@ -23,7 +24,7 @@ pub fn start(port: u16, server_addr: SocketAddr) {
   println!("Starting client on {}", port);
   let mut engine = Engine::new();
   let mut network = Network::new(port, server_addr);
-  let running = true;
+  let mut running = true;
   let frame_limit = 60;
   let time_step = 1.0 / (frame_limit as f32); //s
 
@@ -45,8 +46,10 @@ pub fn start(port: u16, server_addr: SocketAddr) {
         next_keepalive_time = next_keepalive_time + Duration::milliseconds(20);
       }
 
-      engine.tick().into_iter()
-        .foreach(|client_payload| network.send(client_payload));
+      let (internal_e, external_e) = engine.tick();
+
+      internal_e.into_iter().foreach(|event| if event == InternalClientEvent::Exit { running = false;});
+      external_e.into_iter().foreach(|client_payload| network.send(client_payload));
 
       next_time = next_time + Duration::milliseconds((time_step * 1000.0) as i64);
     } else {

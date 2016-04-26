@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{
+  HashMap,
+  HashSet
+};
 
 use uuid::Uuid;
 use common::network;
@@ -30,25 +33,31 @@ impl WorldContainer for ServerWorld {
 // A high fidelity version of the client world
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ServerWorld {
+  // Supplemental state for efficient access
   pub addr_to_player: HashMap<network::Address, Uuid>,
-  pub players: HashMap<Uuid, Player>,
+
+  // Conventional world state
   pub entities: Vec<Entity>,
   pub rendered: HashMap<Entity, RenderAspect>,
   pub physical: HashMap<Entity, PhysicalAspect>,
-  pub controlled: HashMap<Entity, ControlledAspect>,
-  pub controlled_inverse: HashMap<Uuid, ControlledAspect>
+  pub disabled: HashSet<Entity>,
+  pub player: HashMap<Entity, PlayerAspect>,
+  pub controller: HashMap<Entity, ControllerAspect>
 }
 
 impl ServerWorld {
   pub fn new() -> ServerWorld {
     ServerWorld {
+      // Supplemental state for efficient access
       addr_to_player: HashMap::new(),
-      players: HashMap::new(),
+
+      // Conventional world state
       entities: Vec::new(),
       rendered: HashMap::new(),
       physical: HashMap::new(),
-      controlled: HashMap::new(),
-      controlled_inverse: HashMap::new()
+      disabled: HashSet::new(),
+      controller: HashMap::new(),
+      player: HashMap::new()
     }
   }
 
@@ -57,46 +66,30 @@ impl ServerWorld {
       entities: self.entities.clone(),
       rendered: self.rendered.clone(),
       physical: self.physical.clone(),
+      disabled: self.disabled.clone(),
     }
-  }
-
-  pub fn all_connected_addrs(&self) -> Vec<SocketAddr> {
-    self.players.values()
-      .filter(|p| p.connected)
-      .map(|p| p.address.clone())
-      .collect()
   }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Player {
-  uuid: Uuid,
-  address: network::Address,
-  connected: bool
+pub struct PlayerAspect {
+  pub address: network::Address,
+  pub connected: bool,
 }
 
-impl Player {
-  pub fn new(addr: network::Address) -> Player {
-    Player {
-      uuid: Uuid::new_v4(),
-      address: addr,
-      connected: false,
-    }
+impl PlayerAspect {
+  pub fn new(address: network::Address, connected: bool) -> PlayerAspect {
+    PlayerAspect { address: address, connected: connected }
   }
-
-  pub fn address(&self) -> &network::Address { &self.address }
-  pub fn set_connected(&mut self, connected: bool) { self.connected = connected }
-  pub fn uuid(&self) -> &Uuid { &self.uuid }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ControlledAspect {
-  pub uuid: Uuid
+pub struct ControllerAspect {
+  pub subject: Entity,
 }
 
-impl ControlledAspect {
-  pub fn new(uuid: Uuid) -> ControlledAspect {
-    ControlledAspect { uuid: uuid }
+impl ControllerAspect {
+  pub fn new(subject: Entity) -> ControllerAspect {
+    ControllerAspect { subject: subject }
   }
 }
-
