@@ -7,6 +7,9 @@ use common::world::ClientWorld;
 use common::util::Newness;
 use common::protocol::PartialClientSnapshot;
 
+use flate2::read::GzDecoder;
+use std::io::Read;
+
 pub enum ClientWorldBuffer {
   None,
   Partial { series: u16, pieces: Vec<Option<Vec<u8>>> }
@@ -45,7 +48,11 @@ impl ClientWorldBuffer {
         if pieces.iter().all(|p| p.is_some()) {
           let mut full_buffer = Vec::new();
           pieces.iter().cloned().foreach(|p| full_buffer.append(&mut p.unwrap()));
-          str::from_utf8(full_buffer.as_ref()).ok().and_then(|s| serde_json::from_str(s).ok())
+          let bytes: &[u8] = full_buffer.as_ref();
+          let mut string = String::new();
+          GzDecoder::new(bytes)
+            .and_then(|mut decoder| decoder.read_to_string(&mut string)).ok()
+            .and_then(|_| serde_json::from_str(&string).ok())
         } else {
           None
         }

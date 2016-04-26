@@ -5,6 +5,8 @@ extern crate serde_json;
 extern crate itertools;
 extern crate gaffer_udp;
 
+extern crate flate2;
+
 extern crate cgmath;
 #[macro_use]
 extern crate gfx;

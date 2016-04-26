@@ -20,6 +20,10 @@ use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
 use itertools::Itertools;
 
+use flate2::write::GzEncoder;
+use flate2::Compression;
+use std::io::Write;
+
 pub struct Engine {
   world: ServerWorld,
   events: Vec<ClientPayload>,
@@ -47,7 +51,9 @@ impl Engine {
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
 
     let client_snapshot = serde_json::to_string(&self.world.as_client_world()).unwrap();
-    let snapshot_bytes = client_snapshot.into_bytes();
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::Default);
+    encoder.write(client_snapshot.as_bytes());
+    let snapshot_bytes = encoder.finish().unwrap(); // Assumed to be safe because I control the format
     println!("snapshot_bytes_len:{}", snapshot_bytes.len());
     let snapshot_byte_sets = snapshot_bytes.chunks(128 /*bytes*/).enumerate();
     let set_count = snapshot_byte_sets.len();

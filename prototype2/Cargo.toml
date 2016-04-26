@@ -25,6 +25,7 @@ gfx_device_gl = "0.9"
 gfx_app = "*"
 gfx_window_glutin = "0.10"
 glutin = "0.4.8"
+flate2 = "0.2.13"
 
 [[bin]]
 name = "space_coop"
