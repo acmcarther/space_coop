@@ -1,4 +1,5 @@
 use uuid::Uuid;
+use time;
 
 use common::network;
 use common::world::{RenderAspect, PhysicalAspect};
@@ -11,6 +12,7 @@ pub trait PlayerView {
   fn get_player_uuid_from_addr(&self, address: &network::Address) -> Option<&Uuid>;
   fn get_player_addr_from_uuid(&self, uuid: &Uuid) -> Option<&network::Address>;
   fn move_player_ent(&mut self, player: &Uuid, x_d: f32, y_d: f32, z_d: f32);
+  fn update_player_last_msg(&mut self, player: &Uuid);
 }
 
 impl <T: WorldContainer> PlayerView for T {
@@ -87,6 +89,12 @@ impl <T: WorldContainer> PlayerView for T {
         aspect.vel.2 = aspect.vel.2 + z_d;
       },
       None => {}
+    }
+  }
+
+  fn update_player_last_msg(&mut self, uuid: &Uuid) {
+    if let Some(player) = self.mut_world().player.get_mut(uuid) {
+      player.last_msg = time::now()
     }
   }
 }

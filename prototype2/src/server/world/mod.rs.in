@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
+use time::{self, Tm};
 
 use common::network;
 use common::world::{
@@ -21,7 +22,7 @@ impl WorldContainer for ServerWorld {
 }
 
 // A high fidelity version of the client world
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct ServerWorld {
   // Supplemental state for efficient access
   pub addr_to_player: HashMap<network::Address, Uuid>,
@@ -52,19 +53,20 @@ impl ServerWorld {
   }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct PlayerAspect {
   pub address: network::Address,
+  pub last_msg: Tm,
   pub connected: bool,
 }
 
 impl PlayerAspect {
   pub fn new(address: network::Address, connected: bool) -> PlayerAspect {
-    PlayerAspect { address: address, connected: connected }
+    PlayerAspect { address: address, last_msg: time::now(), connected: connected }
   }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct ControllerAspect {
   pub subject: Entity,
 }

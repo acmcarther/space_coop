@@ -4,7 +4,7 @@ use self::event_handler::EventHandler;
 use std::mem;
 use std::collections::HashMap;
 
-use time;
+use time::{self, Duration};
 use itertools::Itertools;
 use uuid::Uuid;
 
@@ -59,6 +59,8 @@ impl Engine {
 
     self.tick_physics(dt);
 
+    self.validate_connections();
+
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
     outbound.extend(self.world.as_client_world().fragment_to_events(self.snapshot_idx)
@@ -75,6 +77,10 @@ impl Engine {
   fn handle(&mut self, payload: ClientPayload) -> Vec<OutboundEvent> {
     use common::protocol::ClientNetworkEvent::*;
 
+    if let Some(ply_uuid) = self.world.addr_to_player.get(&payload.address).map(|a| a.clone()) {
+      self.world.update_player_last_msg(&ply_uuid);
+    }
+
     match payload.event {
       Connect => self.on_connect(payload.address),
       Disconnect => self.on_disconnect(payload.address),
@@ -82,5 +88,18 @@ impl Engine {
       SnapshotAck(seq_num) => self.on_snapshot_ack(payload.address, seq_num),
       DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
     }
+  }
+
+  fn validate_connections(&mut self) -> Vec<OutboundEvent> {
+    let timeout = Duration::seconds(5);
+    let now = time::now();
+
+    self.world.player.values()
+      .filter(|ply| ply.connected && timeout < now - ply.last_msg)
+      .map(|ply| ply.address.clone())
+      .collect::<Vec<_>>()   // Resolve borrow issue for subsequent flatmap
+      .into_iter()
+      .flat_map(|addr| self.on_disconnect(addr))
+      .collect()
   }
 }
