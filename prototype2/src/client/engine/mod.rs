@@ -36,7 +36,7 @@ impl Engine {
       events: Vec::new(),
       partial_snapshot: FragmentBuffer::None,
       world: None,
-      camera_pos: (1.5, -5.0, 3.0),
+      camera_pos: (3.0, -10.0, 6.0),
       camera_orient: Quaternion::one()
     }
   }

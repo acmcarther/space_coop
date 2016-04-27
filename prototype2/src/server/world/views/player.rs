@@ -34,7 +34,7 @@ impl <T: WorldContainer> PlayerView for T {
         self.mut_world().entities.push(player_uuid.clone());
         self.mut_world().entities.push(player_subject_uuid.clone());
         self.mut_world().rendered.insert(player_subject_uuid.clone(), RenderAspect::new());
-        self.mut_world().physical.insert(player_subject_uuid.clone(), PhysicalAspect::new((0.0,0.0,0.0), false));
+        self.mut_world().physical.insert(player_subject_uuid.clone(), PhysicalAspect::new((0.0,0.0,5.0), (0.0, 0.0, 0.0), false));
         self.mut_world().player.insert(player_uuid.clone(), PlayerAspect::new(address.clone(), true));
         self.mut_world().controller.insert(player_uuid.clone(), ControllerAspect::new(player_subject_uuid.clone()));
         self.mut_world().addr_to_player.insert(address, player_uuid.clone());
@@ -82,9 +82,9 @@ impl <T: WorldContainer> PlayerView for T {
     if subject.is_none() { return; }
     match self.mut_world().physical.get_mut(&subject.unwrap()) {
       Some(aspect) => {
-        aspect.pos.0 = aspect.pos.0 + x_d;
-        aspect.pos.1 = aspect.pos.1 + y_d;
-        aspect.pos.2 = aspect.pos.2 + z_d;
+        aspect.vel.0 = aspect.vel.0 + x_d;
+        aspect.vel.1 = aspect.vel.1 + y_d;
+        aspect.vel.2 = aspect.vel.2 + z_d;
       },
       None => {}
     }

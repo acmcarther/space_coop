@@ -4,6 +4,7 @@ use self::event_handler::EventHandler;
 use std::mem;
 use std::collections::HashMap;
 
+use time;
 use itertools::Itertools;
 use uuid::Uuid;
 
@@ -18,6 +19,7 @@ use server::world::ServerWorld;
 use server::world::views::player::PlayerView;
 use server::world::views::client_world::ClientWorldView;
 use server::network::Fragmentable;
+use server::physics::Physics;
 
 pub struct ClientSnapshotHistory {
   pub last_ack: Option<u16>,
@@ -25,7 +27,9 @@ pub struct ClientSnapshotHistory {
 }
 
 pub struct Engine {
-  world: ServerWorld,
+  // TODO: this is pub so Physics can manipulate it
+  //   add an analogue to View so it doesn't need to be pub
+  pub world: ServerWorld,
   events: Vec<ClientPayload>,
   snapshot_idx: u16,
   client_snapshot_histories: HashMap<Uuid, ClientSnapshotHistory>
@@ -43,14 +47,17 @@ impl Engine {
     }
   }
 
-  pub fn tick(&mut self) -> Vec<ServerPayload> {
+  pub fn tick(&mut self, dt: &time::Duration) -> Vec<ServerPayload> {
     let mut event_buf = Vec::new();
     // Yank all the events off the queue, replacing with a new queue
     mem::swap(&mut self.events, &mut event_buf);
 
     let mut outbound: Vec<OutboundEvent> = Vec::new();
 
+
     event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
+
+    self.tick_physics(dt);
 
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
