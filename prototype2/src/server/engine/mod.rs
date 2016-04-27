@@ -63,8 +63,19 @@ impl Engine {
 
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
-    outbound.extend(self.world.as_client_world().fragment_to_events(self.snapshot_idx)
-      .into_iter().map(|e| OutboundEvent::Undirected(e)));
+    // TODO: Clean up borrowck nonsense here
+    outbound.extend(self.world.player.iter()
+      .filter(|&(_, ply)| ply.connected)
+      .map(|(uuid, ply)| (uuid.clone(), ply.address.clone()))
+      .collect::<Vec<_>>().into_iter() // Dodge borrow checker
+      .flat_map(|(uuid, addr)| {
+        let addr = addr.clone();
+        self.world.as_client_world(&uuid).fragment_to_events(self.snapshot_idx)
+          .into_iter().map(|partial| (addr.clone(), partial))
+          .collect::<Vec<_>>().into_iter() // Dodging borrow checker again
+      })
+      .map(|(addr, event)| OutboundEvent::Directed{dest: addr, event: event})
+    );
 
     // TODO: optimize this iter usage, its inefficient because of the transformations
     //   to vector and back

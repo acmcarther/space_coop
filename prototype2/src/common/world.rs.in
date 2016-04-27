@@ -5,6 +5,7 @@ use uuid::Uuid;
 // A lower fidelity version of the server world
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClientWorld {
+  pub own_entity: Entity,
   pub entities: Vec<Entity>,
   pub rendered: HashMap<Entity, RenderAspect>,
   pub physical: HashMap<Entity, PhysicalAspect>,
