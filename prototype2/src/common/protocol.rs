@@ -7,6 +7,8 @@ use common::network;
 
 include!(concat!(env!("OUT_DIR"), "/common/protocol.rs"));
 
+// TODO: Unify ServerPayload and ClientPayload types
+
 #[derive(Clone, Debug)]
 pub struct ServerPayload {
   pub address: network::Address,
@@ -29,6 +31,7 @@ impl ServerPayload {
   }
 }
 
+#[derive(Clone, Debug)]
 pub struct ClientPayload {
   pub address: network::Address,
   pub event: ClientNetworkEvent

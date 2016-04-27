@@ -20,7 +20,7 @@ use server::world::views::client_world::ClientWorldView;
 use server::network::Fragmentable;
 
 pub struct ClientSnapshotHistory {
-  pub last_ack: u16,
+  pub last_ack: Option<u16>,
   pub past_snapshots: HashMap<u16, ClientWorld>
 }
 
@@ -72,7 +72,7 @@ impl Engine {
       Connect => self.on_connect(payload.address),
       Disconnect => self.on_disconnect(payload.address),
       KeepAlive => self.on_keep_alive(payload.address),
-      SnapshotAck(_) => self.on_snapshot_ack(payload.address),
+      SnapshotAck(seq_num) => self.on_snapshot_ack(payload.address, seq_num),
       DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
     }
   }

@@ -49,14 +49,14 @@ impl FragmentBuffer {
 }
 
 pub trait Defragmentable: Sized {
-  fn defragment(buffer: &FragmentBuffer) -> Option<Self>;
+  fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)>;
 }
 
 impl Defragmentable for ClientWorld {
-  fn defragment(buffer: &FragmentBuffer) -> Option<Self> {
+  fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)> {
     match buffer {
       &FragmentBuffer::None => None,
-      &FragmentBuffer::Partial { seq_num: _, ref pieces } => {
+      &FragmentBuffer::Partial { seq_num, ref pieces } => {
         // TODO: optimize this -- iterates twice
         if pieces.iter().all(|p| p.is_some()) {
           let mut full_buffer = Vec::new();
@@ -66,6 +66,7 @@ impl Defragmentable for ClientWorld {
           GzDecoder::new(bytes)
             .and_then(|mut decoder| decoder.read_to_string(&mut string)).ok()
             .and_then(|_| serde_json::from_str(&string).ok())
+            .map(|res| (seq_num, res))
         } else {
           None
         }
