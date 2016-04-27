@@ -202,14 +202,22 @@ impl OpenGlRenderer {
     use cgmath::{Transform, Matrix4, AffineMatrix3};
     use cgmath::{Point3, Vector3};
 
+    let camera_focus = world_opt
+      .and_then(|world| world.own_entity.and_then(|ent_uuid| world.physical.get(&ent_uuid)))
+      .map(|physical| physical.pos.clone())
+      .unwrap_or((0.0,0.0,0.0));
+
     let locals = Locals { transform: self.data.transform };
     self.encoder.update_constant_buffer(&self.data.locals, &locals);
     self.encoder.clear(&self.data.out_color, [0.1, 0.2, 0.3, 1.0]);
     self.encoder.clear_depth(&self.data.out_depth, 1.0);
 
+    // Move the desired camera pos up by the ent pos
+    let camera_adj_pos = (camera_focus.0 + camera_pos.0, camera_focus.1 + camera_pos.1, camera_focus.2 + camera_pos.2);
+
     let view: AffineMatrix3<f32> = Transform::look_at(
-        Point3::new(camera_pos.0, camera_pos.1, camera_pos.2),
-        Point3::new(0f32, 0.0, 0.0),
+        Point3::new(camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2),
+        Point3::new(camera_focus.0, camera_focus.1, camera_focus.2),
         Vector3::unit_z(),
     );
     self.data.color = self.ground_color.clone();

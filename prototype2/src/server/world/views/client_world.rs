@@ -10,7 +10,7 @@ pub trait ClientWorldView {
 impl <T: WorldContainer> ClientWorldView for T {
   fn as_client_world(&self, ply_uuid: &Uuid) -> ClientWorld {
     ClientWorld {
-      own_entity: ply_uuid.clone(),
+      own_entity: self.world().controller.get(ply_uuid).map(|e| e.subject.clone()),
       entities: self.world().entities.clone(),
       rendered: self.world().rendered.clone(),
       physical: self.world().physical.clone(),
