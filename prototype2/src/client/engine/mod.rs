@@ -1,3 +1,6 @@
+mod event_handler;
+use self::event_handler::EventHandler;
+
 use std::mem;
 
 use itertools::Itertools;
@@ -6,9 +9,8 @@ use cgmath::Quaternion;
 use client::controller::Controller;
 use client::renderer::Renderer;
 use client::renderer::opengl::OpenGlRenderer;
-use client::protocol::{InternalClientEvent, CameraDir};
+use client::protocol::InternalClientEvent;
 use client::network::FragmentBuffer;
-use client::network::Defragmentable;
 
 use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, SnapshotEvent};
 use common::world::ClientWorld;
@@ -19,7 +21,6 @@ pub struct Engine {
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
   partial_snapshot: FragmentBuffer,
-  last_snapshot: Option<u16>,
   world: Option<ClientWorld>,
   camera_pos: (f32, f32, f32),
   camera_orient: Quaternion<f32>
@@ -34,7 +35,6 @@ impl Engine {
       controller: Controller::new(),
       events: Vec::new(),
       partial_snapshot: FragmentBuffer::None,
-      last_snapshot: None,
       world: None,
       camera_pos: (1.5, -5.0, 3.0),
       camera_orient: Quaternion::one()
@@ -57,10 +57,7 @@ impl Engine {
       use client::protocol::InternalClientEvent::CameraMove;
 
       match event {
-        &CameraMove(CameraDir::Forward)  => self.camera_pos.0 = self.camera_pos.0 + 0.1,
-        &CameraMove(CameraDir::Backward) => self.camera_pos.0 = self.camera_pos.0 - 0.1,
-        &CameraMove(CameraDir::Left)     => self.camera_pos.1 = self.camera_pos.1 - 0.1,
-        &CameraMove(CameraDir::Right)    => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+        &CameraMove(ref dir)  => self.on_camera_event(dir),
         _ => {}
       }
     });
@@ -74,23 +71,8 @@ impl Engine {
     use common::protocol::ServerNetworkEvent::*;
 
     match event {
-      Snapshot(SnapshotEvent::PartialSnapshot(data)) => {
-        self.partial_snapshot.integrate(data);
-        let world_opt = ClientWorld::defragment(&self.partial_snapshot);
-        if world_opt.is_some() { self.world = world_opt; }
-        Vec::new()
-      },
+      Snapshot(SnapshotEvent::PartialSnapshot(data)) => self.on_partial_snapshot(data),
       _ => Vec::new()
-    }
-  }
-
-  pub fn other_snapshot_newer(&self, series: u16) -> bool {
-    match self.last_snapshot {
-      None => true,
-      Some(u) => {
-        let pos_diff = series.wrapping_sub(u);
-        pos_diff != 0 && pos_diff < 32000
-      }
     }
   }
 }
