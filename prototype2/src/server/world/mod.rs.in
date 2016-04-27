@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::net::SocketAddr;
 
 use uuid::Uuid;
 
@@ -7,7 +6,6 @@ use common::network;
 use common::world::{
   Entity,
   RenderAspect,
-  ClientWorld,
   PhysicalAspect,
 };
 

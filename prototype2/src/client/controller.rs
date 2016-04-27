@@ -3,8 +3,8 @@ use std::mem;
 use glutin;
 use itertools::Itertools;
 
-use client::protocol::{InternalClientEvent, CameraDir, CameraOrient};
-use common::protocol::{ClientNetworkEvent, ClientEvent};
+use client::protocol::{InternalClientEvent, CameraDir};
+use common::protocol::{ClientNetworkEvent};
 
 pub struct Controller {
   internal_events: Vec<InternalClientEvent>,

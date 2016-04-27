@@ -1,5 +1,3 @@
-use uuid::Uuid;
-use common::network;
 use common::world::ClientWorld;
 use server::world::WorldContainer;
 

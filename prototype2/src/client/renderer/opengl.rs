@@ -8,12 +8,11 @@ use gfx_window_glutin;
 use gfx_device_gl;
 
 pub use gfx_app::{ColorFormat, DepthFormat};
-use gfx_app::{self, shade, DEFAULT_CONFIG};
+use gfx_app::{self, shade};
 
-use cgmath::{AffineMatrix3, Matrix4, Quaternion};
+use cgmath::{Matrix4, Quaternion};
 
 use common::world::ClientWorld;
-use client::renderer::Renderer;
 
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
@@ -52,7 +51,6 @@ pub struct OpenGlRenderer {
   data: Data<gfx_device_gl::Resources>,
   slice: gfx::Slice<gfx_device_gl::Resources>,
 
-  view: AffineMatrix3<f32>,
   proj: Matrix4<f32>,
 
   encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
@@ -63,19 +61,18 @@ pub struct OpenGlRenderer {
 impl OpenGlRenderer {
   pub fn new() -> OpenGlRenderer {
     use gfx::traits::FactoryExt;
-    use gfx::traits::Device;
     use gfx::Factory;
     use cgmath;
-    use cgmath::{Point3, Matrix4, Vector3};
+    use cgmath::{Point3, Vector3};
     use cgmath::{Transform, AffineMatrix3};
 
     let builder = glutin::WindowBuilder::new()
       .with_title("Space Coop".to_owned())
       .with_dimensions(1024, 768)
       .with_vsync();
-    let (window, mut device, mut factory, main_color, main_depth) =
+    let (window, device, mut factory, main_color, main_depth) =
       gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
-    let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
+    let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
     let (width, height) = window.get_inner_size().unwrap();
 
@@ -180,7 +177,6 @@ impl OpenGlRenderer {
       data: data,
       slice: slice,
 
-      view: view,
       proj: proj,
 
       encoder: encoder,
@@ -193,7 +189,7 @@ impl OpenGlRenderer {
     &mut self.window
   }
 
-  pub fn render_world(&mut self, world_opt: &Option<&ClientWorld>, camera_pos: &(f32, f32, f32), camera_orient: &Quaternion<f32>) {
+  pub fn render_world(&mut self, world_opt: &Option<&ClientWorld>, camera_pos: &(f32, f32, f32), _: &Quaternion<f32>) {
     use cgmath::{Transform, Matrix4, AffineMatrix3};
     use cgmath::{Point3, Vector3};
 
@@ -213,8 +209,8 @@ impl OpenGlRenderer {
       let world = world_opt.unwrap();
       world.entities.iter().foreach(|uuid| {
         match (world.physical.get(uuid), world.rendered.get(uuid), world.disabled.contains(uuid)) {
-          (Some(physical_aspect), Some(rendered_aspect), false) => {
-            // TODO: use rendered_aspect to determine model
+          // TODO: use rendered_aspect to determine model
+          (Some(physical_aspect), Some(_), false) => {
             let (x,y,z) = physical_aspect.pos;
             let model =
               Matrix4::new(1.0, 0.0, 0.0 , 0.0,
