@@ -12,7 +12,7 @@ use common::protocol::{
   ServerPayload,
   ServerNetworkEvent,
   SnapshotEvent,
-  FullClientSnapshotFragment
+  StateFragment
 };
 use common::world::{ClientWorld};
 
@@ -53,11 +53,11 @@ impl Fragmentable for ClientWorld {
     let set_count = snapshot_byte_sets.len();
 
     snapshot_byte_sets.map(|(idx, bytes)| {
-      ServerNetworkEvent::Snapshot(SnapshotEvent::PartialSnapshot(FullClientSnapshotFragment {
+      ServerNetworkEvent::Snapshot(SnapshotEvent::PartialSnapshot(StateFragment {
         seq_num: seq_num,
         idx: idx as u32,
         count: set_count as u32,
-        state_fragment: bytes.to_vec()
+        payload: bytes.to_vec()
       }))
     }).collect::<Vec<ServerNetworkEvent>>()
   }

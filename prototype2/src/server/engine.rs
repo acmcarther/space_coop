@@ -14,7 +14,7 @@ use common::protocol::{
   ServerPayload,
   SnapshotEvent,
   ServerNetworkEvent,
-  FullClientSnapshotFragment
+  StateFragment
 };
 use common::network;
 use common::world::ClientWorld;

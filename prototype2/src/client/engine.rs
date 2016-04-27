@@ -7,7 +7,8 @@ use client::controller::Controller;
 use client::renderer::Renderer;
 use client::renderer::opengl::OpenGlRenderer;
 use client::protocol::{InternalClientEvent, CameraDir};
-use client::world::ClientWorldBuffer;
+use client::network::FragmentBuffer;
+use client::network::Defragmentable;
 
 use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, SnapshotEvent};
 use common::world::ClientWorld;
@@ -17,7 +18,7 @@ pub struct Engine {
   //console_renderer: ConsoleRenderer,
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
-  partial_snapshot: ClientWorldBuffer,
+  partial_snapshot: FragmentBuffer,
   last_snapshot: Option<u16>,
   world: Option<ClientWorld>,
   camera_pos: (f32, f32, f32),
@@ -32,7 +33,7 @@ impl Engine {
       renderer: OpenGlRenderer::new(),
       controller: Controller::new(),
       events: Vec::new(),
-      partial_snapshot: ClientWorldBuffer::None,
+      partial_snapshot: FragmentBuffer::None,
       last_snapshot: None,
       world: None,
       camera_pos: (1.5, -5.0, 3.0),
@@ -75,7 +76,7 @@ impl Engine {
     match event {
       Snapshot(SnapshotEvent::PartialSnapshot(data)) => {
         self.partial_snapshot.integrate(data);
-        let world_opt = self.partial_snapshot.try_collate();
+        let world_opt = ClientWorld::defragment(&self.partial_snapshot);
         if world_opt.is_some() { self.world = world_opt; }
         Vec::new()
       },

@@ -2,7 +2,6 @@ pub mod renderer;
 pub mod controller;
 pub mod network;
 pub mod engine;
-pub mod world;
 pub mod protocol;
 
 use std::thread;
