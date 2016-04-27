@@ -9,6 +9,7 @@ use gfx_device_gl;
 
 pub use gfx_app::{ColorFormat, DepthFormat};
 use gfx_app::{self, shade};
+use gfx::handle::{Sampler, ShaderResourceView};
 
 use cgmath::{Matrix4, Quaternion};
 
@@ -49,6 +50,8 @@ use client::renderer::opengl::pipe::{Data, Meta};
 pub struct OpenGlRenderer {
   pso: gfx::PipelineState<gfx_device_gl::Resources, Meta>,
   data: Data<gfx_device_gl::Resources>,
+  box_color: (ShaderResourceView<gfx_device_gl::Resources, [f32;4]>, Sampler<gfx_device_gl::Resources>),
+  ground_color: (ShaderResourceView<gfx_device_gl::Resources, [f32;4]>, Sampler<gfx_device_gl::Resources>),
   slice: gfx::Slice<gfx_device_gl::Resources>,
 
   proj: Matrix4<f32>,
@@ -139,9 +142,14 @@ impl OpenGlRenderer {
     ///////////////////////////////////////////////////////////////////////////////////////////
     let (vbuf, slice) = factory.create_vertex_buffer_indexed(&vertex_data, index_data);
 
-    let texels = [[0xC0, 0xA0, 0x20, 0x00]];
-    let (_, texture_view) = factory.create_texture_const::<gfx::format::Rgba8>(
-        gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&texels]
+    let box_texels = [[0xC0, 0xA0, 0x20, 0x00]];
+    let (_, box_texture_view) = factory.create_texture_const::<gfx::format::Rgba8>(
+        gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&box_texels]
+        ).unwrap();
+
+    let ground_texels = [[0xA0, 0xA0, 0xC0, 0x00]];
+    let (_, ground_texture_view) = factory.create_texture_const::<gfx::format::Rgba8>(
+        gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&ground_texels]
         ).unwrap();
 
     let sinfo = gfx::tex::SamplerInfo::new(
@@ -166,16 +174,17 @@ impl OpenGlRenderer {
         vbuf: vbuf.clone(),
         transform: (proj * view.mat).into(), // Totally useless value, is overwritten
         locals: factory.create_constant_buffer(1),
-        color: (texture_view.clone(), factory.create_sampler(sinfo)),
+        color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
         out_color: main_color.clone(),
         out_depth: main_depth.clone(),
     };
-
 
     OpenGlRenderer {
       pso: pso,
       data: data,
       slice: slice,
+      box_color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
+      ground_color: (ground_texture_view.clone(), factory.create_sampler(sinfo)),
 
       proj: proj,
 
@@ -203,7 +212,19 @@ impl OpenGlRenderer {
         Point3::new(0f32, 0.0, 0.0),
         Vector3::unit_z(),
     );
+    self.data.color = self.ground_color.clone();
 
+    let model =
+      Matrix4::new(10.0, 0.0, 0.0 , 0.0,
+                   0.0, 10.0, 0.0,  0.0,
+                   0.0, 0.0, 0.01, 0.0,
+                   0.0, 0.0, 0.0, 1.0);
+    self.data.transform = (self.proj * view.mat * model).into();
+
+    self.encoder.draw(&self.slice, &self.pso, &self.data);
+
+
+    self.data.color = self.box_color.clone();
     // Blot each entity
     if world_opt.is_some() {
       let world = world_opt.unwrap();
@@ -213,10 +234,11 @@ impl OpenGlRenderer {
           (Some(physical_aspect), Some(_), false) => {
             let (x,y,z) = physical_aspect.pos;
             let model =
+              // Minor hack to offset rendering for 1/2 height of cube to make bounce look good
               Matrix4::new(1.0, 0.0, 0.0 , 0.0,
                            0.0, 1.0, 0.0,  0.0,
                            0.0, 0.0, 1.0, 0.0,
-                           x, y, z, 1.0);
+                           x, y, (z + 1.0), 1.0);
             self.data.transform = (self.proj * view.mat * model).into();
 
             self.encoder.draw(&self.slice, &self.pso, &self.data);
