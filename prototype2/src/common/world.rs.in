@@ -1,0 +1,40 @@
+use std::collections::{HashMap, HashSet};
+
+use uuid::Uuid;
+
+// A lower fidelity version of the server world
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientWorld {
+  pub own_entity: Option<Entity>,
+  pub entities: Vec<Entity>,
+  pub rendered: HashMap<Entity, RenderAspect>,
+  pub physical: HashMap<Entity, PhysicalAspect>,
+  pub disabled: HashSet<Entity>
+}
+
+pub type Entity = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RenderAspect {
+  pub model: String
+}
+
+impl RenderAspect {
+  pub fn new() -> RenderAspect {
+    RenderAspect { model: "dummy".to_owned() }
+  }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PhysicalAspect {
+  pub pos: (f32, f32, f32),
+  pub vel: (f32, f32, f32),
+  pub anchored: bool
+}
+
+impl PhysicalAspect{
+  pub fn new(pos: (f32, f32, f32), vel: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
+    PhysicalAspect { pos: pos, vel: vel, anchored: anchored }
+  }
+}
+
