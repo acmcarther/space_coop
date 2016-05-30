@@ -6,6 +6,13 @@ use itertools::Itertools;
 use client::protocol::{InternalClientEvent, CameraDir};
 use common::protocol::{ClientNetworkEvent};
 
+/**
+ * An event generator for "internal" and "external" events
+ *
+ * TODO: Abstract this into an interface to be implemented by types associated to renderers.
+ * This implementation is actually specific to the OpenGL renderer. A console render should
+ * be able to emit events as well.
+ */
 pub struct Controller {
   internal_events: Vec<InternalClientEvent>,
   outbound_events: Vec<ClientNetworkEvent>,

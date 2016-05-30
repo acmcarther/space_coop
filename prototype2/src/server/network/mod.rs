@@ -12,6 +12,11 @@ use common::protocol::{
   ServerPayload,
 };
 
+/**
+ * Manages the connection to the game clients
+ *
+ * Uses a GafferSocket (a wrapper around UDP for some reliability)
+ */
 pub struct Network {
   socket: GafferSocket,
 }

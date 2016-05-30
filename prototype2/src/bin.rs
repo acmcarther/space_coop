@@ -4,6 +4,9 @@ use std::env;
 use std::str::FromStr;
 use std::net::ToSocketAddrs;
 
+static EXAMPLE_SERVER_COMMAND: &'static str = "space_coop server 8888";
+static EXAMPLE_CLIENT_COMMAND: &'static str = "space_coop client 9999 192.168.0.1:8888";
+
 fn main() {
   let app_type = env::args().nth(1);
 
@@ -12,7 +15,7 @@ fn main() {
       let port_opt = env::args().nth(2).and_then(|v| u16::from_str(&v).ok());
       match port_opt {
         Some(port) => prototype2::server::start(port),
-        None => println!("ERROR: Specify a port, as in \"space_coop server 8888\"")
+        None => println!("ERROR: Specify a port, as in \"{}\"", EXAMPLE_SERVER_COMMAND)
       }
     },
     Some("client") => {
@@ -22,11 +25,11 @@ fn main() {
         .and_then(|mut socket_addr_iter| socket_addr_iter.next());
       match (port_opt, socket_addr_opt) {
         (Some(port), Some(addr)) => prototype2::client::start(port, addr),
-        _ => println!("ERROR: Specify a local port and a server ip and port, as in \"space_coop client 9999 192.168.0.1:8888\"")
+        _ => println!("ERROR: Specify a local port and a server ip and port, as in \"{}\"", EXAMPLE_CLIENT_COMMAND)
       }
     }
     _ => {
-      println!("ERROR: Specify an application type from [server, client], as in, \"space_coop server\"")
+      println!("ERROR: Specify an application type from [server, client], as in, \"{}\", or \"{}\"", EXAMPLE_SERVER_COMMAND, EXAMPLE_CLIENT_COMMAND)
     }
   }
 }

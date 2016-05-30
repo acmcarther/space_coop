@@ -1,7 +1,27 @@
+/**
+ * View-related structs and traits
+ */
 pub mod renderer;
+
+/**
+ * Input related structs and traits, strongly correlatted to Renderers
+ */
 pub mod controller;
+
+/**
+ * Managment of client/server communication
+ */
 pub mod network;
+
+/**
+ * Game state and logic management
+ */
 pub mod engine;
+
+/**
+ * Grab-bag of enums with semantic meaning
+ * TODO: Put these somewhere more domain-appropriate
+ */
 pub mod protocol;
 
 use std::thread;
@@ -16,6 +36,9 @@ use client::engine::Engine;
 use client::network::Network;
 use common::protocol::ClientNetworkEvent;
 
+/**
+ * A function to begin running the client
+ */
 pub fn start(port: u16, server_addr: SocketAddr) {
   println!("Starting client on {}", port);
   let mut engine = Engine::new();

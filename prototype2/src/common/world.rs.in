@@ -2,7 +2,11 @@ use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
 
-// A lower fidelity version of the server world
+/**
+ * Contains all of the state for world objects that the client needs.
+ *
+ * A lower fidelity version of the ServerWorld.
+ */
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClientWorld {
   pub own_entity: Option<Entity>,
@@ -14,6 +18,14 @@ pub struct ClientWorld {
 
 pub type Entity = Uuid;
 
+/**
+ * An aspect for an entity that can be rendered by a Renderer.
+ *
+ * Contains the details needed to render it.
+ *
+ * Most entities implementing RenderAspect also implement PhysicalAspect in order to be rendered
+ * somewhere besides the origin of the scene.
+ */
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RenderAspect {
   pub model: String
@@ -25,6 +37,11 @@ impl RenderAspect {
   }
 }
 
+/**
+ * An aspect for an entity that has a physical presense in the scene
+ *
+ * Contains the physical location and whether the entity is mobile or not
+ */
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PhysicalAspect {
   pub pos: (f32, f32, f32),

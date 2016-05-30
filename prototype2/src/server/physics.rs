@@ -3,6 +3,7 @@ use itertools::Itertools;
 
 use server::engine::Engine;
 
+// Simple Physics implementation to be called via #tick_physics in the implementor
 pub trait Physics {
   fn tick_physics(&mut self, dt: &time::Duration);
 }

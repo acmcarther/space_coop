@@ -9,6 +9,7 @@ use cgmath::Quaternion;
 use client::controller::Controller;
 use client::renderer::Renderer;
 use client::renderer::opengl::OpenGlRenderer;
+//use client::renderer::console::ConsoleRenderer;
 use client::protocol::InternalClientEvent;
 use client::network::FragmentBuffer;
 
@@ -17,7 +18,7 @@ use common::world::ClientWorld;
 
 pub struct Engine {
   renderer: OpenGlRenderer,
-  //console_renderer: ConsoleRenderer,
+  //renderer: ConsoleRenderer,
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
   partial_snapshot: FragmentBuffer,

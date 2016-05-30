@@ -9,6 +9,12 @@ use common::util::Newness;
 use common::world::ClientWorld;
 use common::protocol::StateFragment;
 
+/**
+ * Represents a partial state snapshot as received from the server.
+ * These are ordered via a seq_num field.
+ *
+ * TODO(acmcarther): Why is pieces a Vec<Option<...>>?
+ */
 pub enum FragmentBuffer {
   None,
   Partial { seq_num: u16, pieces: Vec<Option<Vec<u8>>> }
@@ -19,12 +25,19 @@ impl FragmentBuffer {
     FragmentBuffer::None
   }
 
+  /**
+   * Takes another StateFragment and tries to integrate it into the current partial
+   * - If a fragment with a newer seq_num is received, the current partial is discarded
+   * - If a fragment with an older seq_num is received, it is discarded
+   * - If a fragment with the current seq_num is received, it is integrated into us
+   */
   pub fn integrate(&mut self, partial: StateFragment) {
     let mut replace_self = false;
     match self {
       &mut FragmentBuffer::None => replace_self = true,
       &mut FragmentBuffer::Partial { ref seq_num, ref mut pieces } => {
         if partial.seq_num.is_newer_than(&seq_num) {
+          // Drop the previous buffer and use the new one
           replace_self = true;
         } else if partial.seq_num == *seq_num {
           // TODO: This is very slightly unsafe, reflect in type
@@ -36,6 +49,7 @@ impl FragmentBuffer {
     }
 
     // Dodging borrow checker
+    // This allows self to be switched to a different variant without borrow checker complaining
     if replace_self { self.replace_self_with_partial(partial) }
   }
 
@@ -48,11 +62,25 @@ impl FragmentBuffer {
   }
 }
 
+/**
+ * Indicates that the implementor can be constructed from FragmentBuffer partials
+ *
+ * Implementors:
+ * - ClientWorld (a subset of ServerWorld) is received over the wire in this manner
+ */
 pub trait Defragmentable: Sized {
+
+  /**
+   * Builds a full object from the FragmentBuffer, returning the sequence number and the object
+   */
   fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)>;
 }
 
 impl Defragmentable for ClientWorld {
+  /**
+   * ClientWorld is Gzipped Json. Besides the common work of combining the partial bytes,
+   * the payload must also be un-gzipped, and then parsed into a ClientWorld
+   */
   fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)> {
     match buffer {
       &FragmentBuffer::None => None,
