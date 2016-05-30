@@ -13,6 +13,13 @@ use serde_json;
 
 use common::protocol::{ClientNetworkEvent, ServerPayload, ServerNetworkEvent};
 
+/**
+ * Manages the connection to the game server
+ *
+ * Uses a GafferSocket (a wrapper around UDP for some reliability)
+ * TODO: This has a lot of common functionality with the server variant: Move that into common as
+ * a trait
+ */
 pub struct Network {
   socket: GafferSocket,
   server_addr: SocketAddr

@@ -11,6 +11,12 @@ use common::protocol::{
 };
 use common::world::ClientWorld;
 
+/**
+ * Indicates that the implementor can be broken into events to be transmitted over the wire
+ *
+ * TODO: This is not symmetric at the domain level with Defragmentable (which uses FragmentBuffers)
+ * Convert this to emit fragment buffers, which can then be turned into server events
+ */
 pub trait Fragmentable {
   fn fragment_to_events(&self, seq_num: u16) -> Vec<ServerNetworkEvent>;
 }

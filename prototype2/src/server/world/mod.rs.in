@@ -10,7 +10,10 @@ use common::world::{
   PhysicalAspect,
 };
 
-// A trait for Views to depend on
+/**
+ * A trait for Views to depend on
+ * TODO(acmcarther): Why?
+ */
 pub trait WorldContainer {
   fn world(&self) -> &ServerWorld;
   fn mut_world(&mut self) -> &mut ServerWorld;
@@ -21,7 +24,11 @@ impl WorldContainer for ServerWorld {
   fn mut_world(&mut self) -> &mut ServerWorld { self }
 }
 
-// A high fidelity version of the client world
+/**
+ * Contains all of the state for world objects.
+ *
+ * A high fidelity version of the ClientWorld
+ */
 #[derive(Debug, Clone)]
 pub struct ServerWorld {
   // Supplemental state for efficient access
@@ -53,6 +60,11 @@ impl ServerWorld {
   }
 }
 
+/**
+ * An aspect for an entity representing a player.
+ *
+ * Contains the player's network information.
+ */
 #[derive(Debug, Clone)]
 pub struct PlayerAspect {
   pub address: network::Address,
@@ -66,6 +78,13 @@ impl PlayerAspect {
   }
 }
 
+/**
+ * An aspect for an entity that "possesses" another entity.
+ *
+ * Contains a reference to that other entity in question.
+ *
+ * Players are common implementors -- they can possess a world object and control it.
+ */
 #[derive(Debug, Clone)]
 pub struct ControllerAspect {
   pub subject: Entity,

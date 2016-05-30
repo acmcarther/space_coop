@@ -7,6 +7,9 @@ use server::protocol::OutboundEvent;
 use server::engine::{Engine, ClientSnapshotHistory};
 use server::world::views::player::PlayerView;
 
+// TODO: Clarify the purpose of this object
+// As of right now, it handles a couple of kinds of "events" and mutates the world
+// SEE: client::engine::event_handler
 pub trait EventHandler {
   fn on_connect(&mut self, addr: network::Address) -> Vec<OutboundEvent>;
   fn on_disconnect(&mut self, addr: network::Address) -> Vec<OutboundEvent>;

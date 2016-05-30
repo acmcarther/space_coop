@@ -4,6 +4,9 @@ use client::protocol::CameraDir;
 use common::protocol::{ClientNetworkEvent, StateFragment};
 use common::world::ClientWorld;
 
+// TODO: Clarify the purpose of this object
+// As of right now, it handles a couple of kinds of "events" and mutates the world
+// SEE: client::engine::event_handler
 pub trait EventHandler  {
   fn on_partial_snapshot(&mut self, data: StateFragment) -> Vec<ClientNetworkEvent>;
   fn on_camera_event(&mut self, dir: &CameraDir);
