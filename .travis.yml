@@ -6,3 +6,5 @@ script:
   - cd prototype2
   - cargo build --verbose
   - cargo test --verbose
+cache:
+  - cargo
