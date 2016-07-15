@@ -1,120 +1,56 @@
-mod event_handler;
-mod physics;
+pub mod physics;
+pub mod io;
+pub mod player;
+pub mod debug;
 
-use self::event_handler::EventHandler;
+use time;
 
-use std::mem;
-use std::collections::HashMap;
-
-use time::{self, Duration};
-use itertools::Itertools;
-use uuid::Uuid;
-
-use common::protocol::{
-  ClientEvent,
-  ClientPayload,
-  ServerPayload,
-};
-use common::world::ClientWorld;
-use protocol::OutboundEvent;
 use world::ServerWorld;
-use world::views::player::PlayerView;
-use world::views::client_world::ClientWorldView;
-use network::Fragmentable;
-use engine::physics::{Physics, SimplePhysics};
 
-pub struct ClientSnapshotHistory {
-  pub last_ack: Option<u16>,
-  pub past_snapshots: HashMap<u16, ClientWorld>
-}
+use specs;
+
+const NETWORK_IO_PRIORITY: specs::Priority = 100;
+const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 80;
+const NETWORK_HEALTH_CHECK_PRIORITY: specs::Priority = 70;
+const PHYSICS_PRIORITY: specs::Priority = 9;
+const PLAYER_CONNECTION_PRIORITY: specs::Priority = 8;
+const PLAYER_SNAPSHOT_PRIORITY: specs::Priority = 6;
+const PLAYER_INPUT_PRIORITY: specs::Priority = 5;
+const DEBUG_PRIORITY: specs::Priority = 1;
 
 pub struct Engine {
-  // TODO: this is pub so Physics can manipulate it
-  //   add an analogue to View so it doesn't need to be pub
-  pub world: ServerWorld,
-  events: Vec<ClientPayload>,
-  physics: SimplePhysics,
-  snapshot_idx: u16,
-  client_snapshot_histories: HashMap<Uuid, ClientSnapshotHistory>
+  pub planner: specs::Planner<Delta>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Delta {
+  pub dt: time::Duration,
+  pub now: time::Tm,
 }
 
 impl Engine {
-  pub fn push_event(&mut self, event: ClientPayload) { self.events.push(event) }
+  //pub fn push_event(&mut self, event: ClientPayload) { self.events.push(event) }
 
-  pub fn new() -> Engine {
+  pub fn new(port: u16) -> Engine {
+
+    let neo_world = ServerWorld::new();
+    let mut planner = specs::Planner::new(neo_world.world, 2 /* Threads, arbitrary */);
+
+    planner.add_system(io::network_adapter::System::new(port), "network::io", NETWORK_IO_PRIORITY);
+    planner.add_system(io::event_distribution::System::new(), "network::event_distribution", NETWORK_EVENT_DISTRIBUTION_PRIORITY);
+    planner.add_system(io::health_check::System::new(), "network::health_check", NETWORK_HEALTH_CHECK_PRIORITY);
+    planner.add_system(physics::System::new(), "physics", PHYSICS_PRIORITY);
+    planner.add_system(player::connection::System::new(), "player::connection", PLAYER_CONNECTION_PRIORITY);
+    planner.add_system(player::snapshot::System::new(), "player::snapshot", PLAYER_SNAPSHOT_PRIORITY);
+    planner.add_system(player::input::System::new(), "player::input", PLAYER_INPUT_PRIORITY);
+    planner.add_system(debug::System::new(), "debug", DEBUG_PRIORITY);
+
     Engine {
-      world: ServerWorld::new(),
-      physics: Physics::simple_physics(),
-      events: Vec::new(),
-      snapshot_idx: 0,
-      client_snapshot_histories: HashMap::new(),
+      planner: planner
     }
   }
 
-  pub fn tick(&mut self, dt: &time::Duration) -> Vec<ServerPayload> {
-    let mut event_buf = Vec::new();
-    // Yank all the events off the queue, replacing with a new queue
-    mem::swap(&mut self.events, &mut event_buf);
-
-    let mut outbound: Vec<OutboundEvent> = Vec::new();
-
-
-    event_buf.drain(..).foreach(|event| outbound.append(&mut self.handle(event)));
-
-    self.physics.tick(&mut self.world, dt);
-
-    self.validate_connections();
-
-    self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
-
-    // TODO: Clean up borrowck nonsense here
-    outbound.extend(self.world.player.iter()
-      .filter(|&(_, ply)| ply.connected)
-      .map(|(uuid, ply)| (uuid.clone(), ply.address.clone()))
-      .collect::<Vec<_>>().into_iter() // Dodge borrow checker
-      .flat_map(|(uuid, addr)| {
-        let addr = addr.clone();
-        self.world.as_client_world(&uuid).fragment_to_events(self.snapshot_idx)
-          .into_iter().map(|partial| (addr.clone(), partial))
-          .collect::<Vec<_>>().into_iter() // Dodging borrow checker again
-      })
-      .map(|(addr, event)| OutboundEvent::Directed{dest: addr, event: event})
-    );
-
-    // TODO: optimize this iter usage, its inefficient because of the transformations
-    //   to vector and back
-    let all_addrs = self.world.all_connected_addrs();
-    outbound.into_iter()
-      .flat_map(|outbound| outbound.to_server_payloads(&all_addrs))
-      .collect::<Vec<ServerPayload>>()
-  }
-
-  fn handle(&mut self, payload: ClientPayload) -> Vec<OutboundEvent> {
-    use common::protocol::ClientNetworkEvent::*;
-
-    if let Some(ply_uuid) = self.world.addr_to_player.get(&payload.address).map(|a| a.clone()) {
-      self.world.update_player_last_msg(&ply_uuid);
-    }
-
-    match payload.event {
-      Connect => self.on_connect(payload.address),
-      Disconnect => self.on_disconnect(payload.address),
-      KeepAlive => self.on_keep_alive(payload.address),
-      SnapshotAck(seq_num) => self.on_snapshot_ack(payload.address, seq_num),
-      DomainEvent(ClientEvent::SelfMove {x_d, y_d, z_d}) => self.on_self_move(payload.address, (x_d, y_d, z_d))
-    }
-  }
-
-  fn validate_connections(&mut self) -> Vec<OutboundEvent> {
-    let timeout = Duration::seconds(5);
-    let now = time::now();
-
-    self.world.player.values()
-      .filter(|ply| ply.connected && timeout < now - ply.last_msg)
-      .map(|ply| ply.address.clone())
-      .collect::<Vec<_>>()   // Resolve borrow issue for subsequent flatmap
-      .into_iter()
-      .flat_map(|addr| self.on_disconnect(addr))
-      .collect()
+  pub fn tick(&mut self, dt: &time::Duration) {
+    self.planner.dispatch(Delta {dt: dt.clone(), now: time::now()});
   }
 }

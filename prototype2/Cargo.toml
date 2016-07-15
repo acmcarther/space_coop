@@ -14,4 +14,4 @@ path = "./server"
 
 [[bin]]
 name = "space_coop"
-path = "src/bin.rs"
+path = "./src/bin.rs"

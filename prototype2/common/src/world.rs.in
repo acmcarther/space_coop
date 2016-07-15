@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
-
-use uuid::Uuid;
+use specs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Model {
@@ -69,7 +68,7 @@ pub struct ClientWorld {
   pub disabled: HashSet<Entity>
 }
 
-pub type Entity = Uuid;
+pub type Entity = String;
 
 /**
  * An aspect for an entity that can be rendered by a Renderer.
@@ -90,6 +89,10 @@ impl RenderAspect {
   }
 }
 
+impl specs::Component for RenderAspect {
+  type Storage = specs::VecStorage<RenderAspect>;
+}
+
 /**
  * An aspect for an entity that has a physical presense in the scene
  *
@@ -106,4 +109,21 @@ impl PhysicalAspect{
   pub fn new(pos: (f32, f32, f32), vel: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
     PhysicalAspect { pos: pos, vel: vel, anchored: anchored }
   }
+}
+
+impl specs::Component for PhysicalAspect {
+  type Storage = specs::VecStorage<PhysicalAspect>;
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct DisabledAspect;
+
+impl DisabledAspect {
+  pub fn new() -> DisabledAspect {
+    DisabledAspect
+  }
+}
+
+impl specs::Component for DisabledAspect {
+  type Storage = specs::HashMapStorage<DisabledAspect>;
 }

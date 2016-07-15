@@ -1,4 +1,3 @@
-extern crate uuid;
 extern crate time;
 extern crate serde;
 extern crate serde_json;
@@ -6,6 +5,7 @@ extern crate itertools;
 extern crate gaffer_udp;
 extern crate flate2;
 extern crate cgmath;
+extern crate specs;
 
 extern crate common;
 
@@ -15,8 +15,8 @@ extern crate common;
 pub mod engine;
 
 /**
- * Manages network IO
- */
+* Manages network IO
+*/
 pub mod network;
 
 /**
@@ -33,15 +33,13 @@ use std::thread;
 use std::time::Duration as StdDuration;
 
 use time::Duration;
-use itertools::Itertools;
 
 use engine::Engine;
-use network::Network;
 
 pub fn start(port: u16) {
   println!("Starting server on {}", port);
-  let mut engine = Engine::new();
-  let mut network = Network::new(port);
+  // TODO(acmcarther): Passing just 'port' to engine seems weird
+  let mut engine = Engine::new(port);
   let running = true;
   let tick_rate = 66;
   let time_step = 1.0 / (tick_rate as f32); //s
@@ -55,11 +53,8 @@ pub fn start(port: u16) {
     now = time::now();
     if now > next_time {
       let dt = now - last_time;
-      network.recv_pending().into_iter()
-        .foreach(|client_payload| engine.push_event(client_payload));
 
-      engine.tick(&dt).into_iter()
-        .foreach(|server_payload| network.send(server_payload));
+      engine.tick(&dt);
 
       last_time = now;
       next_time = next_time + Duration::milliseconds((time_step * 1000.0) as i64);

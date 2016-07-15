@@ -146,7 +146,7 @@ impl Renderer for OpenGlRenderer {
     use cgmath::{Point3, Vector3};
 
     let camera_focus = world_opt
-      .and_then(|world| world.own_entity.and_then(|ent_uuid| world.physical.get(&ent_uuid)))
+      .and_then(|world| world.own_entity.clone().and_then(|ent_uuid| world.physical.get(&ent_uuid)))
       .map(|physical| physical.pos.clone())
       .unwrap_or((0.0,0.0,0.0));
 

@@ -1,66 +1,44 @@
-use std::collections::{HashMap, HashSet};
-
-use uuid::Uuid;
 use time::{self, Tm};
 
 use common::network;
 use common::world::{
   Model,
-  Entity,
   RenderAspect,
   PhysicalAspect,
+  DisabledAspect
 };
+use common::protocol::ClientPayload;
+use protocol::OutboundEvent;
 
+use specs;
+use engine;
 
-/**
- * A trait for Views to depend on
- * TODO(acmcarther): Why?
- */
-pub trait WorldContainer {
-  fn world(&self) -> &ServerWorld;
-  fn mut_world(&mut self) -> &mut ServerWorld;
-}
-
-impl WorldContainer for ServerWorld {
-  fn world(&self) -> &ServerWorld { self }
-  fn mut_world(&mut self) -> &mut ServerWorld { self }
-}
-
-/**
- * Contains all of the state for world objects.
- *
- * A high fidelity version of the ClientWorld
- */
-#[derive(Debug, Clone)]
 pub struct ServerWorld {
-  // Supplemental state for efficient access
-  pub addr_to_player: HashMap<network::Address, Uuid>,
-
-  // Conventional world state
-  pub entities: Vec<Entity>,
-  pub rendered: HashMap<Entity, RenderAspect>,
-  pub collidable: HashMap<Entity, CollisionAspect>,
-  pub physical: HashMap<Entity, PhysicalAspect>,
-  pub disabled: HashSet<Entity>,
-  pub player: HashMap<Entity, PlayerAspect>,
-  pub controller: HashMap<Entity, ControllerAspect>
+  pub world: specs::World,
 }
 
 impl ServerWorld {
   pub fn new() -> ServerWorld {
-    ServerWorld {
-      // Supplemental state for efficient access
-      addr_to_player: HashMap::new(),
+    let mut w = specs::World::new();
 
-      // Conventional world state
-      entities: Vec::new(),
-      rendered: HashMap::new(),
-      collidable: HashMap::new(),
-      physical: HashMap::new(),
-      disabled: HashSet::new(),
-      controller: HashMap::new(),
-      player: HashMap::new()
-    }
+    w.register::<RenderAspect>();
+    w.register::<CollisionAspect>();
+    w.register::<PhysicalAspect>();
+    w.register::<DisabledAspect>();
+    w.register::<PlayerAspect>();
+    w.register::<ControllerAspect>();
+    // TODO(acmcarther): put these where they belong (like in the service that needs them?)
+    // also check that the type isn't already taken
+    // Networking ///////////////////////////////////
+    w.add_resource::<Vec<OutboundEvent>>(Vec::new());
+    w.add_resource::<Vec<ClientPayload>>(Vec::new());
+    // Eventing ////////////////////////////////////
+    w.add_resource::<Vec<engine::player::connection::ConnectEvent>>(Vec::new());
+    w.add_resource::<Vec<engine::player::snapshot::SnapshotAckEvent>>(Vec::new());
+    w.add_resource::<Vec<engine::player::input::InputEvent>>(Vec::new());
+    w.add_resource::<Vec<engine::io::health_check::HealthyEvent>>(Vec::new());
+    // TODO(acmcarther): Thread tuning? This 2 is arbitrary
+    ServerWorld { world: w }
   }
 }
 
@@ -82,6 +60,10 @@ impl PlayerAspect {
   }
 }
 
+impl specs::Component for PlayerAspect {
+  type Storage = specs::HashMapStorage<PlayerAspect>;
+}
+
 /**
  * An aspect for an entity that "possesses" another entity.
  *
@@ -91,13 +73,17 @@ impl PlayerAspect {
  */
 #[derive(Debug, Clone)]
 pub struct ControllerAspect {
-  pub subject: Entity,
+  pub subject: specs::Entity,
 }
 
 impl ControllerAspect {
-  pub fn new(subject: Entity) -> ControllerAspect {
+  pub fn new(subject: specs::Entity) -> ControllerAspect {
     ControllerAspect { subject: subject }
   }
+}
+
+impl specs::Component for ControllerAspect {
+  type Storage = specs::HashMapStorage<ControllerAspect>;
 }
 
 /**
@@ -116,3 +102,6 @@ impl CollisionAspect{
   }
 }
 
+impl specs::Component for CollisionAspect {
+  type Storage = specs::VecStorage<CollisionAspect>;
+}

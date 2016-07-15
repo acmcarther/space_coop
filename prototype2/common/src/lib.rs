@@ -1,7 +1,7 @@
-extern crate uuid;
 extern crate serde;
 extern crate serde_json;
 extern crate gaffer_udp;
+extern crate specs;
 
 /**
  * Describes outbound and inbound payloads
