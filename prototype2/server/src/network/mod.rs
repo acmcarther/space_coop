@@ -1,16 +1,13 @@
 pub mod fragmentation;
 
-pub use self::fragmentation::{Fragmentable};
+pub use self::fragmentation::Fragmentable;
 
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
 use itertools::Unfold;
 use serde_json;
 
-use common::protocol::{
-  ClientPayload,
-  ServerPayload,
-};
+use common::protocol::{ClientPayload, ServerPayload};
 
 /**
  * Manages the connection to the game clients

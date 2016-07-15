@@ -50,7 +50,8 @@ impl specs::System<engine::Delta> for System {
 
     // Build address to entity mapping for convenience
     let mut addr_to_entity = HashMap::new();
-    (&entities, &players).iter()
+    (&entities, &players)
+      .iter()
       .filter(|&(_, ref player)| player.connected)
       .foreach(|(entity, player)| {
         addr_to_entity.insert(player.address.clone(), entity.clone());

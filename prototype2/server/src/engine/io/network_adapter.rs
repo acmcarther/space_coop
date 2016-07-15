@@ -16,14 +16,12 @@ use itertools::Itertools;
  * Output: InboundEvent
  */
 pub struct System {
-  network: Network
+  network: Network,
 }
 
 impl System {
   pub fn new(port: u16) -> System {
-    System {
-      network: Network::new(port)
-    }
+    System { network: Network::new(port) }
   }
 }
 

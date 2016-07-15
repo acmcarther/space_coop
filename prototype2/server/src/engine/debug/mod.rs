@@ -16,9 +16,6 @@ impl System {
 
 impl specs::System<engine::Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
-    let (_, _) =  arg.fetch(|w| {
-      (w.entities(),
-       w.read::<PlayerAspect>(),)
-    });
+    let (_, _) = arg.fetch(|w| (w.entities(), w.read::<PlayerAspect>()));
   }
 }

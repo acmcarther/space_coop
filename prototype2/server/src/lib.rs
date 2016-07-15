@@ -9,24 +9,20 @@ extern crate specs;
 
 extern crate common;
 
-/**
- * Manages main loop and coordination of application components
- */
+/// Manages main loop and coordination of application components
+///
 pub mod engine;
 
-/**
-* Manages network IO
-*/
+/// Manages network IO
+///
 pub mod network;
 
-/**
- * Manages game state
- */
+/// Manages game state
+///
 pub mod world;
 
-/**
- * Describes server outbound payloads
- */
+/// Describes server outbound payloads
+///
 pub mod protocol;
 
 use std::thread;

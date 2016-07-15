@@ -9,26 +9,21 @@ use std::net::SocketAddr;
 
 use protocol::OutboundEvent;
 use common::protocol::ServerNetworkEvent;
-use common::world::{
-  ClientWorld,
-  PhysicalAspect,
-  RenderAspect,
-  DisabledAspect,
-};
-use world::{
-  ControllerAspect,
-  PlayerAspect
-};
+use common::world::{ClientWorld, DisabledAspect, PhysicalAspect, RenderAspect};
+use world::{ControllerAspect, PlayerAspect};
 
 #[allow(dead_code)]
 pub struct SnapshotAckEvent {
   address: SocketAddr,
-  idx: u16
+  idx: u16,
 }
 
 impl SnapshotAckEvent {
   pub fn new(address: SocketAddr, idx: u16) -> SnapshotAckEvent {
-    SnapshotAckEvent { address: address, idx: idx }
+    SnapshotAckEvent {
+      address: address,
+      idx: idx,
+    }
   }
 }
 
@@ -56,7 +51,14 @@ impl specs::System<engine::Delta> for System {
 
     self.snapshot_idx = self.snapshot_idx.wrapping_add(1);
 
-    let (mut snapshot_ack_events, entities, player, physical, render, disabled, controller, mut outbound_events) = arg.fetch(|w| {
+    let (mut snapshot_ack_events,
+         entities,
+         player,
+         physical,
+         render,
+         disabled,
+         controller,
+         mut outbound_events) = arg.fetch(|w| {
       (w.write_resource::<Vec<SnapshotAckEvent>>(),
        w.entities(),
        w.read::<PlayerAspect>(),
@@ -98,7 +100,8 @@ impl specs::System<engine::Delta> for System {
     });
 
     // Add outbound state snapshot events per player
-    outbound_events.extend((&player, &entities).iter()
+    outbound_events.extend((&player, &entities)
+      .iter()
       .filter(|&(ply, _)| ply.connected)
       .flat_map(|(ply, entity)| {
         let client_world = ClientWorld {
@@ -106,12 +109,20 @@ impl specs::System<engine::Delta> for System {
           entities: entity_vec.clone(),
           rendered: render_map.clone(),
           physical: physical_map.clone(),
-          disabled: disabled_map.clone()
+          disabled: disabled_map.clone(),
         };
 
         client_world.fragment_to_events(self.snapshot_idx)
-          .into_iter().map(|partial| (ply.address.clone(), partial)).collect::<Vec<(SocketAddr, ServerNetworkEvent)>>().into_iter()
+          .into_iter()
+          .map(|partial| (ply.address.clone(), partial))
+          .collect::<Vec<(SocketAddr, ServerNetworkEvent)>>()
+          .into_iter()
       })
-      .map(|(addr, event)| OutboundEvent::Directed{dest: addr, event: event}));
+      .map(|(addr, event)| {
+        OutboundEvent::Directed {
+          dest: addr,
+          event: event,
+        }
+      }));
   }
 }

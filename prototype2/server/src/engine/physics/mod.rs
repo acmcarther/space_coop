@@ -1,10 +1,7 @@
 use specs;
 use engine;
 
-use common::world::{
-  PhysicalAspect,
-  DisabledAspect
-};
+use common::world::{DisabledAspect, PhysicalAspect};
 
 /**
  * Simulates the world.
@@ -26,12 +23,11 @@ impl specs::System<engine::Delta> for System {
     use itertools::Itertools;
     use std::ops::Not;
 
-    let (mut physicals, disabled) = arg.fetch(|w| {
-      (w.write::<PhysicalAspect>(),
-       w.read::<DisabledAspect>())
-    });
+    let (mut physicals, disabled) =
+      arg.fetch(|w| (w.write::<PhysicalAspect>(), w.read::<DisabledAspect>()));
 
-    (&mut physicals, disabled.not()).iter()
+    (&mut physicals, disabled.not())
+      .iter()
       .map(|(physical, _)| physical)
       .foreach(|physical| {
         let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
