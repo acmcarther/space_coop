@@ -14,30 +14,25 @@ extern crate gfx_device_gl;
 
 extern crate common;
 
-/**
- * View-related structs and traits
- */
+/// View-related structs and traits
+///
 pub mod renderer;
 
-/**
- * Input related structs and traits, strongly correlatted to Renderers
- */
+/// Input related structs and traits, strongly correlatted to Renderers
+///
 pub mod controller;
 
-/**
- * Managment of client/server communication
- */
+/// Managment of client/server communication
+///
 pub mod network;
 
-/**
- * Game state and logic management
- */
+/// Game state and logic management
+///
 pub mod engine;
 
-/**
- * Grab-bag of enums with semantic meaning
- * TODO: Put these somewhere more domain-appropriate
- */
+/// Grab-bag of enums with semantic meaning
+/// TODO: Put these somewhere more domain-appropriate
+///
 pub mod protocol;
 
 use std::thread;
@@ -65,7 +60,10 @@ pub fn start(port: u16, server_addr: SocketAddr) {
 
   println!("Trying to connect");
   let success = network.connect();
-  if !success { println!("Could not connect to {}", server_addr.to_string()); return }
+  if !success {
+    println!("Could not connect to {}", server_addr.to_string());
+    return;
+  }
 
   let mut next_time = time::now();
   let mut next_keepalive_time = time::now();
@@ -73,7 +71,8 @@ pub fn start(port: u16, server_addr: SocketAddr) {
   println!("Client Started!");
   while running {
     if time::now() > next_time {
-      network.recv_pending().into_iter()
+      network.recv_pending()
+        .into_iter()
         .foreach(|server_payload| engine.push_event(server_payload));
 
       if time::now() > next_keepalive_time {
@@ -83,7 +82,9 @@ pub fn start(port: u16, server_addr: SocketAddr) {
 
       let (internal_e, external_e) = engine.tick();
 
-      internal_e.into_iter().foreach(|event| if event == InternalClientEvent::Exit { running = false;});
+      internal_e.into_iter().foreach(|event| if event == InternalClientEvent::Exit {
+        running = false;
+      });
       external_e.into_iter().foreach(|client_payload| network.send(client_payload));
 
       next_time = next_time + Duration::milliseconds((time_step * 1000.0) as i64);

@@ -1,6 +1,6 @@
 pub mod defragmentation;
 
-pub use self::defragmentation::{FragmentBuffer, Defragmentable};
+pub use self::defragmentation::{Defragmentable, FragmentBuffer};
 
 use std::net::SocketAddr;
 use std::thread;
@@ -11,7 +11,7 @@ use gaffer_udp::non_blocking::GafferSocket;
 use itertools::Unfold;
 use serde_json;
 
-use common::protocol::{ClientNetworkEvent, ServerPayload, ServerNetworkEvent};
+use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, ServerPayload};
 
 /**
  * Manages the connection to the game server
@@ -22,7 +22,7 @@ use common::protocol::{ClientNetworkEvent, ServerPayload, ServerNetworkEvent};
  */
 pub struct Network {
   socket: GafferSocket,
-  server_addr: SocketAddr
+  server_addr: SocketAddr,
 }
 
 impl Network {
@@ -30,7 +30,7 @@ impl Network {
     let sock = GafferSocket::bind(("0.0.0.0", port)).unwrap();
     Network {
       socket: sock,
-      server_addr: server_addr
+      server_addr: server_addr,
     }
   }
 
@@ -49,20 +49,30 @@ impl Network {
   }
 
   pub fn connect(&mut self) -> bool {
-    self.try_send(ClientNetworkEvent::Connect, ServerNetworkEvent::Connected, 5)
+    self.try_send(ClientNetworkEvent::Connect,
+                  ServerNetworkEvent::Connected,
+                  5)
   }
   pub fn disconnect(&mut self) -> bool {
-    self.try_send(ClientNetworkEvent::Disconnect, ServerNetworkEvent::Disconnected, 5)
+    self.try_send(ClientNetworkEvent::Disconnect,
+                  ServerNetworkEvent::Disconnected,
+                  5)
   }
 
-  fn try_send(&mut self, event: ClientNetworkEvent, expected_event: ServerNetworkEvent, tries: u32) -> bool {
+  fn try_send(&mut self,
+              event: ClientNetworkEvent,
+              expected_event: ServerNetworkEvent,
+              tries: u32)
+              -> bool {
     let mut tries_remaining = tries;
     self.send(event.clone());
     thread::sleep(StdDuration::from_millis(200));
 
     while tries_remaining > 0 {
       let success = self.recv_pending().into_iter().any(|payload| payload == expected_event);
-      if success {return true}
+      if success {
+        return true;
+      }
       tries_remaining = tries_remaining - 1;
       self.send(event.clone());
       thread::sleep(StdDuration::from_millis(200));

@@ -2,12 +2,15 @@ use renderer::opengl::primitive::Vertex;
 
 pub struct Model {
   pub vertices: Vec<Vertex>,
-  pub indices: Vec<u16>
+  pub indices: Vec<u16>,
 }
 
 impl Model {
   pub fn new(v: Vec<Vertex>, i: Vec<u16>) -> Model {
-    Model { vertices: v, indices: i }
+    Model {
+      vertices: v,
+      indices: i,
+    }
   }
 }
 

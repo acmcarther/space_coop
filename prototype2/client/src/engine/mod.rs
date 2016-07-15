@@ -9,7 +9,7 @@ use cgmath::Quaternion;
 use controller::Controller;
 use renderer::Renderer;
 use renderer::opengl::OpenGlRenderer;
-//use client::renderer::console::ConsoleRenderer;
+// use client::renderer::console::ConsoleRenderer;
 use protocol::InternalClientEvent;
 use network::FragmentBuffer;
 
@@ -18,17 +18,19 @@ use common::world::ClientWorld;
 
 pub struct Engine {
   renderer: OpenGlRenderer,
-  //renderer: ConsoleRenderer,
+  // renderer: ConsoleRenderer,
   controller: Controller,
   events: Vec<ServerNetworkEvent>,
   partial_snapshot: FragmentBuffer,
   world: Option<ClientWorld>,
   camera_pos: (f32, f32, f32),
-  camera_orient: Quaternion<f32>
+  camera_orient: Quaternion<f32>,
 }
 
 impl Engine {
-  pub fn push_event(&mut self, event: ServerNetworkEvent) { self.events.push(event) }
+  pub fn push_event(&mut self, event: ServerNetworkEvent) {
+    self.events.push(event)
+  }
 
   pub fn new() -> Engine {
     Engine {
@@ -38,7 +40,7 @@ impl Engine {
       partial_snapshot: FragmentBuffer::None,
       world: None,
       camera_pos: (3.0, -10.0, 6.0),
-      camera_orient: Quaternion::one()
+      camera_orient: Quaternion::one(),
     }
   }
 
@@ -58,8 +60,8 @@ impl Engine {
       use protocol::InternalClientEvent::CameraMove;
 
       match event {
-        &CameraMove(ref dir)  => self.on_camera_event(dir),
-        _ => {}
+        &CameraMove(ref dir) => self.on_camera_event(dir),
+        _ => {},
       }
     });
 
@@ -73,7 +75,7 @@ impl Engine {
 
     match event {
       Snapshot(SnapshotEvent::PartialSnapshot(data)) => self.on_partial_snapshot(data),
-      _ => Vec::new()
+      _ => Vec::new(),
     }
   }
 }

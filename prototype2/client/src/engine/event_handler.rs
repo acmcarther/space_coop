@@ -5,9 +5,10 @@ use common::protocol::{ClientNetworkEvent, StateFragment};
 use common::world::ClientWorld;
 
 // TODO: Clarify the purpose of this object
-// As of right now, it handles a couple of kinds of "events" and mutates the world
+// As of right now, it handles a couple of kinds of "events" and mutates the
+// world
 // SEE: client::engine::event_handler
-pub trait EventHandler  {
+pub trait EventHandler {
   fn on_partial_snapshot(&mut self, data: StateFragment) -> Vec<ClientNetworkEvent>;
   fn on_camera_event(&mut self, dir: &CameraDir);
 }
@@ -27,10 +28,10 @@ impl EventHandler for Engine {
 
   fn on_camera_event(&mut self, dir: &CameraDir) {
     match dir {
-      &CameraDir::Forward  => self.camera_pos.0 = self.camera_pos.0 + 0.1,
+      &CameraDir::Forward => self.camera_pos.0 = self.camera_pos.0 + 0.1,
       &CameraDir::Backward => self.camera_pos.0 = self.camera_pos.0 - 0.1,
-      &CameraDir::Left     => self.camera_pos.1 = self.camera_pos.1 - 0.1,
-      &CameraDir::Right    => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+      &CameraDir::Left => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+      &CameraDir::Right => self.camera_pos.1 = self.camera_pos.1 - 0.1,
     }
   }
 }

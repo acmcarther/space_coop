@@ -10,7 +10,7 @@ pub enum CameraDir {
   Forward,
   Backward,
   Left,
-  Right
+  Right,
 }
 
 #[derive(PartialEq, Debug, Clone)]

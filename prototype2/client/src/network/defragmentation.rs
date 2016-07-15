@@ -17,7 +17,10 @@ use common::protocol::StateFragment;
  */
 pub enum FragmentBuffer {
   None,
-  Partial { seq_num: u16, pieces: Vec<Option<Vec<u8>>> }
+  Partial {
+    seq_num: u16,
+    pieces: Vec<Option<Vec<u8>>>,
+  },
 }
 
 impl FragmentBuffer {
@@ -45,12 +48,15 @@ impl FragmentBuffer {
           //   I was too lazy to dodge the borrow checker
           pieces[partial.idx as usize] = Some(partial.payload.clone());
         }
-      }
+      },
     }
 
     // Dodging borrow checker
-    // This allows self to be switched to a different variant without borrow checker complaining
-    if replace_self { self.replace_self_with_partial(partial) }
+    // This allows self to be switched to a different variant without borrow
+    // checker complaining
+    if replace_self {
+      self.replace_self_with_partial(partial)
+    }
   }
 
   fn replace_self_with_partial(&mut self, partial: StateFragment) {
@@ -58,7 +64,11 @@ impl FragmentBuffer {
     pieces[partial.idx as usize] = Some(partial.payload);
 
     // Assignment to self ref to change enum variant
-    mem::swap(self, &mut FragmentBuffer::Partial { seq_num: partial.seq_num, pieces: pieces })
+    mem::swap(self,
+              &mut FragmentBuffer::Partial {
+                seq_num: partial.seq_num,
+                pieces: pieces,
+              })
   }
 }
 
@@ -69,7 +79,6 @@ impl FragmentBuffer {
  * - ClientWorld (a subset of ServerWorld) is received over the wire in this manner
  */
 pub trait Defragmentable: Sized {
-
   /**
    * Builds a full object from the FragmentBuffer, returning the sequence number and the object
    */
@@ -92,13 +101,14 @@ impl Defragmentable for ClientWorld {
           let bytes: &[u8] = full_buffer.as_ref();
           let mut string = String::new();
           GzDecoder::new(bytes)
-            .and_then(|mut decoder| decoder.read_to_string(&mut string)).ok()
+            .and_then(|mut decoder| decoder.read_to_string(&mut string))
+            .ok()
             .and_then(|_| serde_json::from_str(&string).ok())
             .map(|res| (seq_num, res))
         } else {
           None
         }
-      }
+      },
     }
   }
 }

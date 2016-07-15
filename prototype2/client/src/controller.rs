@@ -3,8 +3,8 @@ use std::mem;
 use glutin;
 use itertools::Itertools;
 
-use protocol::{InternalClientEvent, CameraDir};
-use common::protocol::{ClientNetworkEvent};
+use protocol::{CameraDir, InternalClientEvent};
+use common::protocol::ClientNetworkEvent;
 
 /**
  * An event generator for "internal" and "external" events
@@ -44,7 +44,7 @@ impl Controller {
       &KeyboardInput(_, _, Some(J)) => self.internal_events.push(CameraMove(CameraDir::Left)),
       &KeyboardInput(_, _, Some(K)) => self.internal_events.push(CameraMove(CameraDir::Backward)),
       &KeyboardInput(_, _, Some(L)) => self.internal_events.push(CameraMove(CameraDir::Right)),
-      _ => {}
+      _ => {},
     }
   }
 
@@ -55,12 +55,48 @@ impl Controller {
     use common::protocol::ClientEvent::SelfMove;
 
     match event {
-      &KeyboardInput(_, _, Some(W)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.1, y_d: 0.0, z_d: 0.0 })),
-      &KeyboardInput(_, _, Some(A)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.1, z_d: 0.0 })),
-      &KeyboardInput(_, _, Some(S)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: -0.1, y_d: 0.0, z_d: 0.0 })),
-      &KeyboardInput(_, _, Some(D)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: -0.1, z_d: 0.0 })),
-      &KeyboardInput(_, _, Some(Q)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.0, z_d: 0.1 })),
-      &KeyboardInput(_, _, Some(E)) => self.outbound_events.push(DomainEvent(SelfMove { x_d: 0.0, y_d: 0.0, z_d: -0.1 })),
+      &KeyboardInput(_, _, Some(W)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: 0.1,
+          y_d: 0.0,
+          z_d: 0.0,
+        }))
+      },
+      &KeyboardInput(_, _, Some(A)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: 0.0,
+          y_d: 0.1,
+          z_d: 0.0,
+        }))
+      },
+      &KeyboardInput(_, _, Some(S)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: -0.1,
+          y_d: 0.0,
+          z_d: 0.0,
+        }))
+      },
+      &KeyboardInput(_, _, Some(D)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: 0.0,
+          y_d: -0.1,
+          z_d: 0.0,
+        }))
+      },
+      &KeyboardInput(_, _, Some(Q)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: 0.0,
+          y_d: 0.0,
+          z_d: 0.1,
+        }))
+      },
+      &KeyboardInput(_, _, Some(E)) => {
+        self.outbound_events.push(DomainEvent(SelfMove {
+          x_d: 0.0,
+          y_d: 0.0,
+          z_d: -0.1,
+        }))
+      },
       _ => {},
     }
   }

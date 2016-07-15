@@ -15,12 +15,13 @@ impl ConsoleRenderer {
 }
 
 impl Renderer for ConsoleRenderer {
-  fn render_world(&mut self, world: &Option<&ClientWorld>, _: &(f32, f32, f32), _: &Quaternion<f32>) {
+  fn render_world(&mut self,
+                  world: &Option<&ClientWorld>,
+                  _: &(f32, f32, f32),
+                  _: &Quaternion<f32>) {
     match world {
-      &Some(world) => {
-        println!("world: {:?}",world)
-      }
-      &None => println!("No World")
+      &Some(world) => println!("world: {:?}", world),
+      &None => println!("No World"),
     }
   }
 }

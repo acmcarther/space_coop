@@ -2,7 +2,7 @@ pub use gfx_app::{ColorFormat, DepthFormat};
 
 // Declare the vertex format suitable for drawing.
 // Notice the use of FixedPoint.
-gfx_vertex_struct!( Vertex {
+gfx_vertex_struct!(Vertex {
   pos: [i8; 4] = "a_Pos",
   tex_coord: [i8; 2] = "a_TexCoord",
 });
@@ -17,9 +17,8 @@ impl Vertex {
 }
 
 // pub struct Locals
-gfx_constant_struct!( Locals {
-  transform: [[f32; 4]; 4] = "u_Transform",
-});
+#[cfg_attr(rustfmt, rustfmt_skip)] // Macro syntax requires trailing comma
+gfx_constant_struct!(Locals { transform: [[f32; 4]; 4] = "u_Transform", });
 
 // pub mod pipe::{Data, Meta}
 gfx_pipeline!( pipe {
@@ -31,4 +30,3 @@ gfx_pipeline!( pipe {
   out_depth: gfx::DepthTarget<DepthFormat> =
     gfx::preset::depth::LESS_EQUAL_WRITE,
 });
-
