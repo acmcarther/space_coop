@@ -88,10 +88,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "cgmath"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "num-traits 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "client"
 version = "0.1.0"
 dependencies = [
- "cgmath 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "common 0.1.0",
  "flate2 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "gaffer_udp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -592,6 +602,102 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "nalgebra"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "ncollide_geometry 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_pipeline 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_procedural 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_transformation 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_utils 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_geometry"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_utils 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_math"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_pipeline"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_geometry 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_utils 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_procedural"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_utils 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_transformation"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_geometry 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_procedural 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_utils 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ncollide_utils"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide_math 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "net2"
 version = "0.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -616,6 +722,17 @@ dependencies = [
 name = "nom"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "nphysics3d"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "num"
@@ -827,6 +944,9 @@ dependencies = [
  "flate2 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "gaffer_udp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.16 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ncollide 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nphysics3d 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.7.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_codegen 0.7.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",

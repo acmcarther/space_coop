@@ -2,6 +2,12 @@ use specs;
 use engine;
 
 use common::world::{DisabledAspect, PhysicalAspect};
+use ncollide::shape::{Cuboid, Plane};
+use nalgebra::Translation;
+use nalgebra::Rotation;
+use nphysics3d::world::World;
+use nphysics3d::object::{RigidBody, RigidBodyHandle};
+use nphysics3d::math::Vector;
 
 /**
  * Simulates the world.
@@ -26,26 +32,53 @@ impl specs::System<engine::Delta> for System {
     let (mut physicals, disabled) =
       arg.fetch(|w| (w.write::<PhysicalAspect>(), w.read::<DisabledAspect>()));
 
-    (&mut physicals, disabled.not())
+    // Configure world
+    let mut world = World::new();
+    world.set_gravity(Vector::new(0.0, -0.981, 0.0));
+
+    // Add base plane
+    let plane_geometry = Plane::new(Vector::new(0.0, 1.0, 0.0));
+    let mut plane = RigidBody::new_static(plane_geometry, 0.3, 0.6);
+
+    world.add_rigid_body(plane);
+
+    let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
+    let sim_objects = (&mut physicals, disabled.not())
       .iter()
-      .map(|(physical, _)| physical)
-      .foreach(|physical| {
-        let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
+      .map(|(physical, _)| {
 
-        // Gravity
-        physical.vel.2 -= 0.98 * dt_s;
+        let mut entity = RigidBody::new_dynamic(Cuboid::new(Vector::new(1.0, 1.0, 1.0)), 1.0, 0.3, 0.6);
 
-        // Integrate vel
-        let (d_x, d_y, d_z) = (physical.vel.0 * dt_s, physical.vel.1 * dt_s, physical.vel.2 * dt_s);
-        physical.pos = (physical.pos.0 + d_x, physical.pos.1 + d_y, physical.pos.2 + d_z);
+        entity.append_rotation(&Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
+        entity.append_translation(&Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
+        entity.set_lin_vel(Vector::new(physical.vel.0, physical.vel.2, physical.vel.1));
+        entity.set_ang_vel(Vector::new(physical.ang_vel.0, physical.ang_vel.1, physical.ang_vel.2));
 
-        // Dont clip into that planet!
-        if physical.pos.2 < 0.0 {
-          if physical.vel.2 < 0.0 {
-            physical.vel.2 = -(0.6 * physical.vel.2);
-          }
-          physical.pos.2 = 0.0;
-        }
+        let handle = world.add_rigid_body(entity);
+        (physical, handle)
       })
+      .collect::<Vec<(&mut PhysicalAspect, RigidBodyHandle<f32>)>>();
+
+      world.step(dt_s);
+
+      sim_objects.into_iter().foreach(|(aspect, handle)| {
+        aspect.vel.0 = handle.borrow().lin_vel().translation().x;
+        aspect.vel.1 = handle.borrow().lin_vel().translation().z;
+        aspect.vel.2 = handle.borrow().lin_vel().translation().y;
+
+        aspect.pos.0 = handle.borrow().position().translation().x;
+        aspect.pos.1 = handle.borrow().position().translation().z;
+        aspect.pos.2 = handle.borrow().position().translation().y;
+
+        aspect.ang_vel.0 = handle.borrow().ang_vel().x;
+        aspect.ang_vel.1 = handle.borrow().ang_vel().y;
+        aspect.ang_vel.2 = handle.borrow().ang_vel().z;
+
+        aspect.ang.0 = handle.borrow().position().rotation().x;
+        aspect.ang.1 = handle.borrow().position().rotation().y;
+        aspect.ang.2 = handle.borrow().position().rotation().z;
+        /**/
+      });
+
   }
 }

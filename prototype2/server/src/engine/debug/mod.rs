@@ -1,7 +1,7 @@
 use specs;
 use engine;
 
-use world::PlayerAspect;
+use common::world::PhysicalAspect;
 
 /**
  * Useful for Debug
@@ -16,6 +16,13 @@ impl System {
 
 impl specs::System<engine::Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
-    let (_, _) = arg.fetch(|w| (w.entities(), w.read::<PlayerAspect>()));
+    use specs::Join;
+    use itertools::Itertools;
+
+    let (entities, physical) = arg.fetch(|w| (w.entities(), w.read::<PhysicalAspect>()));
+
+    (&entities, &physical).iter().foreach(|(ent, phys)| {
+      println!("{:?}: {:?}", ent, phys);
+    });
   }
 }

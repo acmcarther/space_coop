@@ -15,7 +15,9 @@ pub use gfx_app::{ColorFormat, DepthFormat};
 use gfx_app::shade;
 use gfx::handle::{Sampler, ShaderResourceView};
 
-use cgmath::{AffineMatrix3, Matrix4, Quaternion};
+use cgmath::{Matrix4, Quaternion, Rad};
+use cgmath::Euler;
+use cgmath::Transform;
 
 
 use common::world::{ClientWorld, PhysicalAspect};
@@ -49,7 +51,7 @@ impl OpenGlRenderer {
     use gfx::Factory;
     use cgmath;
     use cgmath::{Point3, Vector3};
-    use cgmath::{AffineMatrix3, Transform};
+    use cgmath::Transform;
 
     let builder = glutin::WindowBuilder::new()
       .with_title("Space Coop".to_owned())
@@ -97,14 +99,14 @@ impl OpenGlRenderer {
                               primitive::pipe::new())
       .unwrap();
 
-    let view: AffineMatrix3<f32> = Transform::look_at(Point3::new(1.5f32, -5.0, 3.0),
-                                                      Point3::new(0f32, 0.0, 0.0),
-                                                      Vector3::unit_z());
+    let view: Matrix4<f32> = Transform::look_at(Point3::new(1.5f32, -5.0, 3.0),
+                                                Point3::new(0f32, 0.0, 0.0),
+                                                Vector3::unit_z());
     let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 400.0);
 
     let data = primitive::pipe::Data {
       vbuf: vbuf.clone(),
-      transform: (proj * view.mat).into(), // Totally useless value, is overwritten
+      transform: (proj * view).into(), // Totally useless value, is overwritten
       locals: factory.create_constant_buffer(1),
       color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
       out_color: main_color.clone(),
@@ -117,9 +119,7 @@ impl OpenGlRenderer {
       slice: slice,
       box_color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
       ground_color: (ground_texture_view.clone(), factory.create_sampler(sinfo)),
-
       proj: proj,
-
       encoder: encoder,
       window: window,
       device: device,
@@ -131,16 +131,19 @@ impl OpenGlRenderer {
   }
 
 
-  pub fn render_model(&mut self, physical_aspect: &PhysicalAspect, view: &AffineMatrix3<f32>) {
+  pub fn render_model(&mut self, physical_aspect: &PhysicalAspect, view: &Matrix4<f32>) {
     let (x, y, z) = physical_aspect.pos;
-    let model =
+    let translation =
       // Minor hack to offset rendering for 1/2 height of cube to make bounce look good
       Matrix4::new(1.0, 0.0, 0.0 , 0.0,
                    0.0, 1.0, 0.0,  0.0,
                    0.0, 0.0, 1.0, 0.0,
                    x, y, (z + 1.0), 1.0);
-    self.data.transform = (self.proj * view.mat * model).into();
+    let (rx, ry, rz) = physical_aspect.ang;
+    let rotation = Matrix4::from(Euler::new(Rad::new(-rx), Rad::new(-rz), Rad::new(-ry)));
+    let model = translation.concat(&rotation);
 
+    self.data.transform = (self.proj * view * model).into();
     self.encoder.draw(&self.slice, &self.pso, &self.data);
   }
 }
@@ -150,7 +153,7 @@ impl Renderer for OpenGlRenderer {
                   world_opt: &Option<&ClientWorld>,
                   camera_pos: &(f32, f32, f32),
                   _: &Quaternion<f32>) {
-    use cgmath::{AffineMatrix3, Matrix4, Transform};
+    use cgmath::{Matrix4, Transform};
     use cgmath::{Point3, Vector3};
 
     let camera_focus = world_opt.and_then(|world| {
@@ -168,7 +171,7 @@ impl Renderer for OpenGlRenderer {
     let camera_adj_pos =
       (camera_focus.0 + camera_pos.0, camera_focus.1 + camera_pos.1, camera_focus.2 + camera_pos.2);
 
-    let view: AffineMatrix3<f32> =
+    let view: Matrix4<f32> =
       Transform::look_at(Point3::new(camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2),
                          Point3::new(camera_focus.0, camera_focus.1, camera_focus.2),
                          Vector3::unit_z());
@@ -190,7 +193,7 @@ impl Renderer for OpenGlRenderer {
                              0.0,
                              0.0,
                              1.0);
-    self.data.transform = (self.proj * view.mat * model).into();
+    self.data.transform = (self.proj * view * model).into();
 
     self.encoder.draw(&self.slice, &self.pso, &self.data);
 

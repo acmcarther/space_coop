@@ -102,12 +102,14 @@ impl specs::Component for RenderAspect {
 pub struct PhysicalAspect {
   pub pos: (f32, f32, f32),
   pub vel: (f32, f32, f32),
+  pub ang: (f32, f32, f32),
+  pub ang_vel: (f32, f32, f32),
   pub anchored: bool
 }
 
 impl PhysicalAspect{
   pub fn new(pos: (f32, f32, f32), vel: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
-    PhysicalAspect { pos: pos, vel: vel, anchored: anchored }
+    PhysicalAspect { pos: pos, vel: vel, ang: (0.0, 0.0, 0.0), ang_vel: (0.0, 0.0, 0.0), anchored: anchored }
   }
 }
 

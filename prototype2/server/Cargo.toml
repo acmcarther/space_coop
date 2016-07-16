@@ -18,6 +18,9 @@ time = "0.1.35"
 cgmath = "0.7"
 flate2 = "0.2.13"
 specs = "0.7.0"
+nalgebra = "0.8.2"
+nphysics3d = "0.4.*"
+ncollide = "0.9.1"
 
 [dependencies.common]
 path = "../common"

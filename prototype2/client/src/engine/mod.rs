@@ -5,6 +5,7 @@ use std::mem;
 
 use itertools::Itertools;
 use cgmath::Quaternion;
+use cgmath::prelude::One;
 
 use controller::Controller;
 use renderer::Renderer;

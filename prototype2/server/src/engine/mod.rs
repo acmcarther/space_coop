@@ -29,9 +29,6 @@ pub struct Delta {
 }
 
 impl Engine {
-  // pub fn push_event(&mut self, event: ClientPayload) { self.events.push(event)
-  // }
-
   pub fn new(port: u16) -> Engine {
 
     let neo_world = ServerWorld::new();
