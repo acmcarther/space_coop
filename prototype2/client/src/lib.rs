@@ -15,24 +15,19 @@ extern crate gfx_device_gl;
 extern crate common;
 
 /// View-related structs and traits
-///
 pub mod renderer;
 
 /// Input related structs and traits, strongly correlatted to Renderers
-///
 pub mod controller;
 
 /// Managment of client/server communication
-///
 pub mod network;
 
 /// Game state and logic management
-///
 pub mod engine;
 
 /// Grab-bag of enums with semantic meaning
 /// TODO: Put these somewhere more domain-appropriate
-///
 pub mod protocol;
 
 use std::thread;

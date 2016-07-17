@@ -19,7 +19,6 @@ use cgmath::{Matrix4, Quaternion, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
 
-
 use common::world::{ClientWorld, PhysicalAspect};
 
 use renderer::Renderer;
