@@ -79,16 +79,6 @@ dependencies = [
 
 [[package]]
 name = "cgmath"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "num 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "cgmath"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -939,7 +929,7 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
- "cgmath 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "common 0.1.0",
  "flate2 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "gaffer_udp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
