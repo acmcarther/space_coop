@@ -98,7 +98,7 @@ pub struct CollisionAspect {
 
 impl CollisionAspect{
   pub fn new() -> CollisionAspect {
-    CollisionAspect { model: Model::dummy() }
+    CollisionAspect { model: Model::cube() }
   }
 }
 

@@ -28,6 +28,26 @@ impl Controller {
 
   pub fn handle_events(&mut self, window: &mut glutin::Window) {
     window.poll_events().foreach(|event| {
+
+      match event  {
+        glutin::Event::Focused(true) => {
+          window.set_cursor_state(glutin::CursorState::Hide).unwrap();
+        },
+        glutin::Event::Focused(false) => {
+          window.set_cursor_state(glutin::CursorState::Normal).unwrap();
+        },
+        glutin::Event::MouseMoved(_, _) => {
+          // TODO(acmcarther): This doesn't work right on xmonad unless the window is in the top
+          // left
+          window.set_cursor_state(glutin::CursorState::Hide).unwrap();
+          let (wx, wy) = window.get_position().unwrap();
+          let (ox, oy) = window.get_outer_size().unwrap();
+          let (x, y) = ((wx + ox as i32 / 2), (wy + oy as i32 /2));
+          window.set_cursor_position(x, y).unwrap();
+        },
+        _ => {}
+      }
+
       self.handle_internal(&event);
       self.handle_outbound(&event);
     });

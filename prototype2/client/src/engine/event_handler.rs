@@ -31,7 +31,7 @@ impl EventHandler for Engine {
       &CameraDir::Forward => self.camera_pos.0 = self.camera_pos.0 + 0.1,
       &CameraDir::Backward => self.camera_pos.0 = self.camera_pos.0 - 0.1,
       &CameraDir::Left => self.camera_pos.1 = self.camera_pos.1 - 0.1,
-      &CameraDir::Right => self.camera_pos.1 = self.camera_pos.1 - 0.1,
+      &CameraDir::Right => self.camera_pos.1 = self.camera_pos.1 + 0.1,
     }
   }
 }

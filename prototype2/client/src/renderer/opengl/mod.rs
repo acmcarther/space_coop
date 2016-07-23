@@ -3,6 +3,7 @@ pub mod model;
 pub mod primitive;
 
 use itertools::Itertools;
+use std::collections::HashMap;
 
 use gfx::traits::FactoryExt;
 use gfx::Device;
@@ -11,18 +12,18 @@ use glutin;
 use gfx_window_glutin;
 use gfx_device_gl;
 
-pub use gfx_app::{ColorFormat, DepthFormat};
-use gfx_app::shade;
 use gfx::handle::{Sampler, ShaderResourceView};
 
 use cgmath::{Matrix4, Quaternion, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
+use cgmath::SquareMatrix;
+use cgmath::Matrix;
 
 use common::world::{ClientWorld, PhysicalAspect};
 
 use renderer::Renderer;
-use renderer::opengl::primitive::Locals;
+use renderer::opengl::primitive::{ColorFormat, DepthFormat, Locals};
 use renderer::opengl::primitive::pipe::{Data, Meta};
 
 /**
@@ -30,12 +31,11 @@ use renderer::opengl::primitive::pipe::{Data, Meta};
  */
 pub struct OpenGlRenderer {
   pso: gfx::PipelineState<gfx_device_gl::Resources, Meta>,
-  data: Data<gfx_device_gl::Resources>,
   box_color: (ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
               Sampler<gfx_device_gl::Resources>),
   ground_color: (ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
                  Sampler<gfx_device_gl::Resources>),
-  slice: gfx::Slice<gfx_device_gl::Resources>,
+  models: HashMap<&'static str, (Data<gfx_device_gl::Resources>, gfx::Slice<gfx_device_gl::Resources>)>,
 
   proj: Matrix4<f32>,
 
@@ -58,66 +58,79 @@ impl OpenGlRenderer {
       .with_vsync();
     let (window, device, mut factory, main_color, main_depth) =
       gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
+
     let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
-
     let (width, height) = window.get_inner_size().unwrap();
-
     let aspect_ratio = width as f32 / height as f32;
-
-    let backend = shade::Backend::Glsl(device.get_info().shading_language);
-
     let shader = shader::constants::cube_shader();
-
-    let model = model::constants::cube();
-
-    let (vbuf, slice) =
-      factory.create_vertex_buffer_indexed(model.vertices.as_slice(), model.indices.as_slice());
 
     let box_texels = [[0xC0, 0xA0, 0x20, 0x00]];
     let (_, box_texture_view) =
-      factory.create_texture_const::<gfx::format::Rgba8>(gfx::tex::Kind::D2(1,
-                                                                       1,
-                                                                       gfx::tex::AaMode::Single),
-                                                    &[&box_texels])
-        .unwrap();
+      factory.create_texture_const::<ColorFormat>(gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&box_texels]) .unwrap();
 
     let ground_texels = [[0xA0, 0xA0, 0xC0, 0x00]];
     let (_, ground_texture_view) =
-      factory.create_texture_const::<gfx::format::Rgba8>(gfx::tex::Kind::D2(1,
-                                                                       1,
-                                                                       gfx::tex::AaMode::Single),
-                                                    &[&ground_texels])
-        .unwrap();
+      factory.create_texture_const::<ColorFormat>(gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&ground_texels]) .unwrap();
 
     let sinfo = gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
                                            gfx::tex::WrapMode::Clamp);
 
-    let pso = factory.create_pipeline_simple(shader.vertex.select(backend).unwrap(),
-                              shader.fragment.select(backend).unwrap(),
-                              gfx::state::CullFace::Back,
-                              primitive::pipe::new())
-      .unwrap();
+    let set = factory.create_shader_set(shader.get_vertex(), shader.get_fragment()).unwrap();
+    let pso = factory.create_pipeline_state(&set, gfx::Primitive::TriangleList,
+                                            gfx::state::Rasterizer::new_fill()
+                                              .with_cull_back(),
+                                            primitive::pipe::new())
+                                            .unwrap();
 
     let view: Matrix4<f32> = Transform::look_at(Point3::new(1.5f32, -5.0, 3.0),
                                                 Point3::new(0f32, 0.0, 0.0),
                                                 Vector3::unit_z());
     let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 400.0);
 
-    let data = primitive::pipe::Data {
-      vbuf: vbuf.clone(),
-      transform: (proj * view).into(), // Totally useless value, is overwritten
+    // cube
+    let cube_model = model::constants::cube();
+    let (cube_vbuf, cube_slice) =
+      factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(), cube_model.indices.as_slice());
+    let cube_data = primitive::pipe::Data {
+      vbuf: cube_vbuf.clone(),
+      camera_pv: (proj * view).into(), // Totally useless value, is overwritten
+      obj_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      norm_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      light_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
+      camera_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
       locals: factory.create_constant_buffer(1),
-      color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
+      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), // overwritten on render as well?
       out_color: main_color.clone(),
       out_depth: main_depth.clone(),
     };
 
+    // icosphere 1
+    let ico_model = model::constants::icosphere(2);
+    let (ico_vbuf, ico_slice) =
+      factory.create_vertex_buffer_with_slice(ico_model.vertices.as_slice(), ico_model.indices.as_slice());
+    let ico_data = primitive::pipe::Data {
+      vbuf: ico_vbuf.clone(),
+      camera_pv: (proj * view).into(), // Totally useless value, is overwritten
+      obj_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      norm_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      light_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
+      camera_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
+      locals: factory.create_constant_buffer(1),
+      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), // overwritten on render as well?
+      out_color: main_color.clone(),
+      out_depth: main_depth.clone(),
+    };
+
+    let mut models = HashMap::new();
+
+    models.insert("cube", (cube_data, cube_slice));
+    models.insert("sphere", (ico_data, ico_slice));
+
     OpenGlRenderer {
       pso: pso,
-      data: data,
-      slice: slice,
       box_color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
       ground_color: (ground_texture_view.clone(), factory.create_sampler(sinfo)),
+      models: models,
       proj: proj,
       encoder: encoder,
       window: window,
@@ -130,20 +143,35 @@ impl OpenGlRenderer {
   }
 
 
-  pub fn render_model(&mut self, physical_aspect: &PhysicalAspect, view: &Matrix4<f32>) {
+  pub fn render_model(&mut self, physical_aspect: &PhysicalAspect, view: &Matrix4<f32>, camera_adj_pos: (f32, f32, f32), light_pos: [f32; 3]) {
     let (x, y, z) = physical_aspect.pos;
     let translation =
       // Minor hack to offset rendering for 1/2 height of cube to make bounce look good
-      Matrix4::new(1.0, 0.0, 0.0 , 0.0,
-                   0.0, 1.0, 0.0,  0.0,
-                   0.0, 0.0, 1.0, 0.0,
+      Matrix4::new(1.02, 0.0, 0.0 , 0.0,
+                   0.0, 1.02, 0.0,  0.0,
+                   0.0, 0.0, 1.02, 0.0,
                    x, y, (z + 1.0), 1.0);
     let (rx, ry, rz) = physical_aspect.ang;
     let rotation = Matrix4::from(Euler::new(Rad::new(-rx), Rad::new(-rz), Rad::new(-ry)));
     let model = translation.concat(&rotation);
 
-    self.data.transform = (self.proj * view * model).into();
-    self.encoder.draw(&self.slice, &self.pso, &self.data);
+    let &mut (ref mut data, ref slice) = self.models.get_mut("sphere").unwrap();
+
+    data.camera_pv = (self.proj * view).into();
+    data.obj_to_world = (model).into();
+    data.norm_to_world = (model).invert().unwrap().transpose().into();
+    data.color = self.box_color.clone();
+    data.light_pos = light_pos.clone();
+    data.camera_pos = [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2];
+    let locals = Locals {
+      obj_to_world: data.obj_to_world,
+      camera_pv: data.camera_pv,
+      norm_to_world: (model).invert().unwrap().transpose().into(),
+      light_pos: light_pos,
+      camera_pos: [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2],
+    };
+    self.encoder.update_constant_buffer(&data.locals, &locals);
+    self.encoder.draw(&slice, &self.pso, data);
   }
 }
 
@@ -161,10 +189,11 @@ impl Renderer for OpenGlRenderer {
       .map(|physical| physical.pos.clone())
       .unwrap_or((0.0, 0.0, 0.0));
 
-    let locals = Locals { transform: self.data.transform };
-    self.encoder.update_constant_buffer(&self.data.locals, &locals);
-    self.encoder.clear(&self.data.out_color, [0.1, 0.2, 0.3, 1.0]);
-    self.encoder.clear_depth(&self.data.out_depth, 1.0);
+    {
+      let &mut (ref mut data, _) = self.models.get_mut("cube").unwrap();
+      self.encoder.clear(&data.out_color, [0.1, 0.2, 0.3, 1.0]);
+      self.encoder.clear_depth(&data.out_depth, 1.0);
+    }
 
     // Move the desired camera pos up by the ent pos
     let camera_adj_pos =
@@ -174,7 +203,6 @@ impl Renderer for OpenGlRenderer {
       Transform::look_at(Point3::new(camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2),
                          Point3::new(camera_focus.0, camera_focus.1, camera_focus.2),
                          Vector3::unit_z());
-    self.data.color = self.ground_color.clone();
 
     let model = Matrix4::new(10.0,
                              0.0,
@@ -192,19 +220,34 @@ impl Renderer for OpenGlRenderer {
                              0.0,
                              0.0,
                              1.0);
-    self.data.transform = (self.proj * view * model).into();
 
-    self.encoder.draw(&self.slice, &self.pso, &self.data);
+    let light_pos: [f32; 3] = [1.0, 1.0, 5.0];
+    {
+      let &mut (ref mut data, ref slice) = self.models.get_mut("cube").unwrap();
+      data.color = self.ground_color.clone();
+      data.camera_pv = (self.proj * view).into();
+      data.obj_to_world = (model).into();
+      data.norm_to_world = (model).invert().unwrap().transpose().into();
+      data.light_pos = light_pos.clone();
+      data.camera_pos = [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2];
+      let locals = Locals {
+        obj_to_world: data.obj_to_world,
+        camera_pv: data.camera_pv,
+        norm_to_world: (view * model).invert().unwrap().transpose().into(),
+        light_pos: light_pos.clone(),
+        camera_pos: [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2],
+      };
+      self.encoder.update_constant_buffer(&data.locals, &locals);
+      self.encoder.draw(&slice, &self.pso, data);
+    }
 
-
-    self.data.color = self.box_color.clone();
     // Blot each entity
     if world_opt.is_some() {
       let world = world_opt.unwrap();
       world.entities.iter().foreach(|uuid| {
         match (world.physical.get(uuid), world.rendered.get(uuid), world.disabled.contains(uuid)) {
           // TODO: use rendered_aspect to determine model
-          (Some(physical_aspect), Some(_), false) => self.render_model(physical_aspect, &view),
+          (Some(physical_aspect), Some(_), false) => self.render_model(physical_aspect, &view, camera_adj_pos.clone(), light_pos.clone()),
           _ => {},
         }
       });

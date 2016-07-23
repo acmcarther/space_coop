@@ -1,29 +1,33 @@
-use gfx_app::shade::Source;
+pub struct Shader {
+  glsl_150v: Vec<u8>,
+  glsl_150f: Vec<u8>,
+}
 
-pub struct Shader<'a> {
-  pub vertex: Source<'a>,
-  pub fragment: Source<'a>,
+impl Shader {
+  pub fn get_vertex(&self) -> &[u8] {
+    &self.glsl_150v
+  }
+
+  pub fn get_fragment(&self) -> &[u8] {
+    &self.glsl_150f
+  }
 }
 
 pub mod constants {
-  use gfx_app;
-  use super::Shader;
+  use super::*;
+  use std::fs::File;
+  use std::io::Read;
 
-  pub fn cube_shader<'a>() -> Shader<'a> {
-    let vs = gfx_app::shade::Source {
-      glsl_120: include_bytes!("assets/shaders/cube_120.glslv"),
-      glsl_150: include_bytes!("assets/shaders/cube_150.glslv"),
-      ..gfx_app::shade::Source::empty()
-    };
-    let fs = gfx_app::shade::Source {
-      glsl_120: include_bytes!("assets/shaders/cube_120.glslf"),
-      glsl_150: include_bytes!("assets/shaders/cube_150.glslf"),
-      ..gfx_app::shade::Source::empty()
-    };
+  pub fn cube_shader() -> Shader {
+    let glsl_150v: Vec<u8> = File::open("../assets/shaders/cube_150.glslv").unwrap().bytes().map(|x| x.unwrap()).collect();
+    let glsl_150f: Vec<u8> = File::open("../assets/shaders/cube_150.glslf").unwrap().bytes().map(|x| x.unwrap()).collect();
+
+    assert!(!glsl_150v.is_empty());
+    assert!(!glsl_150f.is_empty());
 
     Shader {
-      vertex: vs,
-      fragment: fs,
+      glsl_150v: glsl_150v,
+      glsl_150f: glsl_150f,
     }
   }
 }

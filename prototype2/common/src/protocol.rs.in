@@ -9,7 +9,7 @@ pub enum ClientNetworkEvent {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ClientEvent {
-  SelfMove {x_d: f32, y_d: f32, z_d: f32}
+  SelfMove {x_d: f32, y_d: f32, z_d: f32},
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

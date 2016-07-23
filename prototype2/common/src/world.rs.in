@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use specs;
+use itertools::Itertools;
+use std::f32;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Model {
@@ -7,8 +9,88 @@ pub struct Model {
   pub indices: Vec<u16>,
 }
 
+pub struct ModelBuilder {
+  pub vertices: Vec<(f32, f32, f32)>,
+  pub faces: Vec<(u16, u16, u16)>,
+}
+
+impl ModelBuilder {
+  pub fn to_model(self) -> Model {
+    Model {
+      vertices: self.vertices,
+      // Not terribly efficient, but easy to implement
+      indices: self.faces.into_iter().flat_map(|(i1, i2, i3)| vec![i1, i2, i3]).collect()
+    }
+  }
+}
+
+fn normalize(point: (f32, f32, f32)) -> (f32, f32, f32) {
+  let (x, y, z) = point;
+  let len = ((x*x + y*y + z*z) as f32).sqrt();
+  (x/len, y/len, z/len)
+}
+
 impl Model {
-  pub fn dummy() -> Model {
+  pub fn icosphere(iterations: u32) -> Model {
+    let radius_part = (1.0 + (5.0 as f32).sqrt()) / 2.0;
+    let mut model_builder = ModelBuilder {
+      vertices: vec![
+        normalize((-1.0, radius_part, 0.0)),
+        normalize((1.0, radius_part, 0.0)),
+        normalize((-1.0, -radius_part, 0.0)),
+        normalize((1.0, -radius_part, 0.0)),
+        normalize((0.0, -1.0, radius_part)),
+        normalize((0.0, 1.0, radius_part)),
+        normalize((0.0, -1.0, -radius_part)),
+        normalize((0.0, 1.0, -radius_part)),
+        normalize((radius_part, 0.0, -1.0)),
+        normalize((radius_part, 0.0, 1.0)),
+        normalize((-radius_part, 0.0, -1.0)),
+        normalize((-radius_part, 0.0, 1.0)),
+      ],
+      faces: vec![
+        (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11),
+        (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+        (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9),
+        (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1),
+      ]
+    };
+
+    let mut mid_point_cache = HashMap::new();
+
+    (0..iterations).foreach(|_| {
+      model_builder.faces = model_builder.faces.clone().into_iter().flat_map(|(i1, i2, i3)|{
+        let mids: Vec<u16> = vec![(i1, i2), (i2, i3), (i3, i1)].into_iter().map(|(first, second)| {
+          let (si1, si2) = if first < second {
+            (first, second)
+          } else {
+            (second, first)
+          };
+          mid_point_cache.entry((si1, si2)).or_insert_with(|| {
+            let &(v1x, v1y, v1z) = model_builder.vertices.get(si1 as usize).unwrap();
+            let &(v2x, v2y, v2z) = model_builder.vertices.get(si2 as usize).unwrap();
+            let result = normalize((v1x + v2x / 2.0, v1y + v2y / 2.0, v1z + v2z / 2.0));
+            model_builder.vertices.push(result);
+            let idx = model_builder.vertices.len() - 1;
+            idx as u16
+          }).clone()
+        }).collect();
+
+        let (m1, m2, m3): (u16, u16, u16) = (mids.get(0).unwrap().clone(), mids.get(1).unwrap().clone(), mids.get(2).unwrap().clone());
+
+        vec![
+          (i1, m1, m3),
+          (i2, m2, m1),
+          (i3, m3, m2),
+          (m1, m2, m3),
+        ]
+      }).collect()
+    });
+
+    model_builder.to_model()
+  }
+
+  pub fn cube() -> Model {
     Model {
       vertices: vec![
         (-1.0, -1.0,  1.0),
@@ -85,7 +167,7 @@ pub struct RenderAspect {
 
 impl RenderAspect {
   pub fn new() -> RenderAspect {
-    RenderAspect { model: Model::dummy() }
+    RenderAspect { model: Model::icosphere(0) }
   }
 }
 
@@ -128,4 +210,27 @@ impl DisabledAspect {
 
 impl specs::Component for DisabledAspect {
   type Storage = specs::HashMapStorage<DisabledAspect>;
+}
+
+#[cfg(test)]
+mod test {
+  use super::*;
+  use itertools::Itertools;
+
+  #[test]
+  fn icosphere_0() {
+    let ico0 = Model::icosphere(0);
+    let ico1 = Model::icosphere(1);
+
+    ico0.vertices.into_iter().foreach(|(x, y, z)| {
+      let r_sq = x*x + y*y + z*z;
+      assert!(1.01 > r_sq && 0.99 < r_sq);
+    });
+
+    ico1.vertices.into_iter().foreach(|(x, y, z)| {
+      let r_sq = x*x + y*y + z*z;
+      assert!(1.01 > r_sq && 0.99 < r_sq);
+    });
+  }
+
 }

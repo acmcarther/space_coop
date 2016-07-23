@@ -14,6 +14,7 @@ impl System {
   }
 }
 
+#[allow(unused_imports, unused_variables)]
 impl specs::System<engine::Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
     use specs::Join;
@@ -21,8 +22,10 @@ impl specs::System<engine::Delta> for System {
 
     let (entities, physical) = arg.fetch(|w| (w.entities(), w.read::<PhysicalAspect>()));
 
+    /*
     (&entities, &physical).iter().foreach(|(ent, phys)| {
       println!("{:?}: {:?}", ent, phys);
     });
+    */
   }
 }

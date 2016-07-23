@@ -2,7 +2,7 @@ use specs;
 use engine;
 
 use common::world::{DisabledAspect, PhysicalAspect};
-use ncollide::shape::{Cuboid, Plane};
+use ncollide::shape::{Ball, Plane};
 use nalgebra::Translation;
 use nalgebra::Rotation;
 use nphysics3d::world::World;
@@ -38,7 +38,7 @@ impl specs::System<engine::Delta> for System {
 
     // Add base plane
     let plane_geometry = Plane::new(Vector::new(0.0, 1.0, 0.0));
-    let mut plane = RigidBody::new_static(plane_geometry, 0.3, 0.6);
+    let plane = RigidBody::new_static(plane_geometry, 0.3, 0.6);
 
     world.add_rigid_body(plane);
 
@@ -47,7 +47,7 @@ impl specs::System<engine::Delta> for System {
       .iter()
       .map(|(physical, _)| {
 
-        let mut entity = RigidBody::new_dynamic(Cuboid::new(Vector::new(1.0, 1.0, 1.0)), 1.0, 0.3, 0.6);
+        let mut entity = RigidBody::new_dynamic(Ball::new(1.0), 1.0, 0.3, 0.6);
 
         entity.append_rotation(&Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
         entity.append_translation(&Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
