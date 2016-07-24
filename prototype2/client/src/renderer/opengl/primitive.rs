@@ -30,7 +30,7 @@ gfx_defines! {
     obj_to_world: gfx::Global<[[f32; 4]; 4]> = "u_objToWorld",
     norm_to_world: gfx::Global<[[f32; 4]; 4]> = "u_normToWorld",
     camera_pos: gfx::Global<[f32; 3]> = "u_cameraPos",
-    light_pos: gfx::Global<[f32; 3]> = "u_lightPos",
+    light_pos: gfx::Global<[f32; 4]> = "u_lightPos",
     //locals: gfx::ConstantBuffer<Locals> = "Locals",
     out_color: gfx::RenderTarget<ColorFormat> = "o_color",
     out_depth: gfx::DepthTarget<DepthFormat> =

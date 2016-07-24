@@ -48,7 +48,7 @@ pub fn build_cube
     obj_to_world: Matrix4::identity().into(),
     norm_to_world: Matrix4::identity().into(),
     camera_pos: [0.0, 0.0, 0.0],
-    light_pos: [0.0, 0.0, 0.0],
+    light_pos: [0.0, 0.0, 0.0, 0.0],
     out_color: color_out,
     out_depth: depth_out,
   })
@@ -78,7 +78,7 @@ pub fn build_icosphere
     obj_to_world: Matrix4::identity().into(),
     norm_to_world: Matrix4::identity().into(),
     camera_pos: [0.0, 0.0, 0.0],
-    light_pos: [0.0, 0.0, 0.0],
+    light_pos: [0.0, 0.0, 0.0, 0.0],
     out_color: color_out,
     out_depth: depth_out,
   })

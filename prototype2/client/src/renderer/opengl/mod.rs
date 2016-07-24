@@ -103,7 +103,7 @@ impl OpenGlRenderer {
                       physical_aspect: &PhysicalAspect,
                       render_aspect: &RenderAspect,
                       camera_adj_pos: (f32, f32, f32)) {
-    let light_pos: [f32; 3] = [1.0, 1.0, 5.0];
+    let light_pos: [f32; 4] = [0.0, 0.0, 5.0, 1.0];
     let (x, y, z) = physical_aspect.pos;
     let translation =
       // Minor hack to offset rendering for 1/2 height of cube to make bounce look good
@@ -178,9 +178,7 @@ impl OpenGlRenderer {
                              0.0,
                              1.0);
 
-    println!("view: {:?}", self.view);
-    println!("proj: {:?}", self.proj);
-    let light_pos: [f32; 3] = [1.0, 1.0, 5.0];
+    let light_pos: [f32; 4] = [0.0, 0.0, 5.0, 1.0];
     {
       let &mut (ref mut data, ref slice) = self.models.get_mut(&ModelType::Cube).unwrap();
       data.camera_pv = (self.proj * self.view).into();
