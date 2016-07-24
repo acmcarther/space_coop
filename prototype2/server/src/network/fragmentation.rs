@@ -5,7 +5,7 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 
 use common::protocol::{ServerNetworkEvent, SnapshotEvent, StateFragment};
-use common::world::ClientWorld;
+use common::world::CommonWorld;
 
 /**
  * Indicates that the implementor can be broken into events to be transmitted over the wire
@@ -17,7 +17,7 @@ pub trait Fragmentable {
   fn fragment_to_events(&self, seq_num: u16) -> Vec<ServerNetworkEvent>;
 }
 
-impl Fragmentable for ClientWorld {
+impl Fragmentable for CommonWorld {
   fn fragment_to_events(&self, seq_num: u16) -> Vec<ServerNetworkEvent> {
     let client_snapshot = serde_json::to_string(&self).unwrap();
     let mut encoder = GzEncoder::new(Vec::new(), Compression::Default);

@@ -1,7 +1,6 @@
 use specs;
 use engine;
-
-use common::world::PhysicalAspect;
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};
 
 /**
  * Useful for Debug
@@ -20,7 +19,12 @@ impl specs::System<engine::Delta> for System {
     use specs::Join;
     use itertools::Itertools;
 
-    let (entities, physical) = arg.fetch(|w| (w.entities(), w.read::<PhysicalAspect>()));
+    let (entities, physical, disableds, renderables) = arg.fetch(|w| {
+      (w.entities(),
+       w.read::<PhysicalAspect>(),
+       w.read::<DisabledAspect>(),
+       w.read::<RenderAspect>())
+    });
 
     // (&entities, &physical).iter().foreach(|(ent, phys)| {
     // println!("{:?}: {:?}", ent, phys);

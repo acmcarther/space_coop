@@ -3,6 +3,7 @@ extern crate serde_json;
 extern crate gaffer_udp;
 extern crate specs;
 extern crate itertools;
+extern crate uuid;
 
 /// Describes outbound and inbound payloads
 ///

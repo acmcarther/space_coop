@@ -9,7 +9,7 @@ use std::net::SocketAddr;
 
 use protocol::OutboundEvent;
 use common::protocol::ServerNetworkEvent;
-use common::world::{ClientWorld, DisabledAspect, PhysicalAspect, RenderAspect};
+use common::world::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use world::{ControllerAspect, PlayerAspect};
 
 #[allow(dead_code)]
@@ -53,6 +53,7 @@ impl specs::System<engine::Delta> for System {
 
     let (mut snapshot_ack_events,
          entities,
+         synchronized,
          player,
          physical,
          render,
@@ -61,6 +62,7 @@ impl specs::System<engine::Delta> for System {
          mut outbound_events) = arg.fetch(|w| {
       (w.write_resource::<Vec<SnapshotAckEvent>>(),
        w.entities(),
+       w.read::<SynchronizedAspect>(),
        w.read::<PlayerAspect>(),
        w.read::<PhysicalAspect>(),
        w.read::<RenderAspect>(),
@@ -72,31 +74,30 @@ impl specs::System<engine::Delta> for System {
     // TODO(acmcarther): Something useful with this event
     snapshot_ack_events.drain(..);
 
-    // TODO(acmcarther): Dejank (making client storage every time is jank as hell)
-    let mut entity_vec = Vec::new();
+    let mut entity_set = HashSet::new();
     let mut physical_map = HashMap::new();
     let mut render_map = HashMap::new();
-    let mut disabled_map = HashSet::new();
+    let mut disabled_map = HashMap::new();
 
     // Get ent list
-    entities.iter().foreach(|entity| {
+    (&entities, &synchronized).iter().foreach(|(_, synchro)| {
       // WARNING: Dropping generation, result may be invalid
-      entity_vec.push(entity.get_id().to_string());
+      entity_set.insert(synchro.clone());
     });
 
     // Translated physical list
-    (&entities, &physical).iter().foreach(|(entity, aspect)| {
-      physical_map.insert(entity.get_id().to_string(), aspect.clone());
+    (&entities, &synchronized, &physical).iter().foreach(|(entity, synchro, aspect)| {
+      physical_map.insert(synchro.clone().to_string(), aspect.clone());
     });
 
     // Translated rendered list
-    (&entities, &render).iter().foreach(|(entity, aspect)| {
-      render_map.insert(entity.get_id().to_string(), aspect.clone());
+    (&entities, &synchronized, &render).iter().foreach(|(entity, synchro, aspect)| {
+      render_map.insert(synchro.clone().to_string(), aspect.clone());
     });
 
     // Translated disabled list
-    (&entities, &disabled).iter().foreach(|(entity, _)| {
-      disabled_map.insert(entity.get_id().to_string());
+    (&entities, &synchronized, &disabled).iter().foreach(|(entity, synchro, aspect)| {
+      disabled_map.insert(synchro.clone().to_string(), aspect.clone());
     });
 
     // Add outbound state snapshot events per player
@@ -104,15 +105,15 @@ impl specs::System<engine::Delta> for System {
       .iter()
       .filter(|&(ply, _)| ply.connected)
       .flat_map(|(ply, entity)| {
-        let client_world = ClientWorld {
-          own_entity: controller.get(entity).map(|v| v.subject.clone().get_id().to_string()),
-          entities: entity_vec.clone(),
+        let common_world = CommonWorld {
+          own_entity: controller.get(entity).map(|v| v.subject.clone()),
+          entities: entity_set.clone(),
           rendered: render_map.clone(),
           physical: physical_map.clone(),
           disabled: disabled_map.clone(),
         };
 
-        client_world.fragment_to_events(self.snapshot_idx)
+        common_world.fragment_to_events(self.snapshot_idx)
           .into_iter()
           .map(|partial| (ply.address.clone(), partial))
           .collect::<Vec<(SocketAddr, ServerNetworkEvent)>>()

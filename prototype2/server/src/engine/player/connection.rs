@@ -2,10 +2,12 @@ use std::net::SocketAddr;
 
 use world::{CollisionAspect, ControllerAspect, PlayerAspect};
 
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 use common::protocol::ServerNetworkEvent;
 use protocol::OutboundEvent;
+
+use std::collections::HashMap;
 
 use specs;
 use engine;
@@ -39,6 +41,8 @@ impl specs::System<engine::Delta> for System {
     use specs::Join;
 
     let (mut player,
+         entities,
+         mut synchronized,
          mut outbound,
          mut events,
          mut controller,
@@ -47,6 +51,8 @@ impl specs::System<engine::Delta> for System {
          mut render,
          mut physical) = arg.fetch(|w| {
       (w.write::<PlayerAspect>(),
+       w.entities(),
+       w.write::<SynchronizedAspect>(),
        w.write_resource::<Vec<OutboundEvent>>(),
        w.write_resource::<Vec<ConnectEvent>>(),
        w.write::<ControllerAspect>(),
@@ -54,6 +60,12 @@ impl specs::System<engine::Delta> for System {
        w.write::<DisabledAspect>(),
        w.write::<RenderAspect>(),
        w.write::<PhysicalAspect>())
+    });
+
+    // Build synchro -> entity map and our set of synchros
+    let mut synchro_to_entity = HashMap::new();
+    (&entities, &synchronized).iter().foreach(|(ent, synchro)| {
+      synchro_to_entity.insert(synchro.clone(), ent.clone());
     });
 
     events.drain(..).foreach(|e| {
@@ -67,7 +79,7 @@ impl specs::System<engine::Delta> for System {
             .next() {
             current_player.connected = true;
             current_player.last_msg = delta.now;
-            disabled.remove(controller.subject);
+            disabled.remove(synchro_to_entity.get(&controller.subject).unwrap().clone());
             // Dodging borrow checker, by returning instead of else-ing
             outbound.push(OutboundEvent::Directed {
               dest: addr,
@@ -81,6 +93,10 @@ impl specs::System<engine::Delta> for System {
           // Else: no existing entity
           let player_ent = arg.create();
           let object_ent = arg.create();
+          let object_synchro = SynchronizedAspect::new();
+          synchronized.insert(player_ent.clone(), SynchronizedAspect::new());
+          synchronized.insert(object_ent.clone(), object_synchro.clone());
+
           player.insert(player_ent.clone(),
                         PlayerAspect {
                           address: addr,
@@ -89,7 +105,7 @@ impl specs::System<engine::Delta> for System {
                         });
 
           controller.insert(player_ent.clone(),
-                            ControllerAspect { subject: object_ent.clone() });
+                            ControllerAspect { subject: object_synchro.clone() });
 
           render.insert(object_ent.clone(), RenderAspect::new());
           physical.insert(object_ent.clone(),
@@ -109,7 +125,8 @@ impl specs::System<engine::Delta> for System {
             .filter(|&(ref player, _)| player.address == addr)
             .next() {
             current_player.connected = false;
-            disabled.insert(controller.subject, DisabledAspect::default());
+            disabled.insert(synchro_to_entity.get(&controller.subject).unwrap().clone(),
+                            DisabledAspect::default());
             // Dodging borrow checker, by returning instead of else-ing
             outbound.push(OutboundEvent::Directed {
               dest: addr,

@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use specs;
 use itertools::Itertools;
-use std::f32;
+use uuid::Uuid;
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Model {
@@ -135,23 +136,6 @@ impl Model {
   }
 }
 
-
-/**
- * Contains all of the state for world objects that the client needs.
- *
- * A lower fidelity version of the ServerWorld.
- */
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ClientWorld {
-  pub own_entity: Option<Entity>,
-  pub entities: Vec<Entity>,
-  pub rendered: HashMap<Entity, RenderAspect>,
-  pub physical: HashMap<Entity, PhysicalAspect>,
-  pub disabled: HashSet<Entity>
-}
-
-pub type Entity = String;
-
 /**
  * An aspect for an entity that can be rendered by a Renderer.
  *
@@ -208,8 +192,52 @@ impl DisabledAspect {
   }
 }
 
+
 impl specs::Component for DisabledAspect {
   type Storage = specs::HashMapStorage<DisabledAspect>;
+}
+
+
+/**
+ * An aspect indicating that this entity is synchronized between the server and client.
+ *
+ * - Synchro on client but not on server is deleted from client
+ * - Synchro on server but not on client is inserted into client
+ * - Shared synchros are updated from snapshot sent by server
+ *
+ * Also used by ControllerAspect to indicate which synchronized entity it controls.
+ */
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Hash)]
+pub struct SynchronizedAspect(Uuid);
+
+impl SynchronizedAspect {
+  pub fn new() -> SynchronizedAspect {
+    SynchronizedAspect(Uuid::new_v4())
+  }
+
+  pub fn new_from(uuid: Uuid) -> SynchronizedAspect {
+    SynchronizedAspect(uuid)
+  }
+}
+
+impl fmt::Display for SynchronizedAspect {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let &SynchronizedAspect(uuid) = self;
+    write!(f, "{}", uuid)
+  }
+}
+
+impl specs::Component for SynchronizedAspect {
+  type Storage = specs::HashMapStorage<SynchronizedAspect>;
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CommonWorld {
+  pub entities: HashSet<SynchronizedAspect>,
+  pub own_entity: Option<SynchronizedAspect>,
+  pub physical: HashMap<String, PhysicalAspect>,
+  pub rendered: HashMap<String, RenderAspect>,
+  pub disabled: HashMap<String, DisabledAspect>,
 }
 
 #[cfg(test)]

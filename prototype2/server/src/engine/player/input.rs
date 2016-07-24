@@ -1,9 +1,10 @@
 use specs;
 use engine;
 use std::net::SocketAddr;
+use std::collections::HashMap;
 
 use common::protocol::ClientEvent;
-use common::world::PhysicalAspect;
+use common::world::{PhysicalAspect, SynchronizedAspect};
 use world::{ControllerAspect, PlayerAspect};
 
 pub struct InputEvent {
@@ -39,11 +40,20 @@ impl specs::System<engine::Delta> for System {
     use specs::Join;
     use itertools::Itertools;
 
-    let (mut client_events, players, controllers, mut physicals) = arg.fetch(|w| {
-      (w.write_resource::<Vec<InputEvent>>(),
-       w.read::<PlayerAspect>(),
-       w.read::<ControllerAspect>(),
-       w.write::<PhysicalAspect>())
+    let (mut client_events, entities, synchronized, players, controllers, mut physicals) =
+      arg.fetch(|w| {
+        (w.write_resource::<Vec<InputEvent>>(),
+         w.entities(),
+         w.read::<SynchronizedAspect>(),
+         w.read::<PlayerAspect>(),
+         w.read::<ControllerAspect>(),
+         w.write::<PhysicalAspect>())
+      });
+
+    // Build synchro -> entity map and our set of synchros
+    let mut synchro_to_entity = HashMap::new();
+    (&entities, &synchronized).iter().foreach(|(ent, synchro)| {
+      synchro_to_entity.insert(synchro.clone(), ent.clone());
     });
 
     client_events.drain(..).foreach(|event| {
@@ -57,7 +67,9 @@ impl specs::System<engine::Delta> for System {
         .next() {
         match event.event {
           ClientEvent::SelfMove { x_d, y_d, z_d } => {
-            let mut physical = physicals.get_mut(controller.subject.clone()).unwrap();
+            let mut physical =
+              physicals.get_mut(synchro_to_entity.get(&controller.subject).unwrap().clone())
+                .unwrap();
             physical.vel.0 = physical.vel.0 + x_d;
             physical.vel.1 = physical.vel.1 + y_d;
             physical.vel.2 = physical.vel.2 + z_d;

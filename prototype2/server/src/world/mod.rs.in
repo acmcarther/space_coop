@@ -5,7 +5,8 @@ use common::world::{
   Model,
   RenderAspect,
   PhysicalAspect,
-  DisabledAspect
+  DisabledAspect,
+  SynchronizedAspect,
 };
 use common::protocol::ClientPayload;
 use protocol::OutboundEvent;
@@ -27,6 +28,7 @@ impl ServerWorld {
     w.register::<DisabledAspect>();
     w.register::<PlayerAspect>();
     w.register::<ControllerAspect>();
+    w.register::<SynchronizedAspect>();
     // TODO(acmcarther): put these where they belong (like in the service that needs them?)
     // also check that the type isn't already taken
     // Networking ///////////////////////////////////
@@ -37,7 +39,6 @@ impl ServerWorld {
     w.add_resource::<Vec<engine::player::snapshot::SnapshotAckEvent>>(Vec::new());
     w.add_resource::<Vec<engine::player::input::InputEvent>>(Vec::new());
     w.add_resource::<Vec<engine::io::health_check::HealthyEvent>>(Vec::new());
-    // TODO(acmcarther): Thread tuning? This 2 is arbitrary
     ServerWorld { world: w }
   }
 }
@@ -73,11 +74,11 @@ impl specs::Component for PlayerAspect {
  */
 #[derive(Debug, Clone)]
 pub struct ControllerAspect {
-  pub subject: specs::Entity,
+  pub subject: SynchronizedAspect,
 }
 
 impl ControllerAspect {
-  pub fn new(subject: specs::Entity) -> ControllerAspect {
+  pub fn new(subject: SynchronizedAspect) -> ControllerAspect {
     ControllerAspect { subject: subject }
   }
 }

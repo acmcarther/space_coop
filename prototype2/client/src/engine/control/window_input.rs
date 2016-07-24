@@ -1,10 +1,10 @@
 use specs;
+use glutin;
+
 use engine;
 
-use common::world::PhysicalAspect;
-
 /**
- * Useful for Debug
+ * Dumps window inputs from glutin
  */
 pub struct System;
 
@@ -20,11 +20,11 @@ impl specs::System<engine::Delta> for System {
     use specs::Join;
     use itertools::Itertools;
 
-    let (entities, physical) = arg.fetch(|w| (w.entities(), w.read::<PhysicalAspect>()));
+    let (window, mut glutin_events) =
+      arg.fetch(|w| {
+        (w.write_resource::<glutin::Window>(), w.write_resource::<Vec<glutin::Event>>())
+      });
 
-    // (&entities, &physical).iter().foreach(|(ent, phys)| {
-    // println!("{:?}: {:?}", ent, phys);
-    // });
-    //
+    glutin_events.extend(window.poll_events());
   }
 }

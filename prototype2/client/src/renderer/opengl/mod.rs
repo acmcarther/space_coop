@@ -2,11 +2,9 @@ pub mod shader;
 pub mod model;
 pub mod primitive;
 
-use itertools::Itertools;
 use std::collections::HashMap;
 
 use gfx::traits::FactoryExt;
-use gfx::Device;
 use gfx;
 use glutin;
 use gfx_window_glutin;
@@ -14,17 +12,18 @@ use gfx_device_gl;
 
 use gfx::handle::{Sampler, ShaderResourceView};
 
-use cgmath::{Matrix4, Quaternion, Rad};
+use cgmath::{Matrix4, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
 use cgmath::SquareMatrix;
 use cgmath::Matrix;
 
-use common::world::{ClientWorld, PhysicalAspect};
+use common::world::PhysicalAspect;
 
-use renderer::Renderer;
 use renderer::opengl::primitive::{ColorFormat, DepthFormat, Locals};
 use renderer::opengl::primitive::pipe::{Data, Meta};
+use gfx::handle::{DepthStencilView, RenderTargetView};
+use cgmath;
 
 /**
  * A renderer using an OpenGl window to draw the state of the world
@@ -35,33 +34,22 @@ pub struct OpenGlRenderer {
               Sampler<gfx_device_gl::Resources>),
   ground_color: (ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
                  Sampler<gfx_device_gl::Resources>),
-  models: HashMap<&'static str, (Data<gfx_device_gl::Resources>, gfx::Slice<gfx_device_gl::Resources>)>,
-
+  models: HashMap<&'static str,
+                  (Data<gfx_device_gl::Resources>, gfx::Slice<gfx_device_gl::Resources>)>,
   proj: Matrix4<f32>,
-
-  encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
-  window: glutin::Window,
-  device: gfx_device_gl::Device,
+  view: Matrix4<f32>,
 }
 
 impl OpenGlRenderer {
-  pub fn new() -> OpenGlRenderer {
+  pub fn new(mut factory: gfx_device_gl::Factory,
+             main_color: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+             main_depth: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
+             -> OpenGlRenderer {
     use gfx::traits::FactoryExt;
     use gfx::Factory;
-    use cgmath;
     use cgmath::{Point3, Vector3};
     use cgmath::Transform;
 
-    let builder = glutin::WindowBuilder::new()
-      .with_title("Space Coop".to_owned())
-      .with_dimensions(1024, 768)
-      .with_vsync();
-    let (window, device, mut factory, main_color, main_depth) =
-      gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
-
-    let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
-    let (width, height) = window.get_inner_size().unwrap();
-    let aspect_ratio = width as f32 / height as f32;
     let shader = shader::constants::cube_shader();
 
     let box_texels = [[0xC0, 0xA0, 0x20, 0x00]];
@@ -76,30 +64,31 @@ impl OpenGlRenderer {
                                            gfx::tex::WrapMode::Clamp);
 
     let set = factory.create_shader_set(shader.get_vertex(), shader.get_fragment()).unwrap();
-    let pso = factory.create_pipeline_state(&set, gfx::Primitive::TriangleList,
-                                            gfx::state::Rasterizer::new_fill()
-                                              .with_cull_back(),
-                                            primitive::pipe::new())
-                                            .unwrap();
+    let pso = factory.create_pipeline_state(&set,
+                             gfx::Primitive::TriangleList,
+                             gfx::state::Rasterizer::new_fill().with_cull_back(),
+                             primitive::pipe::new())
+      .unwrap();
 
-    let view: Matrix4<f32> = Transform::look_at(Point3::new(1.5f32, -5.0, 3.0),
-                                                Point3::new(0f32, 0.0, 0.0),
-                                                Vector3::unit_z());
-    let proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 400.0);
+    let dummy_view: Matrix4<f32> = Transform::look_at(Point3::new(1.5f32, -5.0, 3.0),
+                                                      Point3::new(0f32, 0.0, 0.0),
+                                                      Vector3::unit_z());
 
     // cube
     let cube_model = model::constants::cube();
     let (cube_vbuf, cube_slice) =
-      factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(), cube_model.indices.as_slice());
+      factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(),
+                                              cube_model.indices.as_slice());
     let cube_data = primitive::pipe::Data {
       vbuf: cube_vbuf.clone(),
-      camera_pv: (proj * view).into(), // Totally useless value, is overwritten
-      obj_to_world: (proj * view).into(), // Totally useless value, is overwritten
-      norm_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      camera_pv: (dummy_view).into(), // Totally useless value, is overwritten
+      obj_to_world: (dummy_view).into(), // Totally useless value, is overwritten
+      norm_to_world: (dummy_view).into(), // Totally useless value, is overwritten
       light_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
       camera_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
       locals: factory.create_constant_buffer(1),
-      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), // overwritten on render as well?
+      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), /* overwritten on render
+                                                                         * as well? */
       out_color: main_color.clone(),
       out_depth: main_depth.clone(),
     };
@@ -107,16 +96,18 @@ impl OpenGlRenderer {
     // icosphere 1
     let ico_model = model::constants::icosphere(2);
     let (ico_vbuf, ico_slice) =
-      factory.create_vertex_buffer_with_slice(ico_model.vertices.as_slice(), ico_model.indices.as_slice());
+      factory.create_vertex_buffer_with_slice(ico_model.vertices.as_slice(),
+                                              ico_model.indices.as_slice());
     let ico_data = primitive::pipe::Data {
       vbuf: ico_vbuf.clone(),
-      camera_pv: (proj * view).into(), // Totally useless value, is overwritten
-      obj_to_world: (proj * view).into(), // Totally useless value, is overwritten
-      norm_to_world: (proj * view).into(), // Totally useless value, is overwritten
+      camera_pv: (dummy_view).into(), // Totally useless value, is overwritten
+      obj_to_world: (dummy_view).into(), // Totally useless value, is overwritten
+      norm_to_world: (dummy_view).into(), // Totally useless value, is overwritten
       light_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
       camera_pos: [0.0, 0.0, 0.0], // Totally useless value, is overwritten
       locals: factory.create_constant_buffer(1),
-      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), // overwritten on render as well?
+      color: (box_texture_view.clone(), factory.create_sampler(sinfo)), /* overwritten on render
+                                                                         * as well? */
       out_color: main_color.clone(),
       out_depth: main_depth.clone(),
     };
@@ -131,19 +122,18 @@ impl OpenGlRenderer {
       box_color: (box_texture_view.clone(), factory.create_sampler(sinfo)),
       ground_color: (ground_texture_view.clone(), factory.create_sampler(sinfo)),
       models: models,
-      proj: proj,
-      encoder: encoder,
-      window: window,
-      device: device,
+      proj: dummy_view.clone(),
+      view: dummy_view,
     }
   }
 
-  pub fn mut_window(&mut self) -> &mut glutin::Window {
-    &mut self.window
-  }
-
-
-  pub fn render_model(&mut self, physical_aspect: &PhysicalAspect, view: &Matrix4<f32>, camera_adj_pos: (f32, f32, f32), light_pos: [f32; 3]) {
+  pub fn render_model(&mut self,
+                      encoder: &mut gfx::Encoder<gfx_device_gl::Resources,
+                                                 gfx_device_gl::CommandBuffer>,
+                      window: &mut glutin::Window,
+                      physical_aspect: &PhysicalAspect,
+                      camera_adj_pos: (f32, f32, f32)) {
+    let light_pos: [f32; 3] = [1.0, 1.0, 5.0];
     let (x, y, z) = physical_aspect.pos;
     let translation =
       // Minor hack to offset rendering for 1/2 height of cube to make bounce look good
@@ -157,7 +147,7 @@ impl OpenGlRenderer {
 
     let &mut (ref mut data, ref slice) = self.models.get_mut("sphere").unwrap();
 
-    data.camera_pv = (self.proj * view).into();
+    data.camera_pv = (self.proj * self.view).into();
     data.obj_to_world = (model).into();
     data.norm_to_world = (model).invert().unwrap().transpose().into();
     data.color = self.box_color.clone();
@@ -170,36 +160,43 @@ impl OpenGlRenderer {
       light_pos: light_pos,
       camera_pos: [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2],
     };
-    self.encoder.update_constant_buffer(&data.locals, &locals);
-    self.encoder.draw(&slice, &self.pso, data);
+    gfx_window_glutin::update_views(window, &mut data.out_color, &mut data.out_depth);
+    encoder.update_constant_buffer(&data.locals, &locals);
+    encoder.draw(&slice, &self.pso, data);
   }
-}
 
-impl Renderer for OpenGlRenderer {
-  fn render_world(&mut self,
-                  world_opt: &Option<&ClientWorld>,
-                  camera_pos: &(f32, f32, f32),
-                  _: &Quaternion<f32>) {
+  pub fn render_world(&mut self,
+                      encoder: &mut gfx::Encoder<gfx_device_gl::Resources,
+                                                 gfx_device_gl::CommandBuffer>,
+                      window: &mut glutin::Window,
+                      camera_pos: &(f32, f32, f32),
+                      camera_target: Option<(f32, f32, f32)>) {
     use cgmath::{Matrix4, Transform};
     use cgmath::{Point3, Vector3};
 
-    let camera_focus = world_opt.and_then(|world| {
-        world.own_entity.clone().and_then(|ent_uuid| world.physical.get(&ent_uuid))
-      })
-      .map(|physical| physical.pos.clone())
-      .unwrap_or((0.0, 0.0, 0.0));
+    // Calculate projection matrix
+    let (width, height) = window.get_inner_size().unwrap();
+    let aspect_ratio = width as f32 / height as f32;
+    self.proj = cgmath::perspective(cgmath::deg(45.0f32), aspect_ratio, 1.0, 400.0);
+
+    // TODO:(we need the generation for this), for now just aim at ground
+    let camera_focus = camera_target.unwrap_or((0.0, 0.0, 0.0));
 
     {
       let &mut (ref mut data, _) = self.models.get_mut("cube").unwrap();
-      self.encoder.clear(&data.out_color, [0.1, 0.2, 0.3, 1.0]);
-      self.encoder.clear_depth(&data.out_depth, 1.0);
+      encoder.clear(&data.out_color, [0.1, 0.2, 0.3, 1.0]);
+      encoder.clear_depth(&data.out_depth, 1.0);
+
+      gfx_window_glutin::update_views(window, &mut data.out_color, &mut data.out_depth);
+
+      // Get our encoder from the main thread
     }
 
     // Move the desired camera pos up by the ent pos
     let camera_adj_pos =
       (camera_focus.0 + camera_pos.0, camera_focus.1 + camera_pos.1, camera_focus.2 + camera_pos.2);
 
-    let view: Matrix4<f32> =
+    self.view =
       Transform::look_at(Point3::new(camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2),
                          Point3::new(camera_focus.0, camera_focus.1, camera_focus.2),
                          Vector3::unit_z());
@@ -225,7 +222,7 @@ impl Renderer for OpenGlRenderer {
     {
       let &mut (ref mut data, ref slice) = self.models.get_mut("cube").unwrap();
       data.color = self.ground_color.clone();
-      data.camera_pv = (self.proj * view).into();
+      data.camera_pv = (self.proj * self.view).into();
       data.obj_to_world = (model).into();
       data.norm_to_world = (model).invert().unwrap().transpose().into();
       data.light_pos = light_pos.clone();
@@ -233,29 +230,12 @@ impl Renderer for OpenGlRenderer {
       let locals = Locals {
         obj_to_world: data.obj_to_world,
         camera_pv: data.camera_pv,
-        norm_to_world: (view * model).invert().unwrap().transpose().into(),
+        norm_to_world: (self.view * model).invert().unwrap().transpose().into(),
         light_pos: light_pos.clone(),
         camera_pos: [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2],
       };
-      self.encoder.update_constant_buffer(&data.locals, &locals);
-      self.encoder.draw(&slice, &self.pso, data);
+      encoder.update_constant_buffer(&data.locals, &locals);
+      encoder.draw(&slice, &self.pso, data);
     }
-
-    // Blot each entity
-    if world_opt.is_some() {
-      let world = world_opt.unwrap();
-      world.entities.iter().foreach(|uuid| {
-        match (world.physical.get(uuid), world.rendered.get(uuid), world.disabled.contains(uuid)) {
-          // TODO: use rendered_aspect to determine model
-          (Some(physical_aspect), Some(_), false) => self.render_model(physical_aspect, &view, camera_adj_pos.clone(), light_pos.clone()),
-          _ => {},
-        }
-      });
-    }
-
-    self.encoder.flush(&mut self.device);
-
-    self.window.swap_buffers().unwrap();
-    self.device.cleanup();
   }
 }

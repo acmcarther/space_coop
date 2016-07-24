@@ -6,7 +6,7 @@ use flate2::read::GzDecoder;
 use itertools::Itertools;
 
 use common::util::Newness;
-use common::world::ClientWorld;
+use common::world::CommonWorld;
 use common::protocol::StateFragment;
 
 /**
@@ -76,7 +76,7 @@ impl FragmentBuffer {
  * Indicates that the implementor can be constructed from FragmentBuffer partials
  *
  * Implementors:
- * - ClientWorld (a subset of ServerWorld) is received over the wire in this manner
+ * - CommonWorld is received over the wire in this manner
  */
 pub trait Defragmentable: Sized {
   /**
@@ -85,10 +85,10 @@ pub trait Defragmentable: Sized {
   fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)>;
 }
 
-impl Defragmentable for ClientWorld {
+impl Defragmentable for CommonWorld {
   /**
-   * ClientWorld is Gzipped Json. Besides the common work of combining the partial bytes,
-   * the payload must also be un-gzipped, and then parsed into a ClientWorld
+   * CommonWorld is Gzipped Json. Besides the common work of combining the partial bytes,
+   * the payload must also be un-gzipped, and then parsed into a CommonWorld
    */
   fn defragment(buffer: &FragmentBuffer) -> Option<(u16, Self)> {
     match buffer {
