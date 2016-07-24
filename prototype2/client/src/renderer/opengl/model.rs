@@ -1,4 +1,14 @@
-use renderer::opengl::primitive::Vertex;
+use gfx;
+use gfx_device_gl;
+
+use gfx::handle::{DepthStencilView, RenderTargetView};
+use gfx::handle::ShaderResourceView;
+use gfx::Factory;
+use gfx::traits::FactoryExt;
+use cgmath::{Matrix4, SquareMatrix};
+
+use renderer::opengl::primitive::{ColorFormat, DepthFormat /* Locals */};
+use renderer::opengl::primitive::{self, Vertex};
 
 #[derive(Debug)]
 pub struct Model {
@@ -15,55 +25,88 @@ impl Model {
   }
 }
 
+pub fn build_cube
+  (factory: &mut gfx_device_gl::Factory,
+   texture_view: ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
+   color_out: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+   depth_out: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
+   -> (gfx::Slice<gfx_device_gl::Resources>, primitive::pipe::Data<gfx_device_gl::Resources>) {
+  let cube_model = constants::cube();
+  let (cube_vbuf, cube_slice) =
+    factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(),
+                                            cube_model.indices.as_slice());
+
+  let sinfo = gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                         gfx::tex::WrapMode::Clamp);
+
+  (cube_slice,
+   primitive::pipe::Data {
+    vbuf: cube_vbuf,
+    color: (texture_view, factory.create_sampler(sinfo)), // Thrown away
+    // locals: factory.create_constant_buffer(1),
+    camera_pv: Matrix4::identity().into(),
+    obj_to_world: Matrix4::identity().into(),
+    norm_to_world: Matrix4::identity().into(),
+    camera_pos: [0.0, 0.0, 0.0],
+    light_pos: [0.0, 0.0, 0.0],
+    out_color: color_out,
+    out_depth: depth_out,
+  })
+}
+
+pub fn build_icosphere
+  (iterations: u32,
+   factory: &mut gfx_device_gl::Factory,
+   texture_view: ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
+   color_out: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+   depth_out: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
+   -> (gfx::Slice<gfx_device_gl::Resources>, primitive::pipe::Data<gfx_device_gl::Resources>) {
+  let cube_model = constants::icosphere(iterations);
+  let (cube_vbuf, cube_slice) =
+    factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(),
+                                            cube_model.indices.as_slice());
+
+  let sinfo = gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Bilinear,
+                                         gfx::tex::WrapMode::Clamp);
+
+  (cube_slice,
+   primitive::pipe::Data {
+    vbuf: cube_vbuf,
+    color: (texture_view, factory.create_sampler(sinfo)),
+    // locals: factory.create_constant_buffer(1),
+    camera_pv: Matrix4::identity().into(),
+    obj_to_world: Matrix4::identity().into(),
+    norm_to_world: Matrix4::identity().into(),
+    camera_pos: [0.0, 0.0, 0.0],
+    light_pos: [0.0, 0.0, 0.0],
+    out_color: color_out,
+    out_depth: depth_out,
+  })
+}
+
 pub mod constants {
   use super::Model;
   use renderer::opengl::primitive::Vertex;
-  use common::world::Model as WorldModel;
+  use common::model::Model as WorldModel;
 
   pub fn icosphere(iterations: u32) -> Model {
     let world_model = WorldModel::icosphere(iterations);
 
     Model {
-      vertices: world_model.vertices.into_iter().map(|(v1, v2, v3)| {
-        Vertex::new([v1, v2, v3], [v1, v2, v3], [1.0, 1.0])//[v1.sin() / f32::consts::PI + 0.5, v2.sin() / f32::consts::PI + 0.5])
-      }).collect(),
-      indices: world_model.indices
+      vertices: world_model.vertices
+        .into_iter()
+        .map(|vertex| Vertex::new(vertex.pos, vertex.norm, vertex.uv))
+        .collect(),
+      indices: world_model.indices,
     }
   }
 
   pub fn cube() -> Model {
-    let vertex_data = vec![
-        // top (0.0, 0, 1.0)
-        Vertex::new([-1.0, -1.0,  1.0], [0.0, 0.0, 1.0], [0.0, 0.0]),
-        Vertex::new([ 1.0, -1.0,  1.0], [0.0, 0.0, 1.0], [1.0, 0.0]),
-        Vertex::new([ 1.0,  1.0,  1.0], [0.0, 0.0, 1.0], [1.0, 1.0]),
-        Vertex::new([-1.0,  1.0,  1.0], [0.0, 0.0, 1.0], [0.0, 1.0]),
-        // bottom (0.0, 0, -1.0)
-        Vertex::new([-1.0,  1.0, -1.0], [0.0, 0.0, -1.0], [1.0, 0.0]),
-        Vertex::new([ 1.0,  1.0, -1.0], [0.0, 0.0, -1.0], [0.0, 0.0]),
-        Vertex::new([ 1.0, -1.0, -1.0], [0.0, 0.0, -1.0], [0.0, 1.0]),
-        Vertex::new([-1.0, -1.0, -1.0], [0.0, 0.0, -1.0], [1.0, 1.0]),
-        // right (1.0, 0.0, 0)
-        Vertex::new([ 1.0, -1.0, -1.0], [1.0, 0.0, 0.0], [0.0, 0.0]),
-        Vertex::new([ 1.0,  1.0, -1.0], [1.0, 0.0, 0.0], [1.0, 0.0]),
-        Vertex::new([ 1.0,  1.0,  1.0], [1.0, 0.0, 0.0], [1.0, 1.0]),
-        Vertex::new([ 1.0, -1.0,  1.0], [1.0, 0.0, 0.0], [0.0, 1.0]),
-        // left (-1.0, 0.0, 0)
-        Vertex::new([-1.0, -1.0,  1.0], [-1.0, 0.0, 0.0], [1.0, 0.0]),
-        Vertex::new([-1.0,  1.0,  1.0], [-1.0, 0.0, 0.0], [0.0, 0.0]),
-        Vertex::new([-1.0,  1.0, -1.0], [-1.0, 0.0, 0.0], [0.0, 1.0]),
-        Vertex::new([-1.0, -1.0, -1.0], [-1.0, 0.0, 0.0], [1.0, 1.0]),
-        // front (0.0, 1.0, 0)
-        Vertex::new([ 1.0,  1.0, -1.0], [0.0, 1.0, 0.0], [1.0, 0.0]),
-        Vertex::new([-1.0,  1.0, -1.0], [0.0, 1.0, 0.0], [0.0, 0.0]),
-        Vertex::new([-1.0,  1.0,  1.0], [0.0, 1.0, 0.0], [0.0, 1.0]),
-        Vertex::new([ 1.0,  1.0,  1.0], [0.0, 1.0, 0.0], [1.0, 1.0]),
-        // back (0.0, -1.0, 0)
-        Vertex::new([ 1.0, -1.0,  1.0], [0.0, -1.0, 0.0], [0.0, 0.0]),
-        Vertex::new([-1.0, -1.0,  1.0], [0.0, -1.0, 0.0], [1.0, 0.0]),
-        Vertex::new([-1.0, -1.0, -1.0], [0.0, -1.0, 0.0], [1.0, 1.0]),
-        Vertex::new([ 1.0, -1.0, -1.0], [0.0, -1.0, 0.0], [0.0, 1.0]),
-    ];
+    let generic_cube = WorldModel::cube();
+    let vertex_data = generic_cube.vertices
+      .into_iter()
+      .map(|vertex| Vertex::new(vertex.pos, vertex.norm, vertex.uv))
+      .collect();
 
     let index_data = vec![
          0,  1,  2,  2,  3,  0, // top

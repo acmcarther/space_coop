@@ -1,8 +1,8 @@
 use time::{self, Tm};
 
 use common::network;
+use common::model::ModelType;
 use common::world::{
-  Model,
   RenderAspect,
   PhysicalAspect,
   DisabledAspect,
@@ -94,12 +94,12 @@ impl specs::Component for ControllerAspect {
  */
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CollisionAspect {
-  pub model: Model
+  pub model: ModelType
 }
 
 impl CollisionAspect{
   pub fn new() -> CollisionAspect {
-    CollisionAspect { model: Model::cube() }
+    CollisionAspect { model: ModelType::Cube }
   }
 }
 

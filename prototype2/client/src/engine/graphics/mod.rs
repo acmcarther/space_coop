@@ -89,9 +89,13 @@ impl specs::System<engine::Delta> for System {
 
     (&physical, disableds.not(), &renderables)
       .iter()
-      .foreach(|(physical_aspect, _, _)| {
+      .foreach(|(physical_aspect, _, render_aspect)| {
         // TODO: use rendered_aspect to determine model
-        self.renderer.render_model(&mut encoder, window.deref_mut(), physical_aspect, (x, y, z));
+        self.renderer.render_model(&mut encoder,
+                                   window.deref_mut(),
+                                   physical_aspect,
+                                   render_aspect,
+                                   (x, y, z));
       });
 
     // Ship the encoder back to the main thread

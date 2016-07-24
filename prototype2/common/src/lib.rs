@@ -20,3 +20,5 @@ pub mod network;
 /// Convenience wrappers for builtin types
 ///
 pub mod util;
+
+pub mod model;

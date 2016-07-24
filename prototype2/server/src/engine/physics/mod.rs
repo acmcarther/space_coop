@@ -2,7 +2,9 @@ use specs;
 use engine;
 
 use common::world::{DisabledAspect, PhysicalAspect};
-use ncollide::shape::{Ball, Plane};
+use common::model::ModelType;
+use world::CollisionAspect;
+use ncollide::shape::{Ball, Plane, Cuboid};
 use nalgebra::Translation;
 use nalgebra::Rotation;
 use nphysics3d::world::World;
@@ -29,8 +31,8 @@ impl specs::System<engine::Delta> for System {
     use itertools::Itertools;
     use std::ops::Not;
 
-    let (mut physicals, disabled) =
-      arg.fetch(|w| (w.write::<PhysicalAspect>(), w.read::<DisabledAspect>()));
+    let (mut physicals, collisions, disabled) =
+      arg.fetch(|w| (w.write::<PhysicalAspect>(), w.read::<CollisionAspect>(), w.read::<DisabledAspect>()));
 
     // Configure world
     let mut world = World::new();
@@ -43,11 +45,14 @@ impl specs::System<engine::Delta> for System {
     world.add_rigid_body(plane);
 
     let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
-    let sim_objects = (&mut physicals, disabled.not())
+    let sim_objects = (&mut physicals, &collisions, disabled.not())
       .iter()
-      .map(|(physical, _)| {
+      .map(|(physical, collision, _)| {
 
-        let mut entity = RigidBody::new_dynamic(Ball::new(1.0), 1.0, 0.3, 0.6);
+        let mut entity = match collision.model  {
+          ModelType::Cube => RigidBody::new_dynamic(Cuboid::new(Vector::new(1.0, 1.0, 1.0)), 1.0, 0.3, 0.6),
+          ModelType::Icosphere0 | ModelType::Icosphere1 | ModelType::Icosphere2 | ModelType::Icosphere3 => RigidBody::new_dynamic(Ball::new(1.0), 1.0, 0.3, 0.6),
+        };
 
         entity.append_rotation(&Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
         entity.append_translation(&Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
