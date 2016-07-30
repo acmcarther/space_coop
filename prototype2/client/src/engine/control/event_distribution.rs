@@ -20,30 +20,52 @@ impl System {
   }
 }
 
-#[allow(unused_imports, unused_variables)]
 impl specs::System<engine::Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
-    use specs::Join;
     use itertools::Itertools;
 
-    let (mut glutin_events, mut move_events, mut camera_events, mut exit_flag) = arg.fetch(|w| {
+    let (mut glutin_events, mut move_events, mut camera_move_events, mut exit_flag) =
+      arg.fetch(|w| {
         (w.write_resource::<Vec<glutin::Event>>(),
          w.write_resource::<Vec<MoveEvent>>(),
          w.write_resource::<Vec<CameraMoveEvent>>(),
          w.write_resource::<ExitFlag>())
       });
 
-    glutin_events.drain(..).foreach(|e| {
-      use glutin::VirtualKeyCode::{A, D, Escape, S, W};
-      match e {
-        KeyboardInput(_, _, Some(Escape)) => *exit_flag = ExitFlag(true),
-        KeyboardInput(_, _, Some(W)) => move_events.push(MoveEvent::Forward),
-        KeyboardInput(_, _, Some(A)) => move_events.push(MoveEvent::Left),
-        KeyboardInput(_, _, Some(S)) => move_events.push(MoveEvent::Backward),
-        KeyboardInput(_, _, Some(D)) => move_events.push(MoveEvent::Right),
-        MouseMoved(x, y) => camera_events.push(CameraMoveEvent(x, y)),
-        _ => {},
-      }
-    });
+    let mut router = EventRouter::new(&mut move_events, &mut camera_move_events, &mut exit_flag);
+    glutin_events.drain(..).foreach(|e| router.route_event(e));
+  }
+}
+
+// TODO(acmcarther): Document
+struct EventRouter<'a> {
+  move_events: &'a mut Vec<MoveEvent>,
+  camera_move_events: &'a mut Vec<CameraMoveEvent>,
+  exit_flag: &'a mut ExitFlag,
+}
+
+impl<'a> EventRouter<'a> {
+  pub fn new(move_events: &'a mut Vec<MoveEvent>,
+             camera_move_events: &'a mut Vec<CameraMoveEvent>,
+             exit_flag: &'a mut ExitFlag)
+             -> EventRouter<'a> {
+    EventRouter {
+      move_events: move_events,
+      camera_move_events: camera_move_events,
+      exit_flag: exit_flag,
+    }
+  }
+
+  pub fn route_event(&mut self, event: glutin::Event) {
+    use glutin::VirtualKeyCode::{A, D, Escape, S, W};
+    match event {
+      KeyboardInput(_, _, Some(Escape)) => *self.exit_flag = ExitFlag(true),
+      KeyboardInput(_, _, Some(W)) => self.move_events.push(MoveEvent::Forward),
+      KeyboardInput(_, _, Some(A)) => self.move_events.push(MoveEvent::Left),
+      KeyboardInput(_, _, Some(S)) => self.move_events.push(MoveEvent::Backward),
+      KeyboardInput(_, _, Some(D)) => self.move_events.push(MoveEvent::Right),
+      MouseMoved(x, y) => self.camera_move_events.push(CameraMoveEvent(x, y)),
+      _ => {},
+    }
   }
 }

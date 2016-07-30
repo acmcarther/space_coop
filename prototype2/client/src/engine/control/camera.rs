@@ -48,45 +48,39 @@ impl specs::System<engine::Delta> for System {
     let (middle_x, middle_y) = ((wx + ox as i32 / 2), (wy + oy as i32 / 2));
     window.set_cursor_position(middle_x, middle_y).unwrap();
 
-    // Copied completely from graphics::System
-    // TODO(acmcarther): Refactor a little
-    let (t_x, t_y, t_z) = own_entity.clone()
-      // Try to find our owned ent in the ent list
-      .and_then(|ent| {
-        (&entities, &synchronized)
-          .iter()
-          .filter(|&(_, synchro)| {
-            let OwnEntity(ref own_ent) = ent;
-            synchro == own_ent
-          })
-          .next()
-      })
-      .map(|(entity, _)| entity)
-      .and_then(|true_ent| physical.get(true_ent))
-      .map(|physical_aspect| physical_aspect.pos.clone())
-      .unwrap_or((0.0, 0.0, 0.0));
+    let mut camera_manipulator = CameraManipulator::new(&mut camera_pos, middle_x);
+    camera_events.drain(..).foreach(|e| camera_manipulator.rotate_camera(e));
+  }
+}
 
+// TODO(acmcarther): Document
+struct CameraManipulator<'a> {
+  camera_pos: &'a mut CameraPos,
+  window_center_x: i32,
+}
 
-    // Move the camera orbitally around the target
-    // Just X for now because y was weird
-    camera_events.drain(..).foreach(|e| {
-      // Get current camera radius
-      let CameraPos(c_x, c_y, c_z) = camera_pos.clone();
-      let CameraMoveEvent(x, y) = e;
+impl<'a> CameraManipulator<'a> {
+  pub fn new(camera_pos: &'a mut CameraPos, window_center_x: i32) -> CameraManipulator<'a> {
+    CameraManipulator {
+      camera_pos: camera_pos,
+      window_center_x: window_center_x,
+    }
+  }
 
-      let rel_x = x - middle_x;
-      let (cam_rel_x, cam_rel_y, cam_rel_z) = (c_x, c_y, c_z);
+  pub fn rotate_camera(&mut self, event: CameraMoveEvent) {
+    // Get current camera radius
+    let CameraPos(c_x, c_y, c_z) = self.camera_pos.clone();
+    let CameraMoveEvent(x, _) = event;
 
-      let cam_angle_x = 0.02 * rel_x as f32;
+    let rel_x = x - self.window_center_x;
+    let cam_angle_x = 0.02 * rel_x as f32;
 
-      let rotation = Quaternion::from(Euler {
-        x: Deg::new(0.0),
-        y: Deg::new(0.0),
-        z: Deg::new(cam_angle_x),
-      });
-      let result = rotation.rotate_vector(Vector3::new(c_x, c_y, c_z));
-
-      *camera_pos = CameraPos(result.x, result.y, result.z);
+    let rotation = Quaternion::from(Euler {
+      x: Deg::new(0.0),
+      y: Deg::new(0.0),
+      z: Deg::new(cam_angle_x),
     });
+    let result = rotation.rotate_vector(Vector3::new(c_x, c_y, c_z));
+    *self.camera_pos = CameraPos(result.x, result.y, result.z);
   }
 }

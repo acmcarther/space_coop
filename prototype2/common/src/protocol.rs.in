@@ -21,16 +21,15 @@ pub enum ServerNetworkEvent {
   Snapshot(SnapshotEvent),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, PartialEq, Eq)]
 pub enum SnapshotEvent {
   PartialSnapshot(StateFragment)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, PartialEq, Eq)]
 pub struct StateFragment {
   pub seq_num: u16,
   pub idx: u32,
   pub count: u32,
   pub payload: Vec<u8>
 }
-

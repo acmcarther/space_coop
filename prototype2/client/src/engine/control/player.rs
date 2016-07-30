@@ -36,43 +36,49 @@ impl specs::System<engine::Delta> for System {
        w.read_resource::<CameraPos>())
     });
 
-    let CameraPos(x, y, _) = *camera_pos;
+    let mut player_manipulator = PlayerManipulator::new(camera_pos.clone(), &mut outbound_events);
+    move_events.drain(..).foreach(|e| player_manipulator.move_player(e));
+  }
+}
 
-    // Note: Negative for some reason
-    let forward_vec = -Vector2::new(x, y).normalize_to(0.1);
-    let perpendicular_vec = -Vector2::new(-y, x).normalize_to(0.1);
+// TODO(acmcarther): Document
+struct PlayerManipulator<'a> {
+  forward_vec: Vector2<f32>,
+  left_vec: Vector2<f32>,
+  outbound_events: &'a mut Vec<ClientNetworkEvent>,
+}
 
-    move_events.drain(..).foreach(|e| {
-      match e {
-        MoveEvent::Forward => {
-          outbound_events.push(DomainEvent(SelfMove {
-            x_d: forward_vec.x,
-            y_d: forward_vec.y,
-            z_d: 0.0,
-          }))
-        },
-        MoveEvent::Backward => {
-          outbound_events.push(DomainEvent(SelfMove {
-            x_d: -forward_vec.x,
-            y_d: -forward_vec.y,
-            z_d: 0.0,
-          }))
-        },
-        MoveEvent::Left => {
-          outbound_events.push(DomainEvent(SelfMove {
-            x_d: perpendicular_vec.x,
-            y_d: perpendicular_vec.y,
-            z_d: 0.0,
-          }))
-        },
-        MoveEvent::Right => {
-          outbound_events.push(DomainEvent(SelfMove {
-            x_d: -perpendicular_vec.x,
-            y_d: -perpendicular_vec.y,
-            z_d: 0.0,
-          }))
-        },
-      }
-    });
+impl<'a> PlayerManipulator<'a> {
+  pub fn new(cam_pos: CameraPos,
+             outbound_events: &'a mut Vec<ClientNetworkEvent>)
+             -> PlayerManipulator<'a> {
+    let CameraPos(x, y, _) = cam_pos;
+
+    PlayerManipulator {
+      // Negative because we're looking toward the origin
+      forward_vec: -Vector2::new(x, y).normalize_to(0.1),
+      left_vec: -Vector2::new(-y, x).normalize_to(0.1),
+      outbound_events: outbound_events,
+    }
+  }
+
+  pub fn move_player(&mut self, event: MoveEvent) {
+    let move_dir = match event {
+      MoveEvent::Forward => self.forward_vec.clone(),
+      MoveEvent::Backward => -self.forward_vec.clone(),
+      MoveEvent::Left => self.left_vec.clone(),
+      MoveEvent::Right => -self.left_vec.clone(),
+    };
+
+    self.moove(move_dir);
+  }
+
+  fn moove(&mut self, dir: Vector2<f32>) {
+    let (x, y) = (dir.x, dir.y);
+    self.outbound_events.push(DomainEvent(SelfMove {
+      x_d: x,
+      y_d: y,
+      z_d: 0.0,
+    }))
   }
 }
