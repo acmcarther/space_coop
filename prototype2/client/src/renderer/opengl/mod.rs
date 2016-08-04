@@ -148,14 +148,11 @@ impl OpenGlRenderer {
     let &debug::DebugMessage(ref message) = debug_msg;
     gfx_window_glutin::update_views(window, &mut self.main_color, &mut self.main_depth);
     // Add some text 10 pixels down and right from the top left screen corner.
-    self.text_renderer.add(message, // Text to add
-                           [10, 10], // Position
-                           [0.9, 0.9, 0.9, 1.0] /* Text color */);
-
     if menu_state.is_open() {
-      self.text_renderer.add("Menu is open \n ", // Text to add
-                             [50, 50], // Position
-                             [0.9, 0.9, 0.9, 1.0] /* Text color */);
+      self.text_renderer.add("Menu is open", [10, 10], [0.9, 0.9, 0.9, 1.0]);
+      self.text_renderer.add("Use Esc to close", [10, 10], [0.9, 0.9, 0.9, 1.0]);
+      self.text_renderer.add("Use Shift+Esc to exit", [10, 40], [0.9, 0.9, 0.9, 1.0]);
+      self.text_renderer.add(message, [10, 70], [0.9, 0.9, 0.9, 1.0]);
     }
 
     // Draw text.
