@@ -3,12 +3,11 @@ pub mod debug;
 pub mod control;
 pub mod connection;
 pub mod state;
-pub mod graphics;
 
 use gfx_device_gl;
 use glutin;
 use std::net::SocketAddr;
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::mpsc::{self, Sender};
 use specs;
 use time;
 use world::{ExitFlag, World};
@@ -16,17 +15,22 @@ use gfx_window_glutin;
 use gfx;
 use gfx::Device;
 
-use renderer::opengl::primitive::{ColorFormat, DepthFormat};
+use renderer::opengl::OpenGlRenderer;
+use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
+use std::sync::RwLockReadGuard;
+use std::ops::Not;
+use world::{CameraPos, OwnEntity};
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 const NETWORK_IO_PRIORITY: specs::Priority = 100;
 const CONTROL_WINDOW_INPUT_PRIORITY: specs::Priority = 90;
 const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 80;
 const CONTROL_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 70;
 const CONTROL_PLAYER_PRIORITY: specs::Priority = 65;
-const CONTROL_CAMERA_PRIORITY: specs::Priority = 64;
+const CONTROL_MENU_PRIORITY: specs::Priority = 65;
+const CONTROL_CAMERA_PRIORITY: specs::Priority = 65;
 const CONNECTION_PRIORITY: specs::Priority = 60;
 const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
-const GRAPHICS_RENDERING_PRIORITY: specs::Priority = 10;
 const NETWORK_HEALTH_CHECK_PRIORITY: specs::Priority = 5;
 const DEBUG_PRIORITY: specs::Priority = 1;
 
@@ -39,9 +43,9 @@ pub struct Delta {
 pub struct Engine {
   pub planner: specs::Planner<Delta>,
   device: gfx_device_gl::Device,
-  encoder: Option<gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>>,
-  encoder_recv: Receiver<gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>>,
-  encoder_send: Sender<gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>>,
+  encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
+  factory: gfx_device_gl::Factory,
+  renderer: OpenGlRenderer,
   network_kill_signal: Sender<()>,
   running: bool,
 }
@@ -57,8 +61,6 @@ impl Engine {
       gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
     let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
-    let (my_encoder_send, their_encoder_recv) = mpsc::channel();
-    let (their_encoder_send, my_encoder_recv) = mpsc::channel();
     let (network_kill_sender, network_kill_receiver) = mpsc::channel();
 
     // ECS stuff
@@ -72,22 +74,19 @@ impl Engine {
                        "network::event_distribution",
                        NETWORK_EVENT_DISTRIBUTION_PRIORITY);
     planner.add_system(connection::System::new(), "connection", CONNECTION_PRIORITY);
-    planner.add_system(control::window_input::System::new(),
-                       "control::window_input",
-                       CONTROL_WINDOW_INPUT_PRIORITY);
+    // planner.add_system(control::window_input::System::new(),
+    // "control::window_input",
+    // CONTROL_WINDOW_INPUT_PRIORITY);
+    //
     planner.add_system(control::event_distribution::System::new(),
                        "control::event_distribution",
                        CONTROL_EVENT_DISTRIBUTION_PRIORITY);
-    planner.add_system(graphics::System::new(their_encoder_recv,
-                                             their_encoder_send,
-                                             factory,
-                                             main_color,
-                                             main_depth),
-                       "graphics",
-                       GRAPHICS_RENDERING_PRIORITY);
     planner.add_system(control::player::System::new(),
                        "control::player",
                        CONTROL_PLAYER_PRIORITY);
+    planner.add_system(control::menu::System::new(),
+                       "control::menu",
+                       CONTROL_MENU_PRIORITY);
     planner.add_system(control::camera::System::new(),
                        "control::camera",
                        CONTROL_CAMERA_PRIORITY);
@@ -102,17 +101,26 @@ impl Engine {
     Engine {
       planner: planner,
       device: device,
-      encoder: Some(encoder),
-      encoder_recv: my_encoder_recv,
-      encoder_send: my_encoder_send,
+      renderer: OpenGlRenderer::new(factory.clone(), main_color, main_depth),
+      factory: factory,
+      encoder: encoder,
       network_kill_signal: network_kill_sender,
       running: true,
     }
   }
 
   pub fn tick(&mut self, dt: &time::Duration) {
-    // Let the renderer draw stuff with our encoder
-    self.encoder_send.send(self.encoder.take().unwrap()).unwrap();
+    use specs::Join;
+    use itertools::Itertools;
+
+    // Do the window poll in main thread (because of OSX issue)
+    {
+      let mut w = self.planner.mut_world();
+      let (window, mut glutin_events) = (w.write_resource::<glutin::Window>(),
+                                         w.write_resource::<Vec<glutin::Event>>());
+      glutin_events.extend(window.poll_events());
+    }
+
 
     // Spin all services
     self.planner.dispatch(Delta {
@@ -120,22 +128,56 @@ impl Engine {
       now: time::now(),
     });
 
-    // Grab window and encoder from ECS and finalize the render
-    {
-      let window = self.planner.mut_world().write_resource::<glutin::Window>();
-      let mut encoder = self.encoder_recv.recv().unwrap();
-      encoder.flush(&mut self.device);
-      window.swap_buffers().unwrap();
-      self.device.cleanup();
-
-      // Put the encoder back into our pocket
-      self.encoder = Some(encoder);
-    }
+    // This lives here because the renderer is not Send
+    self.render();
 
     // Check for that exit signal
     if let ExitFlag(true) = *self.planner.mut_world().read_resource::<ExitFlag>() {
       self.running = false;
     }
+  }
+
+  pub fn render(&mut self) {
+    let world = self.planner.mut_world();
+
+    let (mut window,
+         camera_pos,
+         own_entity,
+         debug_msg,
+         menu_state,
+         synchronized,
+         entities,
+         physical,
+         disabled,
+         render) = (world.write_resource::<glutin::Window>(),
+                    world.read_resource::<CameraPos>(),
+                    world.write_resource::<Option<OwnEntity>>(),
+                    world.read_resource::<debug::DebugMessage>(),
+                    world.read_resource::<control::menu::MenuState>(),
+                    world.read::<SynchronizedAspect>(),
+                    world.entities(),
+                    world.read::<PhysicalAspect>(),
+                    world.read::<DisabledAspect>(),
+                    world.read::<RenderAspect>());
+
+    let camera_target = SelfRetriever::new(own_entity.clone(), &entities, &synchronized, &physical)
+      .find_own_pos();
+
+    RenderWrapper::new(&mut self.renderer,
+                       &mut self.encoder,
+                       &mut window,
+                       &camera_pos,
+                       camera_target,
+                       &debug_msg,
+                       &menu_state,
+                       &render,
+                       &physical,
+                       &disabled)
+      .render_frame();
+
+    self.encoder.flush(&mut self.device);
+    window.swap_buffers().unwrap();
+    self.device.cleanup();
   }
 
   pub fn running(&self) -> bool {
@@ -148,5 +190,126 @@ impl Engine {
 
     // Spin all services
     self.tick(dt);
+  }
+}
+
+
+// TODO(acmcarther): Move the below (all of it) somewhere else. This is here
+// from the OpenGl service refactoring
+type AspectStorageRead<'a, T> = specs::Storage<T,
+                                               RwLockReadGuard<'a, specs::Allocator>,
+                                               RwLockReadGuard<'a, specs::MaskedStorage<T>>>;
+
+// TODO: Document
+struct SelfRetriever<'a> {
+  own_entity: Option<OwnEntity>,
+  entities: &'a specs::Entities<'a>,
+  synchronized: &'a AspectStorageRead<'a, SynchronizedAspect>,
+  physical: &'a AspectStorageRead<'a, PhysicalAspect>,
+}
+
+impl<'a> SelfRetriever<'a> {
+  pub fn new(own_entity: Option<OwnEntity>,
+             entities: &'a specs::Entities<'a>,
+             synchronized: &'a AspectStorageRead<'a, SynchronizedAspect>,
+             physical: &'a AspectStorageRead<'a, PhysicalAspect>)
+             -> SelfRetriever<'a> {
+
+    SelfRetriever {
+      own_entity: own_entity,
+      entities: entities,
+      synchronized: synchronized,
+      physical: physical,
+    }
+  }
+
+  pub fn find_own_pos(mut self) -> Option<(f32, f32, f32)> {
+    use specs::Join;
+
+    self.own_entity
+      .take()
+      .and_then(|ent| {
+        (self.entities, self.synchronized)
+          .iter()
+          .filter(|&(_, synchro)| {
+            let OwnEntity(ref own_ent) = ent;
+            synchro == own_ent
+          })
+          .next()
+      })
+      .map(|(entity, _)| entity)
+      .and_then(|true_ent| self.physical.get(true_ent))
+      .map(|physical_aspect| physical_aspect.pos)
+  }
+}
+
+// TODO(acmcarther): Document and rename to something more descriptive
+// TODO(acmcarther): This seems like it defeats the purpose: it takes *way* too
+// many params
+struct RenderWrapper<'a> {
+  renderer: &'a mut OpenGlRenderer,
+  encoder: &'a mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
+  window: &'a mut glutin::Window,
+  camera_pos: &'a CameraPos,
+  camera_target: Option<(f32, f32, f32)>,
+  debug_msg: &'a debug::DebugMessage,
+  menu_state: &'a control::menu::MenuState,
+  render: &'a AspectStorageRead<'a, RenderAspect>,
+  physical: &'a AspectStorageRead<'a, PhysicalAspect>,
+  disabled: &'a AspectStorageRead<'a, DisabledAspect>,
+}
+
+impl<'a> RenderWrapper<'a> {
+  pub fn new(renderer: &'a mut OpenGlRenderer,
+             encoder: &'a mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
+             window: &'a mut glutin::Window,
+             camera_pos: &'a CameraPos,
+             camera_target: Option<(f32, f32, f32)>,
+             debug_msg: &'a debug::DebugMessage,
+             menu_state: &'a control::menu::MenuState,
+             render: &'a AspectStorageRead<'a, RenderAspect>,
+             physical: &'a AspectStorageRead<'a, PhysicalAspect>,
+             disabled: &'a AspectStorageRead<'a, DisabledAspect>)
+             -> RenderWrapper<'a> {
+    RenderWrapper {
+      renderer: renderer,
+      encoder: encoder,
+      window: window,
+      camera_pos: camera_pos,
+      camera_target: camera_target,
+      debug_msg: debug_msg,
+      menu_state: menu_state,
+      render: render,
+      physical: physical,
+      disabled: disabled,
+    }
+  }
+
+  pub fn render_frame(mut self) {
+    use specs::Join;
+    use itertools::Itertools;
+
+    let &CameraPos(x, y, z) = self.camera_pos;
+
+    // TODO: clean up this api: we shouldnt rely on implict state setting here
+    self.renderer.render_world(&mut self.encoder,
+                               &mut self.window,
+                               &(x, y, z),
+                               self.camera_target);
+
+    (self.physical, self.disabled.not(), self.render)
+      .iter()
+      .foreach(|(physical_aspect, _, render_aspect)| {
+        self.renderer.render_model(&mut self.encoder,
+                                   &mut self.window,
+                                   physical_aspect,
+                                   render_aspect,
+                                   (x, y, z));
+      });
+
+    self.renderer.render_ui(&mut self.encoder,
+                            &mut self.window,
+                            &self.debug_msg,
+                            &self.menu_state);
   }
 }

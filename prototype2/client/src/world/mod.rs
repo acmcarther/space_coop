@@ -11,6 +11,8 @@ use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAs
 use engine::connection::ConnectionEvent;
 use engine::control::player::MoveEvent;
 use engine::control::camera::CameraMoveEvent;
+use engine::control::menu::{MenuEvent, MenuState};
+use engine::debug::DebugMessage;
 
 // TODO(acmcarther): move somewhere more appropriate
 #[derive(Debug, Clone)]
@@ -35,6 +37,8 @@ impl World {
     w.register::<SynchronizedAspect>();
     w.add_resource::<ExitFlag>(ExitFlag(false));
     w.add_resource::<CameraPos>(CameraPos(3.0, -10.0, 6.0));
+    w.add_resource::<MenuState>(MenuState::new());
+    w.add_resource::<DebugMessage>(DebugMessage("".to_owned()));
     w.add_resource::<Option<OwnEntity>>(None);
     w.add_resource::<Vec<ServerNetworkEvent>>(Vec::new());
     w.add_resource::<Vec<ConnectionEvent>>(Vec::new());
@@ -42,6 +46,7 @@ impl World {
     w.add_resource::<Vec<MoveEvent>>(Vec::new());
     w.add_resource::<Vec<CameraMoveEvent>>(Vec::new());
     w.add_resource::<Vec<SnapshotEvent>>(Vec::new());
+    w.add_resource::<Vec<MenuEvent>>(Vec::new());
     w.add_resource::<Vec<glutin::Event>>(Vec::new());
     w.add_resource::<glutin::Window>(window);
     w.add_resource::<engine::connection::ConnectionStatus>(engine::connection::ConnectionStatus::new());

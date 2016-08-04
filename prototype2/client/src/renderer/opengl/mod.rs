@@ -1,15 +1,18 @@
 pub mod shader;
 pub mod model;
-pub mod primitive;
+pub mod primitive3d;
 
 use std::collections::HashMap;
 
 use gfx::traits::FactoryExt;
 use gfx;
+use gfx_text;
 use glutin;
 use gfx_window_glutin;
 use gfx_device_gl;
 
+use engine::debug;
+use engine::control::menu::MenuState;
 use cgmath::{Matrix4, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
@@ -19,8 +22,6 @@ use cgmath::Matrix;
 use common::world::{PhysicalAspect, RenderAspect};
 use common::model::ModelType;
 
-use renderer::opengl::primitive::{ColorFormat, DepthFormat};
-use renderer::opengl::primitive::pipe::{Data, Meta};
 use gfx::handle::{DepthStencilView, RenderTargetView};
 use cgmath;
 
@@ -28,32 +29,38 @@ use cgmath;
  * A renderer using an OpenGl window to draw the state of the world
  */
 pub struct OpenGlRenderer {
-  pso: gfx::PipelineState<gfx_device_gl::Resources, Meta>,
+  pso_3d: gfx::PipelineState<gfx_device_gl::Resources, primitive3d::pipe::Meta>,
   models: HashMap<ModelType,
-                  (Data<gfx_device_gl::Resources>, gfx::Slice<gfx_device_gl::Resources>)>,
+                  (primitive3d::pipe::Data<gfx_device_gl::Resources>,
+                   gfx::Slice<gfx_device_gl::Resources>)>,
+  factory: gfx_device_gl::Factory,
+  main_color: RenderTargetView<gfx_device_gl::Resources, primitive3d::ColorFormat>,
+  main_depth: DepthStencilView<gfx_device_gl::Resources, primitive3d::DepthFormat>,
+  text_renderer: gfx_text::Renderer<gfx_device_gl::Resources, gfx_device_gl::Factory>,
   proj: Matrix4<f32>,
   view: Matrix4<f32>,
 }
 
 impl OpenGlRenderer {
   pub fn new(mut factory: gfx_device_gl::Factory,
-             main_color: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-             main_depth: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
+             main_color: RenderTargetView<gfx_device_gl::Resources, primitive3d::ColorFormat>,
+             main_depth: DepthStencilView<gfx_device_gl::Resources, primitive3d::DepthFormat>)
              -> OpenGlRenderer {
     use gfx::traits::FactoryExt;
     use gfx::Factory;
 
-    let shader = shader::constants::cube_shader();
+    let cube_shader = shader::constants::cube_shader();
 
     let box_texels = [[0xC0, 0xA0, 0x20, 0x00]];
     let (_, box_texture_view) =
-      factory.create_texture_const::<ColorFormat>(gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&box_texels]) .unwrap();
+      factory.create_texture_const::<primitive3d::ColorFormat>(gfx::tex::Kind::D2(1, 1, gfx::tex::AaMode::Single), &[&box_texels]) .unwrap();
 
-    let set = factory.create_shader_set(shader.get_vertex(), shader.get_fragment()).unwrap();
-    let pso = factory.create_pipeline_state(&set,
+    let set = factory.create_shader_set(cube_shader.get_vertex(), cube_shader.get_fragment())
+      .unwrap();
+    let pso_3d = factory.create_pipeline_state(&set,
                              gfx::Primitive::TriangleList,
                              gfx::state::Rasterizer::new_fill().with_cull_back(),
-                             primitive::pipe::new())
+                             primitive3d::pipe::new())
       .unwrap();
 
     let mut models = HashMap::new();
@@ -89,10 +96,14 @@ impl OpenGlRenderer {
     models.insert(ModelType::Icosphere3, (ico3_data, ico3_slice));
 
     OpenGlRenderer {
-      pso: pso,
+      pso_3d: pso_3d,
       models: models,
+      main_color: main_color,
+      main_depth: main_depth,
+      text_renderer: gfx_text::new(factory.clone()).build().unwrap(),
       proj: Matrix4::identity(), // Overwritten on first call to render_world
       view: Matrix4::identity(), // Overwritten on first call to render_world
+      factory: factory,
     }
   }
 
@@ -124,7 +135,31 @@ impl OpenGlRenderer {
     data.camera_pos = [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2];
     gfx_window_glutin::update_views(window, &mut data.out_color, &mut data.out_depth);
     // encoder.update_constant_buffer(&data.locals, &locals);
-    encoder.draw(&slice, &self.pso, data);
+    encoder.draw(&slice, &self.pso_3d, data);
+  }
+
+  pub fn render_ui(&mut self,
+                   encoder: &mut gfx::Encoder<gfx_device_gl::Resources,
+                                              gfx_device_gl::CommandBuffer>,
+                   window: &mut glutin::Window,
+                   debug_msg: &debug::DebugMessage,
+                   menu_state: &MenuState) {
+
+    let &debug::DebugMessage(ref message) = debug_msg;
+    gfx_window_glutin::update_views(window, &mut self.main_color, &mut self.main_depth);
+    // Add some text 10 pixels down and right from the top left screen corner.
+    self.text_renderer.add(message, // Text to add
+                           [10, 10], // Position
+                           [0.9, 0.9, 0.9, 1.0] /* Text color */);
+
+    if menu_state.is_open() {
+      self.text_renderer.add("Menu is open \n ", // Text to add
+                             [50, 50], // Position
+                             [0.9, 0.9, 0.9, 1.0] /* Text color */);
+    }
+
+    // Draw text.
+    self.text_renderer.draw(encoder, &mut self.main_color).unwrap();
   }
 
   pub fn render_world(&mut self,
@@ -161,12 +196,12 @@ impl OpenGlRenderer {
                          Point3::new(camera_focus.0, camera_focus.1, camera_focus.2),
                          Vector3::unit_z());
 
-    let model = Matrix4::new(10.0,
+    let model = Matrix4::new(30.0,
                              0.0,
                              0.0,
                              0.0,
                              0.0,
-                             10.0,
+                             30.0,
                              0.0,
                              0.0,
                              0.0,
@@ -187,7 +222,7 @@ impl OpenGlRenderer {
       data.light_pos = light_pos.clone();
       data.camera_pos = [camera_adj_pos.0, camera_adj_pos.1, camera_adj_pos.2];
       // encoder.update_constant_buffer(&data.locals, &locals);
-      encoder.draw(&slice, &self.pso, data);
+      encoder.draw(&slice, &self.pso_3d, data);
     }
   }
 }

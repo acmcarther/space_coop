@@ -7,8 +7,8 @@ use gfx::Factory;
 use gfx::traits::FactoryExt;
 use cgmath::{Matrix4, SquareMatrix};
 
-use renderer::opengl::primitive::{ColorFormat, DepthFormat /* Locals */};
-use renderer::opengl::primitive::{self, Vertex};
+use renderer::opengl::primitive3d::{ColorFormat, DepthFormat /* Locals */};
+use renderer::opengl::primitive3d::{self, Vertex};
 
 #[derive(Debug)]
 pub struct Model {
@@ -30,7 +30,7 @@ pub fn build_cube
    texture_view: ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
    color_out: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
    depth_out: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
-   -> (gfx::Slice<gfx_device_gl::Resources>, primitive::pipe::Data<gfx_device_gl::Resources>) {
+   -> (gfx::Slice<gfx_device_gl::Resources>, primitive3d::pipe::Data<gfx_device_gl::Resources>) {
   let cube_model = constants::cube();
   let (cube_vbuf, cube_slice) =
     factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(),
@@ -40,7 +40,7 @@ pub fn build_cube
                                          gfx::tex::WrapMode::Clamp);
 
   (cube_slice,
-   primitive::pipe::Data {
+   primitive3d::pipe::Data {
     vbuf: cube_vbuf,
     color: (texture_view, factory.create_sampler(sinfo)), // Thrown away
     // locals: factory.create_constant_buffer(1),
@@ -60,7 +60,7 @@ pub fn build_icosphere
    texture_view: ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
    color_out: RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
    depth_out: DepthStencilView<gfx_device_gl::Resources, DepthFormat>)
-   -> (gfx::Slice<gfx_device_gl::Resources>, primitive::pipe::Data<gfx_device_gl::Resources>) {
+   -> (gfx::Slice<gfx_device_gl::Resources>, primitive3d::pipe::Data<gfx_device_gl::Resources>) {
   let cube_model = constants::icosphere(iterations);
   let (cube_vbuf, cube_slice) =
     factory.create_vertex_buffer_with_slice(cube_model.vertices.as_slice(),
@@ -70,7 +70,7 @@ pub fn build_icosphere
                                          gfx::tex::WrapMode::Clamp);
 
   (cube_slice,
-   primitive::pipe::Data {
+   primitive3d::pipe::Data {
     vbuf: cube_vbuf,
     color: (texture_view, factory.create_sampler(sinfo)),
     // locals: factory.create_constant_buffer(1),
@@ -86,7 +86,7 @@ pub fn build_icosphere
 
 pub mod constants {
   use super::Model;
-  use renderer::opengl::primitive::Vertex;
+  use renderer::opengl::primitive3d::Vertex;
   use common::model::Model as WorldModel;
 
   pub fn icosphere(iterations: u32) -> Model {
