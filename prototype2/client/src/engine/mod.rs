@@ -29,6 +29,8 @@ const CONTROL_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 70;
 const CONTROL_PLAYER_PRIORITY: specs::Priority = 65;
 const CONTROL_MENU_PRIORITY: specs::Priority = 65;
 const CONTROL_CAMERA_PRIORITY: specs::Priority = 65;
+const CONTROL_CONSOLE_PRIORITY: specs::Priority = 65;
+const CONTROL_CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
 const CONNECTION_PRIORITY: specs::Priority = 60;
 const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
 const NETWORK_HEALTH_CHECK_PRIORITY: specs::Priority = 5;
@@ -90,6 +92,12 @@ impl Engine {
     planner.add_system(control::camera::System::new(),
                        "control::camera",
                        CONTROL_CAMERA_PRIORITY);
+    planner.add_system(control::console::System::new(),
+                       "control::console",
+                       CONTROL_CONSOLE_PRIORITY);
+    planner.add_system(control::console_invoker::System::new(),
+                       "control::console_invoker",
+                       CONTROL_CONSOLE_INVOKER_PRIORITY);
     planner.add_system(state::snapshot::System::new(),
                        "state::snapshot",
                        STATE_SNAPSHOT_PRIORITY);
@@ -145,6 +153,9 @@ impl Engine {
          own_entity,
          debug_msg,
          menu_state,
+         command_buffer,
+         command_cursor,
+         console_log,
          synchronized,
          entities,
          physical,
@@ -154,6 +165,9 @@ impl Engine {
                     world.write_resource::<Option<OwnEntity>>(),
                     world.read_resource::<debug::DebugMessage>(),
                     world.read_resource::<control::menu::MenuState>(),
+                    world.read_resource::<control::console::CommandBuffer>(),
+                    world.read_resource::<control::console::CommandCursor>(),
+                    world.read_resource::<control::console_invoker::ConsoleLog>(),
                     world.read::<SynchronizedAspect>(),
                     world.entities(),
                     world.read::<PhysicalAspect>(),
@@ -170,6 +184,9 @@ impl Engine {
                        camera_target,
                        &debug_msg,
                        &menu_state,
+                       &command_buffer,
+                       &command_cursor,
+                       &console_log,
                        &render,
                        &physical,
                        &disabled)
@@ -254,6 +271,9 @@ struct RenderWrapper<'a> {
   camera_target: Option<(f32, f32, f32)>,
   debug_msg: &'a debug::DebugMessage,
   menu_state: &'a control::menu::MenuState,
+  command_buffer: &'a control::console::CommandBuffer,
+  command_cursor: &'a control::console::CommandCursor,
+  console_log: &'a control::console_invoker::ConsoleLog,
   render: &'a AspectStorageRead<'a, RenderAspect>,
   physical: &'a AspectStorageRead<'a, PhysicalAspect>,
   disabled: &'a AspectStorageRead<'a, DisabledAspect>,
@@ -267,6 +287,9 @@ impl<'a> RenderWrapper<'a> {
              camera_target: Option<(f32, f32, f32)>,
              debug_msg: &'a debug::DebugMessage,
              menu_state: &'a control::menu::MenuState,
+             command_buffer: &'a control::console::CommandBuffer,
+             command_cursor: &'a control::console::CommandCursor,
+             console_log: &'a control::console_invoker::ConsoleLog,
              render: &'a AspectStorageRead<'a, RenderAspect>,
              physical: &'a AspectStorageRead<'a, PhysicalAspect>,
              disabled: &'a AspectStorageRead<'a, DisabledAspect>)
@@ -279,6 +302,9 @@ impl<'a> RenderWrapper<'a> {
       camera_target: camera_target,
       debug_msg: debug_msg,
       menu_state: menu_state,
+      command_buffer: command_buffer,
+      command_cursor: command_cursor,
+      console_log: console_log,
       render: render,
       physical: physical,
       disabled: disabled,
@@ -310,6 +336,9 @@ impl<'a> RenderWrapper<'a> {
     self.renderer.render_ui(&mut self.encoder,
                             &mut self.window,
                             &self.debug_msg,
+                            &self.command_buffer,
+                            &self.command_cursor,
+                            &self.console_log,
                             &self.menu_state);
   }
 }

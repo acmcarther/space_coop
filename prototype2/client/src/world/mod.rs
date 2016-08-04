@@ -12,6 +12,8 @@ use engine::connection::ConnectionEvent;
 use engine::control::player::MoveEvent;
 use engine::control::camera::CameraMoveEvent;
 use engine::control::menu::{MenuEvent, MenuState};
+use engine::control::console::{CommandBuffer, CommandCursor, ConsoleEvent, ExecutedCommand};
+use engine::control::console_invoker::{CommandHistory, ConsoleLog};
 use engine::debug::DebugMessage;
 
 // TODO(acmcarther): move somewhere more appropriate
@@ -39,6 +41,10 @@ impl World {
     w.add_resource::<CameraPos>(CameraPos(3.0, -10.0, 6.0));
     w.add_resource::<MenuState>(MenuState::new());
     w.add_resource::<DebugMessage>(DebugMessage("".to_owned()));
+    w.add_resource::<CommandBuffer>(CommandBuffer(String::new()));
+    w.add_resource::<CommandCursor>(CommandCursor(0));
+    w.add_resource::<CommandHistory>(CommandHistory::new());
+    w.add_resource::<ConsoleLog>(ConsoleLog::new());
     w.add_resource::<Option<OwnEntity>>(None);
     w.add_resource::<Vec<ServerNetworkEvent>>(Vec::new());
     w.add_resource::<Vec<ConnectionEvent>>(Vec::new());
@@ -47,6 +53,8 @@ impl World {
     w.add_resource::<Vec<CameraMoveEvent>>(Vec::new());
     w.add_resource::<Vec<SnapshotEvent>>(Vec::new());
     w.add_resource::<Vec<MenuEvent>>(Vec::new());
+    w.add_resource::<Vec<ConsoleEvent>>(Vec::new());
+    w.add_resource::<Vec<ExecutedCommand>>(Vec::new());
     w.add_resource::<Vec<glutin::Event>>(Vec::new());
     w.add_resource::<glutin::Window>(window);
     w.add_resource::<engine::connection::ConnectionStatus>(engine::connection::ConnectionStatus::new());
