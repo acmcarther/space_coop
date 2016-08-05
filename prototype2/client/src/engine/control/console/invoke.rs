@@ -3,7 +3,7 @@ use glutin;
 
 use engine;
 
-use engine::control::console::ExecutedCommand;
+use engine::control::console::input::ExecutedCommand;
 use std::collections::vec_deque::VecDeque;
 
 const COMMAND_HISTORY_CAPACITY: usize = 100;

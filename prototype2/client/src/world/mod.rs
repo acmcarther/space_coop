@@ -12,8 +12,8 @@ use engine::connection::ConnectionEvent;
 use engine::control::player::MoveEvent;
 use engine::control::camera::CameraMoveEvent;
 use engine::control::menu::{MenuEvent, MenuState};
-use engine::control::console::{CommandBuffer, CommandCursor, ConsoleEvent, ExecutedCommand};
-use engine::control::console_invoker::{CommandHistory, ConsoleLog};
+use engine::control::console::input::{CommandBuffer, CommandCursor, ConsoleEvent, ExecutedCommand};
+use engine::control::console::invoke::{CommandHistory, ConsoleLog};
 use engine::debug::DebugMessage;
 
 // TODO(acmcarther): move somewhere more appropriate

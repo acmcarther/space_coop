@@ -14,7 +14,7 @@ use gfx_device_gl;
 use engine::debug;
 use engine::control::menu::MenuState;
 use engine::control::console;
-use engine::control::console_invoker;
+use engine::control::console::invoke;
 use cgmath::{Matrix4, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
@@ -145,9 +145,9 @@ impl OpenGlRenderer {
                                               gfx_device_gl::CommandBuffer>,
                    window: &mut glutin::Window,
                    debug_msg: &debug::DebugMessage,
-                   console_buffer: &console::CommandBuffer,
-                   console_cursor: &console::CommandCursor,
-                   console_log: &console_invoker::ConsoleLog,
+                   console_buffer: &console::input::CommandBuffer,
+                   console_cursor: &console::input::CommandCursor,
+                   console_log: &console::invoke::ConsoleLog,
                    menu_state: &MenuState) {
     use itertools::Itertools;
 
@@ -165,7 +165,7 @@ impl OpenGlRenderer {
 
       // TODO: display cursor
       // let &console::CommandCursor(ref cursor) = console_cursor;
-      let &console::CommandBuffer(ref msg) = console_buffer;
+      let &console::input::CommandBuffer(ref msg) = console_buffer;
       self.text_renderer.add(msg, // Text to add
                              [50, 300], // Position
                              [0.9, 0.9, 0.9, 1.0] /* Text color */);

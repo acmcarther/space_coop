@@ -9,6 +9,7 @@ serde_codegen = "0.7.9"
 itertools = "*"
 
 [dependencies]
+lazy_static = "0.2.1"
 gaffer_udp = "0.1.2"
 itertools = "*"
 serde = "0.7.9"

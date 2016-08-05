@@ -9,7 +9,7 @@ use glutin::Event::MouseMoved;
 use engine::control::player::MoveEvent;
 use engine::control::menu::{MenuEvent, MenuState};
 use engine::control::camera::CameraMoveEvent;
-use engine::control::console::ConsoleEvent;
+use engine::control::console::input::ConsoleEvent;
 
 /**
  * Send the events from the windowing system to event busses
