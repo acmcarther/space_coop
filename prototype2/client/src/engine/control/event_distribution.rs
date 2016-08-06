@@ -2,12 +2,14 @@ use specs;
 use glutin;
 
 use engine;
+use std::convert::From;
 
 use glutin::Event::KeyboardInput;
 use glutin::Event::MouseMoved;
 use engine::control::player::MoveEvent;
 use engine::control::menu::{MenuEvent, MenuState};
 use engine::control::camera::CameraMoveEvent;
+use engine::control::console::input::ConsoleEvent;
 
 /**
  * Send the events from the windowing system to event busses
@@ -33,20 +35,23 @@ impl specs::System<engine::Delta> for System {
          menu_state,
          mut move_events,
          mut menu_events,
-         mut camera_move_events) = arg.fetch(|w| {
+         mut camera_move_events,
+         mut console_events) = arg.fetch(|w| {
       (w.write_resource::<Vec<glutin::Event>>(),
        w.read_resource::<glutin::Window>(),
        w.read_resource::<MenuState>(),
        w.write_resource::<Vec<MoveEvent>>(),
        w.write_resource::<Vec<MenuEvent>>(),
-       w.write_resource::<Vec<CameraMoveEvent>>())
+       w.write_resource::<Vec<CameraMoveEvent>>(),
+       w.write_resource::<Vec<ConsoleEvent>>())
     });
 
     let mut router = EventRouter::new(&window,
                                       &menu_state,
                                       &mut move_events,
                                       &mut menu_events,
-                                      &mut camera_move_events);
+                                      &mut camera_move_events,
+                                      &mut console_events);
     glutin_events.drain(..).foreach(|e| router.route_event(e));
   }
 }
@@ -58,6 +63,7 @@ struct EventRouter<'a> {
   move_events: &'a mut Vec<MoveEvent>,
   menu_events: &'a mut Vec<MenuEvent>,
   camera_move_events: &'a mut Vec<CameraMoveEvent>,
+  console_events: &'a mut Vec<ConsoleEvent>,
 }
 
 impl<'a> EventRouter<'a> {
@@ -65,7 +71,8 @@ impl<'a> EventRouter<'a> {
              menu_state: &'a MenuState,
              move_events: &'a mut Vec<MoveEvent>,
              menu_events: &'a mut Vec<MenuEvent>,
-             camera_move_events: &'a mut Vec<CameraMoveEvent>)
+             camera_move_events: &'a mut Vec<CameraMoveEvent>,
+             console_events: &'a mut Vec<ConsoleEvent>)
              -> EventRouter<'a> {
     EventRouter {
       window: window,
@@ -73,12 +80,19 @@ impl<'a> EventRouter<'a> {
       move_events: move_events,
       menu_events: menu_events,
       camera_move_events: camera_move_events,
+      console_events: console_events,
     }
   }
 
   pub fn route_event(&mut self, event: glutin::Event) {
     use glutin::VirtualKeyCode::{A, D, Escape, S, W};
     use glutin::ElementState;
+
+    // Pipe events to console if menu is open
+    if *self.menu_state == MenuState::Open {
+      self.console_events.push(ConsoleEvent::from(event.clone()))
+    }
+
     match (self.menu_state, event) {
       // Disabled, since menu was added. This will be moved into menu as a menu entry
       // KeyboardInput(_, _, Some(Escape)) => *self.exit_flag = ExitFlag(true),

@@ -13,6 +13,8 @@ extern crate gfx_text;
 extern crate gfx_window_glutin;
 extern crate gfx_device_gl;
 extern crate common;
+#[macro_use]
+extern crate lazy_static;
 
 /// View-related structs and traits
 pub mod renderer;

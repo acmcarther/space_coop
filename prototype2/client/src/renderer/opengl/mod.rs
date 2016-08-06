@@ -13,6 +13,8 @@ use gfx_device_gl;
 
 use engine::debug;
 use engine::control::menu::MenuState;
+use engine::control::console;
+use engine::control::console::invoke;
 use cgmath::{Matrix4, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
@@ -143,7 +145,11 @@ impl OpenGlRenderer {
                                               gfx_device_gl::CommandBuffer>,
                    window: &mut glutin::Window,
                    debug_msg: &debug::DebugMessage,
+                   console_buffer: &console::input::CommandBuffer,
+                   console_cursor: &console::input::CommandCursor,
+                   console_log: &console::invoke::ConsoleLog,
                    menu_state: &MenuState) {
+    use itertools::Itertools;
 
     let &debug::DebugMessage(ref message) = debug_msg;
     gfx_window_glutin::update_views(window, &mut self.main_color, &mut self.main_depth);
@@ -156,6 +162,17 @@ impl OpenGlRenderer {
       self.text_renderer.add("Menu is open \n ", // Text to add
                              [50, 50], // Position
                              [0.9, 0.9, 0.9, 1.0] /* Text color */);
+
+      // TODO: display cursor
+      // let &console::CommandCursor(ref cursor) = console_cursor;
+      let &console::input::CommandBuffer(ref msg) = console_buffer;
+      self.text_renderer.add(msg, // Text to add
+                             [50, 300], // Position
+                             [0.9, 0.9, 0.9, 1.0] /* Text color */);
+      console_log.list(10).into_iter().enumerate().foreach(|(idx, element)| {
+        let y_pos = 280 - (idx as i32) * 20; // Scroll up the screen
+        self.text_renderer.add(element, [50, y_pos], [0.9, 0.9, 0.9, 1.0]);
+      });
     }
 
     // Draw text.
