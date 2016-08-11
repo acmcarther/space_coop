@@ -2,7 +2,7 @@ use specs;
 use glutin;
 
 use pause::PauseState;
-use common::Delta;
+use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};
 
 use input::ConsoleEvent;

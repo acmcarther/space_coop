@@ -1,33 +1,10 @@
 use specs;
 
-use common::Delta;
+use state::Delta;
 use input::ExecutedCommand;
 use std::collections::vec_deque::VecDeque;
 use pubsub::{PubSubStore, SubscriberToken};
-
-const COMMAND_HISTORY_CAPACITY: usize = 100;
-
-pub struct CommandHistory {
-  commands: VecDeque<String>,
-}
-
-impl CommandHistory {
-  pub fn new() -> CommandHistory {
-    CommandHistory { commands: VecDeque::with_capacity(COMMAND_HISTORY_CAPACITY) }
-  }
-
-  pub fn push(&mut self, command: String) {
-    if self.commands.len() == COMMAND_HISTORY_CAPACITY {
-      self.commands.pop_back();
-    }
-
-    self.commands.push_front(command);
-  }
-
-  pub fn list(&self, count: usize) -> Vec<&str> {
-    self.commands.iter().map(|v| v.as_str()).take(count).collect()
-  }
-}
+use primitive_interpreter::{Command, Interpreter, InterpreterResult};
 
 pub struct ConsoleLog {
   messages: VecDeque<String>,
@@ -52,13 +29,16 @@ impl ConsoleLog {
  */
 pub struct System {
   executed_commands_sub_token: SubscriberToken<ExecutedCommand>,
+  interpreter: Interpreter,
 }
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {
-    world.add_resource::<CommandHistory>(CommandHistory::new());
     world.add_resource::<ConsoleLog>(ConsoleLog::new());
-    System { executed_commands_sub_token: world.register_subscriber::<ExecutedCommand>() }
+    System {
+      executed_commands_sub_token: world.register_subscriber::<ExecutedCommand>(),
+      interpreter: Interpreter::new(),
+    }
   }
 
   pub fn name() -> &'static str {
@@ -71,17 +51,21 @@ impl specs::System<Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use itertools::Itertools;
 
-    let (mut executed_commands, mut command_history, mut console_log) = arg.fetch(|w| {
+    let (mut executed_commands, mut translated_commands, mut console_log) = arg.fetch(|w| {
       (w.fetch_subscriber(&self.executed_commands_sub_token).collected(),
-       w.write_resource::<CommandHistory>(),
+       w.fetch_publisher::<Command>(),
        w.write_resource::<ConsoleLog>())
     });
 
     executed_commands.drain(..).foreach(|command| {
       let ExecutedCommand(command_message) = command;
       console_log.push(command_message.clone());
-      console_log.push(format!("Unknown command: {}", &command_message));
-      command_history.push(command_message);
+      match self.interpreter.interpret(command_message.clone()) {
+        InterpreterResult::Valid(cmd) => translated_commands.push(cmd),
+        InterpreterResult::Invalid => {
+          console_log.push(format!("Unknown command: {}", &command_message));
+        },
+      }
     });
   }
 }

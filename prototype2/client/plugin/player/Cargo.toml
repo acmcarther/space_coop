@@ -21,3 +21,5 @@ path = "../../core/camera"
 [dependencies.pause]
 path = "../../core/pause"
 
+[dependencies.state]
+path = "../../core/state"

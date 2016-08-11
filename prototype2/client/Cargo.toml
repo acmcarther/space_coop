@@ -46,3 +46,9 @@ path = "./core/window"
 
 [dependencies.player]
 path = "./plugin/player"
+
+[dependencies.mutator]
+path = "./plugin/mutator"
+
+[dependencies.state]
+path = "./core/state"

@@ -1,13 +1,13 @@
 extern crate itertools;
 extern crate cgmath;
 extern crate specs;
-extern crate common;
+extern crate state;
 extern crate pubsub;
 extern crate pause;
 extern crate glutin;
 
 use cgmath::{Deg, Euler, Quaternion, Rotation, Vector3};
-use common::Delta;
+use state::Delta;
 use pause::PauseState;
 use pubsub::{PubSubStore, SubscriberToken};
 

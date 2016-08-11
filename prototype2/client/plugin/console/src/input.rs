@@ -5,7 +5,7 @@ use glutin::Event::KeyboardInput;
 use std::convert::From;
 use charsets::{CharAction, CharEvent, CharMotion};
 use std::mem;
-use common::Delta;
+use state::Delta;
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
 
 #[derive(Clone)]

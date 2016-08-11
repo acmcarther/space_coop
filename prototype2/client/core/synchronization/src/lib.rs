@@ -4,14 +4,15 @@ extern crate itertools;
 extern crate network;
 extern crate common;
 extern crate pubsub;
+extern crate state;
 
-use common::Delta;
+use state::{Delta, OwnEntity};
 use common::protocol::{ClientNetworkEvent, SnapshotEvent};
 use common::world::CommonWorld;
 use network::FragmentBuffer;
 use network::Defragmentable;
 use itertools::Itertools;
-use common::world::{DisabledAspect, OwnEntity, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use std::mem;
 use std::collections::{HashMap, HashSet};
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};

@@ -2,8 +2,9 @@ extern crate specs;
 extern crate itertools;
 
 extern crate common;
+extern crate state;
 
-use common::Delta;
+use state::Delta;
 use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};
 
 const FRAME_WAIT: u32 = 60;

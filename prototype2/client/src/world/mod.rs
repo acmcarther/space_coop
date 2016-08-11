@@ -1,10 +1,9 @@
 use specs;
 use glutin;
 
-use common::world::{DisabledAspect, OwnEntity, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use state::{ExitFlag, OwnEntity};
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
-#[derive(Debug, Clone)]
-pub struct ExitFlag(pub bool);
 
 // TODO(acmcarther): This is awkward... "world.world"
 pub struct World {

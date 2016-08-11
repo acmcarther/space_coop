@@ -1,10 +1,10 @@
 extern crate specs;
 extern crate glutin;
-extern crate common;
 extern crate itertools;
 extern crate pubsub;
+extern crate state;
 
-use common::Delta;
+use state::Delta;
 use pubsub::PubSubStore;
 
 /**
@@ -28,9 +28,7 @@ impl specs::System<Delta> for System {
     use itertools::Itertools;
 
     let (window, mut glutin_events) =
-      arg.fetch(|w| {
-        (w.write_resource::<glutin::Window>(), w.fetch_publisher::<glutin::Event>())
-      });
+      arg.fetch(|w| (w.write_resource::<glutin::Window>(), w.fetch_publisher::<glutin::Event>()));
 
     window.poll_events().into_iter().foreach(|e| glutin_events.push(e));
   }

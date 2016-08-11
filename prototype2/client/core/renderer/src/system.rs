@@ -12,7 +12,8 @@ use pause;
 use camera;
 use glutin;
 use debug;
-use common::world::{DisabledAspect, OwnEntity, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use state::OwnEntity;
+use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use opengl::OpenGlRenderer;
 
 pub struct System {

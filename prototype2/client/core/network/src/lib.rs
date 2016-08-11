@@ -6,6 +6,7 @@ extern crate itertools;
 extern crate gaffer_udp;
 extern crate flate2;
 extern crate common;
+extern crate state;
 extern crate pubsub;
 
 mod defragmentation;

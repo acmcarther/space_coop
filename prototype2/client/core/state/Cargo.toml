@@ -1,14 +1,11 @@
 [package]
-name = "debug"
+name = "state"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
 
 [dependencies]
 itertools = "*"
-specs = "0.7.0"
+time = "0.1.35"
 
 [dependencies.common]
 path = "../../../common"
-
-[dependencies.state]
-path = "../state"

@@ -5,9 +5,6 @@ use std::fmt;
 
 use model::ModelType;
 
-#[derive(Debug, Clone)]
-pub struct OwnEntity(pub SynchronizedAspect);
-
 /**
  * An aspect for an entity that can be rendered by a Renderer.
  *

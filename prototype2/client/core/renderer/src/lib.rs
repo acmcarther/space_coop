@@ -16,6 +16,7 @@ extern crate console;
 extern crate pause;
 extern crate debug;
 extern crate camera;
+extern crate state;
 
 pub mod opengl;
 pub mod system;

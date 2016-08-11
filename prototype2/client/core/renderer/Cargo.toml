@@ -30,5 +30,8 @@ path = "../camera"
 [dependencies.pause]
 path = "../pause"
 
+[dependencies.state]
+path = "../state"
+
 [dependencies.console]
 path = "../../plugin/console"

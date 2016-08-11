@@ -8,8 +8,8 @@ itertools = "*"
 glutin = "0.6.1"
 specs = "0.7.0"
 
-[dependencies.common]
-path = "../../../common"
+[dependencies.state]
+path = "../state"
 
 [dependencies.pubsub]
 path = "../../../pubsub"

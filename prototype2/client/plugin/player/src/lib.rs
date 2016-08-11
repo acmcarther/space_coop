@@ -6,8 +6,9 @@ extern crate camera;
 extern crate pubsub;
 extern crate glutin;
 extern crate pause;
+extern crate state;
 
-use common::Delta;
+use state::Delta;
 use common::protocol::ClientNetworkEvent::{self, DomainEvent};
 use common::protocol::ClientEvent::SelfMove;
 use cgmath::{InnerSpace, Vector2};

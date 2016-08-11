@@ -16,12 +16,14 @@ use camera;
 use renderer;
 use synchronization;
 use player;
+use mutator;
 
 use renderer::opengl::OpenGlRenderer;
 use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
-use common::Delta;
-use world::{ExitFlag, World};
+use state::Delta;
+use world::World;
 use pubsub::PubSubStore;
+use state::ExitFlag;
 
 // Window input implicit priority: infinity
 const NETWORK_IO_PRIORITY: specs::Priority = 100;
@@ -34,6 +36,7 @@ const PLAYER_MOVE_PRIORITY: specs::Priority = 65;
 const CAMERA_MOVE_PRIORITY: specs::Priority = 65;
 const CONSOLE_INPUT_PRIORITY: specs::Priority = 65;
 const CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
+const MUTATOR_PRIORITY: specs::Priority = 63;
 const NETWORK_CONNECTION_PRIORITY: specs::Priority = 60;
 const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
 const NETWORK_KEEP_ALIVE_PRIORITY: specs::Priority = 5;
@@ -78,6 +81,7 @@ impl Engine {
     let camera_move_system = camera::MovementSystem::new(&mut world);
     let console_input_system = console::InputSystem::new(&mut world);
     let console_invoker_system = console::InvokeSystem::new(&mut world);
+    let mutator_system = mutator::System::new(&mut world);
     let synchronization_system = synchronization::System::new(&mut world);
     let network_keep_alive_system = network::KeepAliveSystem::new(&mut world);
     let debug_system = debug::System::new(&mut world);
@@ -115,6 +119,7 @@ impl Engine {
     planner.add_system(console_invoker_system,
                        console::InvokeSystem::name(),
                        CONSOLE_INVOKER_PRIORITY);
+    planner.add_system(mutator_system, mutator::System::name(), MUTATOR_PRIORITY);
     planner.add_system(synchronization_system,
                        synchronization::System::name(),
                        STATE_SNAPSHOT_PRIORITY);

@@ -1,6 +1,6 @@
 use specs;
 
-use common::Delta;
+use state::Delta;
 use time::{self, Duration, Tm};
 use Network;
 use std::net::SocketAddr;

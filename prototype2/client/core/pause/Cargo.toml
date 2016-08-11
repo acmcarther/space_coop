@@ -13,3 +13,6 @@ path = "../../../common"
 
 [dependencies.pubsub]
 path = "../../../pubsub"
+
+[dependencies.state]
+path = "../state"

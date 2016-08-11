@@ -18,6 +18,8 @@ extern crate synchronization;
 extern crate window;
 extern crate player;
 extern crate pause;
+extern crate mutator;
+extern crate state;
 
 pub mod engine;
 pub mod world;

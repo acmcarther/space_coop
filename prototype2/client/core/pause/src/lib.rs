@@ -1,12 +1,12 @@
 extern crate specs;
 extern crate glutin;
-extern crate common;
 extern crate itertools;
 extern crate pubsub;
+extern crate state;
 
 use pubsub::{PubSubStore, SubscriberToken};
 
-use common::Delta;
+use state::Delta;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum PauseState {

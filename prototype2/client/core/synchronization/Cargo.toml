@@ -15,3 +15,6 @@ path = "../../../pubsub"
 
 [dependencies.network]
 path = "../network"
+
+[dependencies.state]
+path = "../state"

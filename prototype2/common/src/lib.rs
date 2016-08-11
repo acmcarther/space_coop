@@ -23,9 +23,3 @@ pub mod network;
 pub mod util;
 
 pub mod model;
-
-#[derive(Debug, Clone)]
-pub struct Delta {
-  pub dt: time::Duration,
-  pub now: time::Tm,
-}
