@@ -1,0 +1,20 @@
+[package]
+name = "console"
+version = "0.1.0"
+authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[dependencies]
+itertools = "*"
+cgmath = "0.10"
+specs = "0.7.0"
+glutin = "0.6.1"
+lazy_static = "0.2.1"
+
+[dependencies.common]
+path = "../../../common"
+
+[dependencies.pause]
+path = "../../core/pause"
+
+[dependencies.pubsub]
+path = "../../../pubsub"

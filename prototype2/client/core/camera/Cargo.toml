@@ -1,0 +1,19 @@
+[package]
+name = "camera"
+version = "0.1.0"
+authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[dependencies]
+itertools = "*"
+cgmath = "0.10"
+specs = "0.7.0"
+glutin = "0.6.1"
+
+[dependencies.common]
+path = "../../../common"
+
+[dependencies.pause]
+path = "../pause"
+
+[dependencies.pubsub]
+path = "../../../pubsub"

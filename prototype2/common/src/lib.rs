@@ -4,6 +4,7 @@ extern crate gaffer_udp;
 extern crate specs;
 extern crate itertools;
 extern crate uuid;
+extern crate time;
 
 /// Describes outbound and inbound payloads
 ///
@@ -22,3 +23,9 @@ pub mod network;
 pub mod util;
 
 pub mod model;
+
+#[derive(Debug, Clone)]
+pub struct Delta {
+  pub dt: time::Duration,
+  pub now: time::Tm,
+}

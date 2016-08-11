@@ -1,0 +1,23 @@
+[package]
+name = "player"
+version = "0.1.0"
+authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[dependencies]
+itertools = "*"
+cgmath = "0.10"
+glutin = "0.6.1"
+specs = "0.7.0"
+
+[dependencies.common]
+path = "../../../common"
+
+[dependencies.pubsub]
+path = "../../../pubsub"
+
+[dependencies.camera]
+path = "../../core/camera"
+
+[dependencies.pause]
+path = "../../core/pause"
+

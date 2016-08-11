@@ -1,53 +1,50 @@
-pub mod io;
-pub mod debug;
-pub mod control;
-pub mod connection;
-pub mod state;
+use std::net::SocketAddr;
+use std::sync::mpsc::{self, Sender};
 
 use gfx_device_gl;
 use glutin;
-use std::net::SocketAddr;
-use std::sync::mpsc::{self, Sender};
 use specs;
 use time;
-use world::{ExitFlag, World};
 use gfx_window_glutin;
 use gfx;
-use gfx::Device;
+
+use network;
+use console;
+use pause;
+use debug;
+use camera;
+use renderer;
+use synchronization;
+use player;
 
 use renderer::opengl::OpenGlRenderer;
 use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
-use std::sync::RwLockReadGuard;
-use std::ops::Not;
-use world::{CameraPos, OwnEntity};
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::Delta;
+use world::{ExitFlag, World};
+use pubsub::PubSubStore;
 
+// Window input implicit priority: infinity
 const NETWORK_IO_PRIORITY: specs::Priority = 100;
-const CONTROL_WINDOW_INPUT_PRIORITY: specs::Priority = 90;
-const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 80;
-const CONTROL_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 70;
-const CONTROL_PLAYER_PRIORITY: specs::Priority = 65;
-const CONTROL_MENU_PRIORITY: specs::Priority = 65;
-const CONTROL_CAMERA_PRIORITY: specs::Priority = 65;
-const CONTROL_CONSOLE_PRIORITY: specs::Priority = 65;
-const CONTROL_CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
-const CONNECTION_PRIORITY: specs::Priority = 60;
+const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 90;
+const PAUSE_PRIORITY: specs::Priority = 85;
+const PLAYER_PREPROCESSOR_PRIORITY: specs::Priority = 77;
+const CAMERA_PREPROCESSOR_PRIORITY: specs::Priority = 77;
+const CONSOLE_PREPROCESSOR_PRIORITY: specs::Priority = 77;
+const PLAYER_MOVE_PRIORITY: specs::Priority = 65;
+const CAMERA_MOVE_PRIORITY: specs::Priority = 65;
+const CONSOLE_INPUT_PRIORITY: specs::Priority = 65;
+const CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
+const NETWORK_CONNECTION_PRIORITY: specs::Priority = 60;
 const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
-const NETWORK_HEALTH_CHECK_PRIORITY: specs::Priority = 5;
+const NETWORK_KEEP_ALIVE_PRIORITY: specs::Priority = 5;
 const DEBUG_PRIORITY: specs::Priority = 1;
-
-#[derive(Debug, Clone)]
-pub struct Delta {
-  pub dt: time::Duration,
-  pub now: time::Tm,
-}
+// Renderer implicit priority: 0
 
 pub struct Engine {
   pub planner: specs::Planner<Delta>,
   device: gfx_device_gl::Device,
   encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
-  factory: gfx_device_gl::Factory,
-  renderer: OpenGlRenderer,
+  renderer: renderer::RenderingSystem,
   network_kill_signal: Sender<()>,
   running: bool,
 }
@@ -66,51 +63,72 @@ impl Engine {
     let (network_kill_sender, network_kill_receiver) = mpsc::channel();
 
     // ECS stuff
-    let world = World::new(window);
-    let mut planner = specs::Planner::new(world.world, 2 /* Threads, arbitrary */);
+    let mut world = World::new(window).world;
 
-    planner.add_system(io::network_adapter::System::new(port, server_addr, network_kill_receiver),
-                       "network::io",
+    // Instantiate systems with their pubsub and other resources
+    let network_adapter_system =
+      network::AdapterSystem::new(port, server_addr, network_kill_receiver, &mut world);
+    let network_event_distribution_system = network::EventDistributionSystem::new(&mut world);
+    let network_connection_system = network::ConnectionSystem::new(&mut world);
+    let pause_system = pause::System::new(&mut world);
+    let player_preprocessor_system = player::PreprocessorSystem::new(&mut world);
+    let camera_preprocessor_system = camera::PreprocessorSystem::new(&mut world);
+    let console_preprocessor_system = console::PreprocessorSystem::new(&mut world);
+    let player_move_system = player::MoveSystem::new(&mut world);
+    let camera_move_system = camera::MovementSystem::new(&mut world);
+    let console_input_system = console::InputSystem::new(&mut world);
+    let console_invoker_system = console::InvokeSystem::new(&mut world);
+    let synchronization_system = synchronization::System::new(&mut world);
+    let network_keep_alive_system = network::KeepAliveSystem::new(&mut world);
+    let debug_system = debug::System::new(&mut world);
+
+    // Insert systems into planner
+    let mut planner = specs::Planner::new(world, 2 /* Threads, arbitrary */);
+    planner.add_system(network_adapter_system,
+                       network::AdapterSystem::name(),
                        NETWORK_IO_PRIORITY);
-    planner.add_system(io::event_distribution::System::new(),
-                       "network::event_distribution",
+    planner.add_system(network_event_distribution_system,
+                       network::EventDistributionSystem::name(),
                        NETWORK_EVENT_DISTRIBUTION_PRIORITY);
-    planner.add_system(connection::System::new(), "connection", CONNECTION_PRIORITY);
-    // planner.add_system(control::window_input::System::new(),
-    // "control::window_input",
-    // CONTROL_WINDOW_INPUT_PRIORITY);
-    //
-    planner.add_system(control::event_distribution::System::new(),
-                       "control::event_distribution",
-                       CONTROL_EVENT_DISTRIBUTION_PRIORITY);
-    planner.add_system(control::player::System::new(),
-                       "control::player",
-                       CONTROL_PLAYER_PRIORITY);
-    planner.add_system(control::menu::System::new(),
-                       "control::menu",
-                       CONTROL_MENU_PRIORITY);
-    planner.add_system(control::camera::System::new(),
-                       "control::camera",
-                       CONTROL_CAMERA_PRIORITY);
-    planner.add_system(control::console::input::System::new(),
-                       "control::console::input",
-                       CONTROL_CONSOLE_PRIORITY);
-    planner.add_system(control::console::invoke::System::new(),
-                       "control::console::invoke",
-                       CONTROL_CONSOLE_INVOKER_PRIORITY);
-    planner.add_system(state::snapshot::System::new(),
-                       "state::snapshot",
+    planner.add_system(network_connection_system,
+                       network::ConnectionSystem::name(),
+                       NETWORK_CONNECTION_PRIORITY);
+    planner.add_system(pause_system, pause::System::name(), PAUSE_PRIORITY);
+    planner.add_system(player_preprocessor_system,
+                       player::PreprocessorSystem::name(),
+                       PLAYER_PREPROCESSOR_PRIORITY);
+    planner.add_system(camera_preprocessor_system,
+                       camera::PreprocessorSystem::name(),
+                       CAMERA_PREPROCESSOR_PRIORITY);
+    planner.add_system(console_preprocessor_system,
+                       console::PreprocessorSystem::name(),
+                       CONSOLE_PREPROCESSOR_PRIORITY);
+    planner.add_system(player_move_system,
+                       player::MoveSystem::name(),
+                       PLAYER_MOVE_PRIORITY);
+    planner.add_system(camera_move_system,
+                       camera::MovementSystem::name(),
+                       CAMERA_MOVE_PRIORITY);
+    planner.add_system(console_input_system,
+                       console::InputSystem::name(),
+                       CONSOLE_INPUT_PRIORITY);
+    planner.add_system(console_invoker_system,
+                       console::InvokeSystem::name(),
+                       CONSOLE_INVOKER_PRIORITY);
+    planner.add_system(synchronization_system,
+                       synchronization::System::name(),
                        STATE_SNAPSHOT_PRIORITY);
-    planner.add_system(io::health_check::System::new(),
-                       "network::health_check",
-                       NETWORK_HEALTH_CHECK_PRIORITY);
-    planner.add_system(debug::System::new(), "debug", DEBUG_PRIORITY);
+    planner.add_system(network_keep_alive_system,
+                       network::KeepAliveSystem::name(),
+                       NETWORK_KEEP_ALIVE_PRIORITY);
+    planner.add_system(debug_system, "debug", DEBUG_PRIORITY);
 
     Engine {
       planner: planner,
       device: device,
-      renderer: OpenGlRenderer::new(factory.clone(), main_color, main_depth),
-      factory: factory,
+      renderer: renderer::RenderingSystem::new(OpenGlRenderer::new(factory,
+                                                                   main_color,
+                                                                   main_depth)),
       encoder: encoder,
       network_kill_signal: network_kill_sender,
       running: true,
@@ -118,15 +136,14 @@ impl Engine {
   }
 
   pub fn tick(&mut self, dt: &time::Duration) {
-    use specs::Join;
     use itertools::Itertools;
 
     // Do the window poll in main thread (because of OSX issue)
     {
-      let mut w = self.planner.mut_world();
+      let w = self.planner.mut_world();
       let (window, mut glutin_events) = (w.write_resource::<glutin::Window>(),
-                                         w.write_resource::<Vec<glutin::Event>>());
-      glutin_events.extend(window.poll_events());
+                                         w.fetch_publisher::<glutin::Event>());
+      window.poll_events().into_iter().foreach(|e| glutin_events.push(e));
     }
 
 
@@ -146,55 +163,8 @@ impl Engine {
   }
 
   pub fn render(&mut self) {
-    let world = self.planner.mut_world();
-
-    let (mut window,
-         camera_pos,
-         own_entity,
-         debug_msg,
-         menu_state,
-         command_buffer,
-         command_cursor,
-         console_log,
-         synchronized,
-         entities,
-         physical,
-         disabled,
-         render) = (world.write_resource::<glutin::Window>(),
-                    world.read_resource::<CameraPos>(),
-                    world.write_resource::<Option<OwnEntity>>(),
-                    world.read_resource::<debug::DebugMessage>(),
-                    world.read_resource::<control::menu::MenuState>(),
-                    world.read_resource::<control::console::input::CommandBuffer>(),
-                    world.read_resource::<control::console::input::CommandCursor>(),
-                    world.read_resource::<control::console::invoke::ConsoleLog>(),
-                    world.read::<SynchronizedAspect>(),
-                    world.entities(),
-                    world.read::<PhysicalAspect>(),
-                    world.read::<DisabledAspect>(),
-                    world.read::<RenderAspect>());
-
-    let camera_target = SelfRetriever::new(own_entity.clone(), &entities, &synchronized, &physical)
-      .find_own_pos();
-
-    RenderWrapper::new(&mut self.renderer,
-                       &mut self.encoder,
-                       &mut window,
-                       &camera_pos,
-                       camera_target,
-                       &debug_msg,
-                       &menu_state,
-                       &command_buffer,
-                       &command_cursor,
-                       &console_log,
-                       &render,
-                       &physical,
-                       &disabled)
-      .render_frame();
-
-    self.encoder.flush(&mut self.device);
-    window.swap_buffers().unwrap();
-    self.device.cleanup();
+    let mut world = self.planner.mut_world();
+    self.renderer.run(&mut world, &mut self.encoder, &mut self.device);
   }
 
   pub fn running(&self) -> bool {
@@ -207,138 +177,5 @@ impl Engine {
 
     // Spin all services
     self.tick(dt);
-  }
-}
-
-
-// TODO(acmcarther): Move the below (all of it) somewhere else. This is here
-// from the OpenGl service refactoring
-type AspectStorageRead<'a, T> = specs::Storage<T,
-                                               RwLockReadGuard<'a, specs::Allocator>,
-                                               RwLockReadGuard<'a, specs::MaskedStorage<T>>>;
-
-// TODO: Document
-struct SelfRetriever<'a> {
-  own_entity: Option<OwnEntity>,
-  entities: &'a specs::Entities<'a>,
-  synchronized: &'a AspectStorageRead<'a, SynchronizedAspect>,
-  physical: &'a AspectStorageRead<'a, PhysicalAspect>,
-}
-
-impl<'a> SelfRetriever<'a> {
-  pub fn new(own_entity: Option<OwnEntity>,
-             entities: &'a specs::Entities<'a>,
-             synchronized: &'a AspectStorageRead<'a, SynchronizedAspect>,
-             physical: &'a AspectStorageRead<'a, PhysicalAspect>)
-             -> SelfRetriever<'a> {
-
-    SelfRetriever {
-      own_entity: own_entity,
-      entities: entities,
-      synchronized: synchronized,
-      physical: physical,
-    }
-  }
-
-  pub fn find_own_pos(mut self) -> Option<(f32, f32, f32)> {
-    use specs::Join;
-
-    self.own_entity
-      .take()
-      .and_then(|ent| {
-        (self.entities, self.synchronized)
-          .iter()
-          .filter(|&(_, synchro)| {
-            let OwnEntity(ref own_ent) = ent;
-            synchro == own_ent
-          })
-          .next()
-      })
-      .map(|(entity, _)| entity)
-      .and_then(|true_ent| self.physical.get(true_ent))
-      .map(|physical_aspect| physical_aspect.pos)
-  }
-}
-
-// TODO(acmcarther): Document and rename to something more descriptive
-// TODO(acmcarther): This seems like it defeats the purpose: it takes *way* too
-// many params
-struct RenderWrapper<'a> {
-  renderer: &'a mut OpenGlRenderer,
-  encoder: &'a mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
-  window: &'a mut glutin::Window,
-  camera_pos: &'a CameraPos,
-  camera_target: Option<(f32, f32, f32)>,
-  debug_msg: &'a debug::DebugMessage,
-  menu_state: &'a control::menu::MenuState,
-  command_buffer: &'a control::console::input::CommandBuffer,
-  command_cursor: &'a control::console::input::CommandCursor,
-  console_log: &'a control::console::invoke::ConsoleLog,
-  render: &'a AspectStorageRead<'a, RenderAspect>,
-  physical: &'a AspectStorageRead<'a, PhysicalAspect>,
-  disabled: &'a AspectStorageRead<'a, DisabledAspect>,
-}
-
-impl<'a> RenderWrapper<'a> {
-  pub fn new(renderer: &'a mut OpenGlRenderer,
-             encoder: &'a mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
-             window: &'a mut glutin::Window,
-             camera_pos: &'a CameraPos,
-             camera_target: Option<(f32, f32, f32)>,
-             debug_msg: &'a debug::DebugMessage,
-             menu_state: &'a control::menu::MenuState,
-             command_buffer: &'a control::console::input::CommandBuffer,
-             command_cursor: &'a control::console::input::CommandCursor,
-             console_log: &'a control::console::invoke::ConsoleLog,
-             render: &'a AspectStorageRead<'a, RenderAspect>,
-             physical: &'a AspectStorageRead<'a, PhysicalAspect>,
-             disabled: &'a AspectStorageRead<'a, DisabledAspect>)
-             -> RenderWrapper<'a> {
-    RenderWrapper {
-      renderer: renderer,
-      encoder: encoder,
-      window: window,
-      camera_pos: camera_pos,
-      camera_target: camera_target,
-      debug_msg: debug_msg,
-      menu_state: menu_state,
-      command_buffer: command_buffer,
-      command_cursor: command_cursor,
-      console_log: console_log,
-      render: render,
-      physical: physical,
-      disabled: disabled,
-    }
-  }
-
-  pub fn render_frame(mut self) {
-    use specs::Join;
-    use itertools::Itertools;
-
-    let &CameraPos(x, y, z) = self.camera_pos;
-
-    // TODO: clean up this api: we shouldnt rely on implict state setting here
-    self.renderer.render_world(&mut self.encoder,
-                               &mut self.window,
-                               &(x, y, z),
-                               self.camera_target);
-
-    (self.physical, self.disabled.not(), self.render)
-      .iter()
-      .foreach(|(physical_aspect, _, render_aspect)| {
-        self.renderer.render_model(&mut self.encoder,
-                                   &mut self.window,
-                                   physical_aspect,
-                                   render_aspect,
-                                   (x, y, z));
-      });
-
-    self.renderer.render_ui(&mut self.encoder,
-                            &mut self.window,
-                            &self.debug_msg,
-                            &self.command_buffer,
-                            &self.command_cursor,
-                            &self.console_log,
-                            &self.menu_state);
   }
 }

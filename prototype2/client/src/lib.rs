@@ -1,30 +1,25 @@
 extern crate time;
 extern crate specs;
-extern crate serde;
-extern crate serde_json;
 extern crate itertools;
-extern crate gaffer_udp;
-extern crate flate2;
-extern crate cgmath;
 #[macro_use]
 extern crate gfx;
 extern crate glutin;
-extern crate gfx_text;
 extern crate gfx_window_glutin;
 extern crate gfx_device_gl;
 extern crate common;
-#[macro_use]
-extern crate lazy_static;
+extern crate pubsub;
 
-/// View-related structs and traits
-pub mod renderer;
+extern crate network;
+extern crate camera;
+extern crate console;
+extern crate renderer;
+extern crate debug;
+extern crate synchronization;
+extern crate window;
+extern crate player;
+extern crate pause;
 
-/// Managment of client/server communication
-pub mod network;
-
-/// Game state and logic management
 pub mod engine;
-
 pub mod world;
 
 use std::thread;
