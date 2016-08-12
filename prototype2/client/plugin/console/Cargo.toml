@@ -9,6 +9,7 @@ cgmath = "0.10"
 specs = "0.7.0"
 glutin = "0.6.1"
 lazy_static = "0.2.1"
+uuid = { version = "0.2.2", features = ["serde", "v4"] }
 
 [dependencies.state]
 path = "../../core/state"
@@ -18,3 +19,6 @@ path = "../../core/pause"
 
 [dependencies.pubsub]
 path = "../../../pubsub"
+
+[dependencies.common]
+path = "../../../common"

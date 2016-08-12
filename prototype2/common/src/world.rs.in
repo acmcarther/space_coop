@@ -22,6 +22,9 @@ impl RenderAspect {
   pub fn new() -> RenderAspect {
     RenderAspect { model: ModelType::Cube }
   }
+  pub fn new_with(model: ModelType) -> RenderAspect {
+    RenderAspect { model: model }
+  }
 }
 
 impl specs::Component for RenderAspect {
@@ -45,6 +48,10 @@ pub struct PhysicalAspect {
 impl PhysicalAspect{
   pub fn new(pos: (f32, f32, f32), vel: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
     PhysicalAspect { pos: pos, vel: vel, ang: (0.0, 0.0, 0.0), ang_vel: (0.0, 0.0, 0.0), anchored: anchored }
+  }
+
+  pub fn duplicate_with_pos(&self, pos: (f32, f32, f32)) -> PhysicalAspect {
+    PhysicalAspect { pos: pos, vel: self.vel.clone(), ang: self.ang.clone(), ang_vel: self.ang_vel.clone(), anchored: self.anchored.clone() }
   }
 }
 
@@ -86,6 +93,12 @@ impl SynchronizedAspect {
 
   pub fn new_from(uuid: Uuid) -> SynchronizedAspect {
     SynchronizedAspect(uuid)
+  }
+
+  pub fn starts_with<'a> (&'a self, pat: &'a str) -> bool {
+    let &SynchronizedAspect(ref uuid) = self;
+
+    uuid.to_string().starts_with(pat)
   }
 }
 

@@ -101,6 +101,10 @@ impl CollisionAspect{
   pub fn new() -> CollisionAspect {
     CollisionAspect { model: ModelType::Cube }
   }
+
+  pub fn from_render(render: &RenderAspect) -> CollisionAspect {
+    CollisionAspect { model: render.model.clone() }
+  }
 }
 
 impl specs::Component for CollisionAspect {

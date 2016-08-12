@@ -1,12 +1,15 @@
+#![feature(slice_patterns)]
 extern crate itertools;
 extern crate specs;
 extern crate cgmath;
+extern crate uuid;
 extern crate glutin;
 #[macro_use]
 extern crate lazy_static;
 extern crate pubsub;
 extern crate pause;
 extern crate state;
+extern crate common;
 
 mod invoke;
 mod charsets;
