@@ -1,7 +1,5 @@
 extern crate time;
 extern crate specs;
-extern crate serde;
-extern crate serde_json;
 extern crate itertools;
 extern crate cgmath;
 #[macro_use]
@@ -16,7 +14,7 @@ extern crate console;
 extern crate pause;
 extern crate debug;
 extern crate camera;
-extern crate state;
+extern crate client_state as state;
 
 pub mod opengl;
 pub mod system;

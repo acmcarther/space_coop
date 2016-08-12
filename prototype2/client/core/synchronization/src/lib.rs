@@ -1,10 +1,10 @@
 extern crate specs;
 extern crate itertools;
 
-extern crate network;
+extern crate client_network as network;
 extern crate common;
 extern crate pubsub;
-extern crate state;
+extern crate client_state as state;
 
 use state::{Delta, OwnEntity};
 use common::protocol::{ClientNetworkEvent, SnapshotEvent};

@@ -1,11 +1,14 @@
 [package]
-name = "synchronization"
+name = "physics"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
 
 [dependencies]
 itertools = "*"
 specs = "0.7.0"
+nalgebra = "0.8.2"
+nphysics3d = "0.4.*"
+ncollide = "0.9.1"
 
 [dependencies.common]
 path = "../../../common"
@@ -13,8 +16,8 @@ path = "../../../common"
 [dependencies.pubsub]
 path = "../../../pubsub"
 
-[dependencies.client_network]
-path = "../client_network"
+[dependencies.aspects]
+path = "../../aspects"
 
-[dependencies.client_state]
-path = "../client_state"
+[dependencies.server_state]
+path = "../../server_state"

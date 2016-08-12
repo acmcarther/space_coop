@@ -1,15 +1,17 @@
 use specs;
 use time::Duration;
-use engine;
 
 use std::net::SocketAddr;
 use std::collections::HashMap;
 
-use world::PlayerAspect;
+use aspects::PlayerAspect;
+use state::Delta;
 
-use engine::player::connection::ConnectEvent;
+use connection::ConnectEvent;
 use itertools::Itertools;
+use pubsub::{PubSubStore, SubscriberToken};
 
+#[derive(Debug, Clone)]
 pub struct HealthyEvent(SocketAddr);
 
 impl HealthyEvent {
@@ -29,23 +31,25 @@ impl HealthyEvent {
  * Inputs: HealthyEvents
  * Outputs: Players, ConnectEvents
  */
-pub struct System;
+pub struct System {
+  healthy_event_sub_token: SubscriberToken<HealthyEvent>,
+}
 
 impl System {
-  pub fn new() -> System {
-    System
+  pub fn new(world: &mut specs::World) -> System {
+    System { healthy_event_sub_token: world.register_subscriber() }
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, delta: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, delta: Delta) {
     use specs::Join;
 
     let (entities, mut players, mut healthy_events, mut connect_events) = arg.fetch(|w| {
       (w.entities(),
        w.write::<PlayerAspect>(),
-       w.write_resource::<Vec<HealthyEvent>>(),
-       w.write_resource::<Vec<ConnectEvent>>())
+       w.fetch_subscriber(&self.healthy_event_sub_token).collected(),
+       w.fetch_publisher::<ConnectEvent>())
     });
 
     // Build address to entity mapping for convenience

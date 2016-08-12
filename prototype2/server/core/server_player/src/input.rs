@@ -1,12 +1,14 @@
 use specs;
-use engine;
 use std::net::SocketAddr;
 use std::collections::HashMap;
 
 use common::protocol::ClientEvent;
 use common::world::{PhysicalAspect, RenderAspect, SynchronizedAspect};
-use world::{CollisionAspect, ControllerAspect, PlayerAspect};
+use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
+use state::Delta;
+use pubsub::{PubSubStore, SubscriberToken};
 
+#[derive(Debug, Clone)]
 pub struct InputEvent {
   pub address: SocketAddr,
   pub event: ClientEvent,
@@ -27,16 +29,18 @@ impl InputEvent {
  * Inputs: ClientEvent, Player
  *
  */
-pub struct System;
+pub struct System {
+  input_event_sub_token: SubscriberToken<InputEvent>,
+}
 
 impl System {
-  pub fn new() -> System {
-    System
+  pub fn new(world: &mut specs::World) -> System {
+    System { input_event_sub_token: world.register_subscriber() }
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use specs::Join;
     use itertools::Itertools;
 
@@ -48,7 +52,7 @@ impl specs::System<engine::Delta> for System {
          mut physicals,
          players,
          controllers) = arg.fetch(|w| {
-      (w.write_resource::<Vec<InputEvent>>(),
+      (w.fetch_subscriber(&self.input_event_sub_token).collected(),
        w.entities(),
        w.write::<SynchronizedAspect>(),
        w.write::<RenderAspect>(),

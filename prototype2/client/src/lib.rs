@@ -9,17 +9,17 @@ extern crate gfx_device_gl;
 extern crate common;
 extern crate pubsub;
 
-extern crate network;
+extern crate client_network as network;
 extern crate camera;
 extern crate console;
 extern crate renderer;
 extern crate debug;
 extern crate synchronization;
 extern crate window;
-extern crate player;
+extern crate client_player as player;
 extern crate pause;
 extern crate mutator;
-extern crate state;
+extern crate client_state as state;
 
 pub mod engine;
 pub mod world;

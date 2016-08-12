@@ -6,7 +6,7 @@ extern crate camera;
 extern crate pubsub;
 extern crate glutin;
 extern crate pause;
-extern crate state;
+extern crate client_state as state;
 
 use state::Delta;
 use common::protocol::ClientNetworkEvent::{self, DomainEvent};

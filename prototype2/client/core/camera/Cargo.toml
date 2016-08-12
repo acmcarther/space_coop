@@ -9,8 +9,8 @@ cgmath = "0.10"
 specs = "0.7.0"
 glutin = "0.6.1"
 
-[dependencies.state]
-path = "../state"
+[dependencies.client_state]
+path = "../client_state"
 
 [dependencies.pause]
 path = "../pause"

@@ -1,13 +1,13 @@
 use specs;
-use engine;
-
-use network::Network;
-
-use common::protocol::ClientPayload;
-use world::PlayerAspect;
-use protocol::OutboundEvent;
-
 use itertools::Itertools;
+
+use Network;
+
+use state::Delta;
+use common::protocol::ClientPayload;
+use aspects::PlayerAspect;
+use protocol::OutboundEvent;
+use pubsub::{PubSubStore, SubscriberToken};
 
 /**
  * Manages the network adapter, broadcasting pending outgoing events and accepting incoming events
@@ -17,21 +17,25 @@ use itertools::Itertools;
  */
 pub struct System {
   network: Network,
+  outbound_event_sub_token: SubscriberToken<OutboundEvent>,
 }
 
 impl System {
-  pub fn new(port: u16) -> System {
-    System { network: Network::new(port) }
+  pub fn new(port: u16, world: &mut specs::World) -> System {
+    System {
+      network: Network::new(port),
+      outbound_event_sub_token: world.register_subscriber::<OutboundEvent>(),
+    }
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use specs::Join;
 
     let (mut outbound_events, mut inbound_events, player) = arg.fetch(|w| {
-      (w.write_resource::<Vec<OutboundEvent>>(),
-       w.write_resource::<Vec<ClientPayload>>(),
+      (w.fetch_subscriber(&self.outbound_event_sub_token).collected(),
+       w.fetch_publisher::<ClientPayload>(),
        w.read::<PlayerAspect>())
     });
 
@@ -43,6 +47,6 @@ impl specs::System<engine::Delta> for System {
       .foreach(|event| self.network.send(event));
 
     // Process all incoming events
-    inbound_events.append(&mut self.network.recv_pending());
+    self.network.recv_pending().into_iter().foreach(|e| inbound_events.push(e));
   }
 }

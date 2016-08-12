@@ -1,17 +1,19 @@
 use std::net::SocketAddr;
 
-use world::{CollisionAspect, ControllerAspect, PlayerAspect};
+use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
 
 use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 use common::protocol::ServerNetworkEvent;
-use protocol::OutboundEvent;
+use network::OutboundEvent;
 
 use std::collections::HashMap;
 
 use specs;
-use engine;
+use state::Delta;
+use pubsub::{PubSubStore, SubscriberToken};
 
+#[derive(Debug, Clone)]
 pub enum ConnectEvent {
   Connect(SocketAddr),
   Disconnect(SocketAddr),
@@ -27,16 +29,18 @@ pub enum ConnectEvent {
  * Input: Players, Controllers, ConnectEvent
  * Output: Players, Controllers, Collisions, Disableds, Renders, Physicals
  */
-pub struct System;
+pub struct System {
+  connection_event_sub_token: SubscriberToken<ConnectEvent>,
+}
 
 impl System {
-  pub fn new() -> System {
-    System
+  pub fn new(world: &mut specs::World) -> System {
+    System { connection_event_sub_token: world.register_subscriber::<ConnectEvent>() }
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, delta: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, delta: Delta) {
     use itertools::Itertools;
     use specs::Join;
 
@@ -53,8 +57,8 @@ impl specs::System<engine::Delta> for System {
       (w.write::<PlayerAspect>(),
        w.entities(),
        w.write::<SynchronizedAspect>(),
-       w.write_resource::<Vec<OutboundEvent>>(),
-       w.write_resource::<Vec<ConnectEvent>>(),
+       w.fetch_publisher::<OutboundEvent>(),
+       w.fetch_subscriber(&self.connection_event_sub_token).collected(),
        w.write::<ControllerAspect>(),
        w.write::<CollisionAspect>(),
        w.write::<DisabledAspect>(),

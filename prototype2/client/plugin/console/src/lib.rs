@@ -8,7 +8,7 @@ extern crate glutin;
 extern crate lazy_static;
 extern crate pubsub;
 extern crate pause;
-extern crate state;
+extern crate client_state as state;
 extern crate common;
 
 mod invoke;

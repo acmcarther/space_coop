@@ -1,5 +1,5 @@
 [package]
-name = "player"
+name = "client_player"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
 
@@ -21,5 +21,5 @@ path = "../../core/camera"
 [dependencies.pause]
 path = "../../core/pause"
 
-[dependencies.state]
-path = "../../core/state"
+[dependencies.client_state]
+path = "../../core/client_state"

@@ -10,5 +10,5 @@ specs = "0.7.0"
 [dependencies.common]
 path = "../../../common"
 
-[dependencies.state]
-path = "../state"
+[dependencies.client_state]
+path = "../client_state"

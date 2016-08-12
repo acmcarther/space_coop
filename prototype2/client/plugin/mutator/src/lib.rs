@@ -2,7 +2,7 @@ extern crate specs;
 extern crate itertools;
 extern crate console;
 extern crate pubsub;
-extern crate state;
+extern crate client_state as state;
 extern crate common;
 
 use state::Delta;

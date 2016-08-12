@@ -1,10 +1,20 @@
 [package]
-name = "synchronization"
+name = "client_network"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
+build = "build.rs"
+
+[build-dependencies]
+serde_codegen = "0.7.9"
+itertools = "*"
 
 [dependencies]
+gaffer_udp = "0.1.2"
 itertools = "*"
+serde = "0.7.9"
+serde_json = "0.7.4"
+time = "0.1.35"
+flate2 = "0.2.13"
 specs = "0.7.0"
 
 [dependencies.common]
@@ -12,9 +22,6 @@ path = "../../../common"
 
 [dependencies.pubsub]
 path = "../../../pubsub"
-
-[dependencies.client_network]
-path = "../client_network"
 
 [dependencies.client_state]
 path = "../client_state"

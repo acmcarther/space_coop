@@ -1,11 +1,9 @@
 use specs;
-use engine;
 
 use common::protocol::ClientPayload;
-use engine::io::health_check::HealthyEvent;
-use engine::player::connection::ConnectEvent;
-use engine::player::snapshot::SnapshotAckEvent;
-use engine::player::input::InputEvent;
+use player::{ConnectEvent, HealthyEvent, InputEvent, SnapshotAckEvent};
+use pubsub::{PubSubStore, SubscriberToken};
+use state::Delta;
 
 use itertools::Itertools;
 
@@ -15,16 +13,18 @@ use itertools::Itertools;
  * Inputs: ClientPayload
  * Outputs: ConnectEvent, SnapshotAckEvent, ClientEvent, HealthyEvent,
  */
-pub struct System;
+pub struct System {
+  client_payload_sub_token: SubscriberToken<ClientPayload>,
+}
 
 impl System {
-  pub fn new() -> System {
-    System
+  pub fn new(world: &mut specs::World) -> System {
+    System { client_payload_sub_token: world.register_subscriber() }
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use common::protocol::ClientNetworkEvent::*;
 
     let (mut inbound_events,
@@ -32,11 +32,11 @@ impl specs::System<engine::Delta> for System {
          mut snapshot_ack_events,
          mut input_events,
          mut healthy_events) = arg.fetch(|w| {
-      (w.write_resource::<Vec<ClientPayload>>(),
-       w.write_resource::<Vec<ConnectEvent>>(),
-       w.write_resource::<Vec<SnapshotAckEvent>>(),
-       w.write_resource::<Vec<InputEvent>>(),
-       w.write_resource::<Vec<HealthyEvent>>())
+      (w.fetch_subscriber(&self.client_payload_sub_token).collected(),
+       w.fetch_publisher::<ConnectEvent>(),
+       w.fetch_publisher::<SnapshotAckEvent>(),
+       w.fetch_publisher::<InputEvent>(),
+       w.fetch_publisher::<HealthyEvent>())
     });
 
     // Convert our single message type to several and ship em to different busses

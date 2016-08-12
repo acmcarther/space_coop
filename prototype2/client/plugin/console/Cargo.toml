@@ -11,8 +11,8 @@ glutin = "0.6.1"
 lazy_static = "0.2.1"
 uuid = { version = "0.2.2", features = ["serde", "v4"] }
 
-[dependencies.state]
-path = "../../core/state"
+[dependencies.client_state]
+path = "../../core/client_state"
 
 [dependencies.pause]
 path = "../../core/pause"

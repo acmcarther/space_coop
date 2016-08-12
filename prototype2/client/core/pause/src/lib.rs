@@ -2,7 +2,7 @@ extern crate specs;
 extern crate glutin;
 extern crate itertools;
 extern crate pubsub;
-extern crate state;
+extern crate client_state as state;
 
 use pubsub::{PubSubStore, SubscriberToken};
 

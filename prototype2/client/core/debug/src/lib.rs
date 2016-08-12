@@ -2,7 +2,7 @@ extern crate specs;
 extern crate itertools;
 
 extern crate common;
-extern crate state;
+extern crate client_state as state;
 
 use state::Delta;
 use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};

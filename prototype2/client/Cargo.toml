@@ -7,9 +7,7 @@ authors = ["Alex McArther <acmcarther@gmail.com>"]
 itertools = "*"
 time = "0.1.35"
 gfx = "0.12.0"
-cgmath = "0.10"
 gfx_device_gl = "*"
-gfx_text = "0.12.0"
 gfx_window_glutin = "*"
 glutin = "0.6.1"
 specs = "0.7.0"
@@ -20,8 +18,8 @@ path = "../common"
 [dependencies.pubsub]
 path = "../pubsub"
 
-[dependencies.network]
-path = "./core/network"
+[dependencies.client_network]
+path = "./core/client_network"
 
 [dependencies.pause]
 path = "./core/pause"
@@ -44,11 +42,11 @@ path = "./plugin/console"
 [dependencies.window]
 path = "./core/window"
 
-[dependencies.player]
-path = "./plugin/player"
+[dependencies.client_player]
+path = "./plugin/client_player"
 
 [dependencies.mutator]
 path = "./plugin/mutator"
 
-[dependencies.state]
-path = "./core/state"
+[dependencies.client_state]
+path = "./core/client_state"

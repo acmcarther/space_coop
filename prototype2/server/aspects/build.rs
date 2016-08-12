@@ -13,7 +13,7 @@ pub fn main() {
   // Don't care if directory already exists
   let _ = fs::create_dir(Path::new(&out_dir).join("world"));
 
-  (vec![]).into_iter().foreach(|path| {
+  (vec!["lib.rs"]).into_iter().foreach(|path| {
     let full_src = "src/".to_owned() + path + ".in";
     let src = Path::new(&full_src);
     let dst = Path::new(&out_dir).join(path);

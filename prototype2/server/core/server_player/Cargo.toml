@@ -1,10 +1,11 @@
 [package]
-name = "synchronization"
+name = "server_player"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
 
 [dependencies]
 itertools = "*"
+time = "0.1.35"
 specs = "0.7.0"
 
 [dependencies.common]
@@ -13,8 +14,11 @@ path = "../../../common"
 [dependencies.pubsub]
 path = "../../../pubsub"
 
-[dependencies.client_network]
-path = "../client_network"
+[dependencies.aspects]
+path = "../../aspects"
 
-[dependencies.client_state]
-path = "../client_state"
+[dependencies.server_network]
+path = "../server_network"
+
+[dependencies.server_state]
+path = "../../server_state"

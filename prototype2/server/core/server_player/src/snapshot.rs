@@ -1,18 +1,19 @@
 use std::collections::{HashMap, HashSet};
 
 use specs;
-use engine;
-
-use network::fragmentation::Fragmentable;
 
 use std::net::SocketAddr;
 
-use protocol::OutboundEvent;
+use network::{Fragmentable, OutboundEvent};
 use common::protocol::ServerNetworkEvent;
 use common::world::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-use world::{ControllerAspect, PlayerAspect};
+use aspects::{ControllerAspect, PlayerAspect};
+use state::Delta;
+use pubsub::{PubSubStore, SubscriberToken};
+
 
 #[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct SnapshotAckEvent {
   address: SocketAddr,
   idx: u16,
@@ -35,17 +36,21 @@ impl SnapshotAckEvent {
  */
 pub struct System {
   snapshot_idx: u16,
+  snapshot_ack_sub_token: SubscriberToken<SnapshotAckEvent>,
 }
 
 impl System {
-  pub fn new() -> System {
-    System { snapshot_idx: 0 }
+  pub fn new(world: &mut specs::World) -> System {
+    System {
+      snapshot_idx: 0,
+      snapshot_ack_sub_token: world.register_subscriber(),
+    }
   }
 }
 
 #[allow(unused_variables, unused_imports)]
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, _: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use specs::Join;
     use itertools::Itertools;
 
@@ -60,7 +65,7 @@ impl specs::System<engine::Delta> for System {
          disabled,
          controller,
          mut outbound_events) = arg.fetch(|w| {
-      (w.write_resource::<Vec<SnapshotAckEvent>>(),
+      (w.fetch_subscriber(&self.snapshot_ack_sub_token).collected(),
        w.entities(),
        w.read::<SynchronizedAspect>(),
        w.read::<PlayerAspect>(),
@@ -68,7 +73,7 @@ impl specs::System<engine::Delta> for System {
        w.read::<RenderAspect>(),
        w.read::<DisabledAspect>(),
        w.read::<ControllerAspect>(),
-       w.write_resource::<Vec<OutboundEvent>>())
+       w.fetch_publisher::<OutboundEvent>())
     });
 
     // TODO(acmcarther): Something useful with this event
@@ -101,7 +106,7 @@ impl specs::System<engine::Delta> for System {
     });
 
     // Add outbound state snapshot events per player
-    outbound_events.extend((&player, &entities)
+    (&player, &entities)
       .iter()
       .filter(|&(ply, _)| ply.connected)
       .flat_map(|(ply, entity)| {
@@ -124,6 +129,7 @@ impl specs::System<engine::Delta> for System {
           dest: addr,
           event: event,
         }
-      }));
+      })
+      .foreach(|e| outbound_events.push(e));
   }
 }

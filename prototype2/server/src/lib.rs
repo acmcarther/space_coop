@@ -1,32 +1,22 @@
-extern crate cgmath;
-extern crate flate2;
-extern crate gaffer_udp;
 extern crate itertools;
-extern crate nphysics3d;
-extern crate ncollide;
-extern crate nalgebra;
-extern crate serde;
-extern crate serde_json;
 extern crate specs;
 extern crate time;
 
 extern crate common;
+extern crate pubsub;
+extern crate aspects;
+extern crate server_state as state;
+extern crate server_network as network;
+extern crate server_player as player;
+extern crate physics;
 
 /// Manages main loop and coordination of application components
 ///
 pub mod engine;
 
-/// Manages network IO
-///
-pub mod network;
-
 /// Manages game state
 ///
 pub mod world;
-
-/// Describes server outbound payloads
-///
-pub mod protocol;
 
 use std::thread;
 use std::time::Duration as StdDuration;

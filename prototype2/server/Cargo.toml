@@ -5,22 +5,32 @@ authors = ["Alex McArther <acmcarther@gmail.com>"]
 build = "build.rs"
 
 [build-dependencies]
-serde_codegen = "*"
-syntex = "*"
-itertools = "*"
+serde_codegen = "0.7.14"
+syntex = "0.38.0"
+itertools = "0.4.6"
 
 [dependencies]
-gaffer_udp = "0.1.2"
 itertools = "*"
-serde = "0.7.9"
-serde_json = "0.7.4"
 time = "0.1.35"
-cgmath = "0.10"
-flate2 = "0.2.13"
 specs = "0.7.0"
-nalgebra = "0.8.2"
-nphysics3d = "0.4.*"
-ncollide = "0.9.1"
 
 [dependencies.common]
 path = "../common"
+
+[dependencies.pubsub]
+path = "../pubsub"
+
+[dependencies.aspects]
+path = "./aspects"
+
+[dependencies.server_state]
+path = "./server_state"
+
+[dependencies.server_network]
+path = "./core/server_network"
+
+[dependencies.server_player]
+path = "./core/server_player"
+
+[dependencies.physics]
+path = "./plugin/physics"

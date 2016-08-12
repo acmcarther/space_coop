@@ -10,8 +10,8 @@ specs = "0.7.0"
 [dependencies.console]
 path = "../console"
 
-[dependencies.state]
-path = "../../core/state"
+[dependencies.client_state]
+path = "../../core/client_state"
 
 [dependencies.pubsub]
 path = "../../../pubsub"

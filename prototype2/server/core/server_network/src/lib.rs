@@ -1,11 +1,27 @@
-pub mod fragmentation;
+extern crate specs;
+extern crate itertools;
+extern crate flate2;
+extern crate serde_json;
+extern crate gaffer_udp;
+extern crate time;
+
+extern crate common;
+extern crate server_state as state;
+extern crate aspects;
+extern crate pubsub;
+
+mod protocol;
+mod adapter;
+mod fragmentation;
+
+pub use protocol::OutboundEvent;
+pub use adapter::System as AdapterSystem;
 
 pub use self::fragmentation::Fragmentable;
 
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
 use itertools::Unfold;
-use serde_json;
 
 use common::protocol::{ClientPayload, ServerPayload};
 

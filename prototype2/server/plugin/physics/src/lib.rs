@@ -1,9 +1,18 @@
-use specs;
-use engine;
+extern crate specs;
+extern crate ncollide;
+extern crate nalgebra;
+extern crate nphysics3d;
+extern crate itertools;
+
+extern crate common;
+extern crate aspects;
+extern crate server_state as state;
+extern crate pubsub;
 
 use common::world::{DisabledAspect, PhysicalAspect};
 use common::model::ModelType;
-use world::CollisionAspect;
+use state::Delta;
+use aspects::CollisionAspect;
 use ncollide::shape::{Ball, Plane, Cuboid};
 use nalgebra::Translation;
 use nalgebra::Rotation;
@@ -20,13 +29,13 @@ use nphysics3d::math::Vector;
 pub struct System;
 
 impl System {
-  pub fn new() -> System {
+  pub fn new(_: &mut specs::World) -> System {
     System
   }
 }
 
-impl specs::System<engine::Delta> for System {
-  fn run(&mut self, arg: specs::RunArg, delta: engine::Delta) {
+impl specs::System<Delta> for System {
+  fn run(&mut self, arg: specs::RunArg, delta: Delta) {
     use specs::Join;
     use itertools::Itertools;
     use std::ops::Not;
