@@ -17,6 +17,7 @@ use renderer;
 use synchronization;
 use player;
 use mutator;
+use mouse_lock;
 
 use renderer::opengl::OpenGlRenderer;
 use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
@@ -26,21 +27,22 @@ use pubsub::PubSubStore;
 use state::ExitFlag;
 
 // Window input implicit priority: infinity
-const NETWORK_IO_PRIORITY: specs::Priority = 100;
-const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 90;
-const PAUSE_PRIORITY: specs::Priority = 85;
-const PLAYER_PREPROCESSOR_PRIORITY: specs::Priority = 77;
-const CAMERA_PREPROCESSOR_PRIORITY: specs::Priority = 77;
-const CONSOLE_PREPROCESSOR_PRIORITY: specs::Priority = 77;
-const PLAYER_MOVE_PRIORITY: specs::Priority = 65;
-const CAMERA_MOVE_PRIORITY: specs::Priority = 65;
-const CONSOLE_INPUT_PRIORITY: specs::Priority = 65;
-const CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
-const MUTATOR_PRIORITY: specs::Priority = 63;
-const NETWORK_CONNECTION_PRIORITY: specs::Priority = 60;
-const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
-const NETWORK_KEEP_ALIVE_PRIORITY: specs::Priority = 5;
-const DEBUG_PRIORITY: specs::Priority = 1;
+pub const NETWORK_IO_PRIORITY: specs::Priority = 100;
+pub const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 90;
+pub const PAUSE_PRIORITY: specs::Priority = 85;
+pub const PLAYER_PREPROCESSOR_PRIORITY: specs::Priority = 77;
+pub const MOUSE_LOCK_PRIORITY: specs::Priority = 77;
+pub const CONSOLE_PREPROCESSOR_PRIORITY: specs::Priority = 77;
+pub const CAMERA_PREPROCESSOR_PRIORITY: specs::Priority = 76;
+pub const PLAYER_MOVE_PRIORITY: specs::Priority = 65;
+pub const CAMERA_MOVE_PRIORITY: specs::Priority = 65;
+pub const CONSOLE_INPUT_PRIORITY: specs::Priority = 65;
+pub const CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
+pub const MUTATOR_PRIORITY: specs::Priority = 63;
+pub const NETWORK_CONNECTION_PRIORITY: specs::Priority = 60;
+pub const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
+pub const NETWORK_KEEP_ALIVE_PRIORITY: specs::Priority = 5;
+pub const DEBUG_PRIORITY: specs::Priority = 1;
 // Renderer implicit priority: 0
 
 pub struct Engine {
@@ -75,6 +77,7 @@ impl Engine {
     let network_connection_system = network::ConnectionSystem::new(&mut world);
     let pause_system = pause::System::new(&mut world);
     let player_preprocessor_system = player::PreprocessorSystem::new(&mut world);
+    let mouse_lock_system = mouse_lock::System::new(&mut world);
     let camera_preprocessor_system = camera::PreprocessorSystem::new(&mut world);
     let console_preprocessor_system = console::PreprocessorSystem::new(&mut world);
     let player_move_system = player::MoveSystem::new(&mut world);
@@ -101,6 +104,9 @@ impl Engine {
     planner.add_system(player_preprocessor_system,
                        player::PreprocessorSystem::name(),
                        PLAYER_PREPROCESSOR_PRIORITY);
+    planner.add_system(mouse_lock_system,
+                       mouse_lock::System::name(),
+                       MOUSE_LOCK_PRIORITY);
     planner.add_system(camera_preprocessor_system,
                        camera::PreprocessorSystem::name(),
                        CAMERA_PREPROCESSOR_PRIORITY);

@@ -12,6 +12,14 @@ gfx_window_glutin = "*"
 glutin = "0.6.1"
 specs = "0.7.0"
 
+[dev-dependencies]
+cucumber = "0.2.3"
+lazy_static = "0.2.1"
+
+[[test]]
+name = "cuke"
+path = "./features/cuke.rs"
+
 [dependencies.common]
 path = "../common"
 
@@ -26,6 +34,9 @@ path = "./core/pause"
 
 [dependencies.debug]
 path = "./core/debug"
+
+[dependencies.mouse_lock]
+path = "./core/mouse_lock"
 
 [dependencies.renderer]
 path = "./core/renderer"

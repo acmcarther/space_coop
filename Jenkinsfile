@@ -10,8 +10,12 @@ node('master') {
                 sh '(cd prototype2 && nix-shell --run "cargo build")'
             stage 'Test Root'
                 sh '(cd prototype2 && nix-shell --run "cargo test")'
-            stage 'Test Subcrates'
-                sh '(cd prototype2 && nix-shell --run "cargo test -p common -p client -p server")'
+            stage 'Test Common'
+                sh '(cd prototype2 && nix-shell --run "cd common; cargo test")'
+            stage 'Test Client'
+                sh '(cd prototype2 && nix-shell --run "cd client; cargo test")'
+            stage 'Test Server'
+                sh '(cd prototype2 && nix-shell --run "cd server; cargo test")'
             currentBuild.result = "SUCCESS"
         } catch (err) {
             currentBuild.result = "FAILURE"

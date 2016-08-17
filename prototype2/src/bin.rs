@@ -36,5 +36,6 @@ fn port_from(matches: &ArgMatches) -> u16 {
 fn addr_from(matches: &ArgMatches) -> std::net::SocketAddr {
   matches.value_of("server address")
     .and_then(|v| v.to_socket_addrs().ok())
-    .and_then(|mut socket_addr_iter| socket_addr_iter.next()).unwrap()
+    .and_then(|mut socket_addr_iter| socket_addr_iter.next())
+    .unwrap()
 }

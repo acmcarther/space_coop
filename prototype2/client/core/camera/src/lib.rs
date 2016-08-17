@@ -3,15 +3,14 @@ extern crate cgmath;
 extern crate specs;
 extern crate client_state as state;
 extern crate pubsub;
-extern crate pause;
-extern crate glutin;
+extern crate mouse_lock;
 
 use cgmath::{Deg, Euler, Quaternion, Rotation, Vector3};
 use state::Delta;
-use pause::PauseState;
 use pubsub::{PubSubStore, SubscriberToken};
+use mouse_lock::RelativeMouseMovementEvent;
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct CameraPos(pub f32, pub f32, pub f32);
 
 #[derive(Debug, Clone)]
@@ -77,12 +76,14 @@ impl<'a> CameraManipulator<'a> {
 }
 
 pub struct PreprocessorSystem {
-  window_event_sub_token: SubscriberToken<glutin::Event>,
+  relative_mouse_movement_sub_token: SubscriberToken<RelativeMouseMovementEvent>,
 }
 
 impl PreprocessorSystem {
   pub fn new(world: &mut specs::World) -> PreprocessorSystem {
-    PreprocessorSystem { window_event_sub_token: world.register_subscriber::<glutin::Event>() }
+    PreprocessorSystem {
+      relative_mouse_movement_sub_token: world.register_subscriber::<RelativeMouseMovementEvent>(),
+    }
   }
 
   pub fn name() -> &'static str {
@@ -93,30 +94,14 @@ impl PreprocessorSystem {
 impl specs::System<Delta> for PreprocessorSystem {
   fn run(&mut self, arg: specs::RunArg, _: Delta) {
     use itertools::Itertools;
-    use glutin::Event::MouseMoved;
 
-    let (mut glutin_events, pause_state, window, mut camera_events) = arg.fetch(|w| {
-      (w.fetch_subscriber(&self.window_event_sub_token).collected(),
-       w.read_resource::<PauseState>(),
-       w.write_resource::<glutin::Window>(),
+    let (mut relative_mouse_movement_events, mut camera_events) = arg.fetch(|w| {
+      (w.fetch_subscriber(&self.relative_mouse_movement_sub_token).collected(),
        w.fetch_publisher::<CameraMoveEvent>())
     });
 
-    if *pause_state != PauseState::Paused {
-      glutin_events.drain(..).foreach(|e| {
-        match e {
-          MouseMoved(x, _) => {
-            // Move the mouse back to the middle of the window
-            let (wx, wy) = window.get_position().unwrap();
-            let (ox, oy) = window.get_outer_size().unwrap();
-            let (middle_x, middle_y) = ((wx + ox as i32 / 2), (wy + oy as i32 / 2));
-            window.set_cursor_position(middle_x, middle_y).unwrap();
-
-            camera_events.push(CameraMoveEvent(x - middle_x));
-          },
-          _ => {}, // It's goin' on the ground
-        }
-      });
-    }
+    relative_mouse_movement_events.drain(..).foreach(|e| {
+      camera_events.push(CameraMoveEvent(e.x));
+    });
   }
 }

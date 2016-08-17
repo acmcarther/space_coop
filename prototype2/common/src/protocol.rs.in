@@ -1,6 +1,6 @@
 use world::{SynchronizedAspect, PhysicalAspect, RenderAspect};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ClientNetworkEvent {
   Connect,
   Disconnect,
@@ -10,7 +10,7 @@ pub enum ClientNetworkEvent {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ClientEvent {
   SelfMove {x_d: f32, y_d: f32, z_d: f32},
   // TODO: Administrative: Should have access controls

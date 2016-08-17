@@ -13,7 +13,7 @@ use model::ModelType;
  * Most entities implementing RenderAspect also implement PhysicalAspect in order to be rendered
  * somewhere besides the origin of the scene.
  */
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct RenderAspect {
   pub model: ModelType
 }
@@ -36,7 +36,7 @@ impl specs::Component for RenderAspect {
  *
  * Contains the physical location and whether the entity is mobile or not
  */
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PhysicalAspect {
   pub pos: (f32, f32, f32),
   pub vel: (f32, f32, f32),
