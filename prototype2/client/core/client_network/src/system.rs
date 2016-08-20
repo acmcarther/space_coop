@@ -46,6 +46,7 @@ pub struct AdapterSystem {
   network_kill_signal: Receiver<()>,
   client_event_sub_token: SubscriberToken<ClientNetworkEvent>,
 }
+declare_dependencies!(AdapterSystem, []);
 
 impl AdapterSystem {
   pub fn new(port: u16,
@@ -96,6 +97,8 @@ impl specs::System<Delta> for AdapterSystem {
 pub struct ConnectionSystem {
   connection_event_sub_token: SubscriberToken<ConnectionEvent>,
 }
+declare_dependencies!(ConnectionSystem, [EventDistributionSystem]);
+standalone_installer_from_new!(ConnectionSystem, Delta);
 
 impl ConnectionSystem {
   pub fn new(world: &mut specs::World) -> ConnectionSystem {
@@ -144,6 +147,10 @@ impl specs::System<Delta> for ConnectionSystem {
 pub struct KeepAliveSystem {
   next_keepalive_time: Tm,
 }
+// NOTE: Not directly dependent on AdapterSystem, but would like to guarantee
+// that we don't push this event on this tick
+declare_dependencies!(KeepAliveSystem, [AdapterSystem]);
+standalone_installer_from_new!(KeepAliveSystem, Delta);
 
 impl KeepAliveSystem {
   pub fn new(_: &mut specs::World) -> KeepAliveSystem {
@@ -176,6 +183,8 @@ impl specs::System<Delta> for KeepAliveSystem {
 pub struct EventDistributionSystem {
   server_event_sub_token: SubscriberToken<ServerNetworkEvent>,
 }
+declare_dependencies!(EventDistributionSystem, [AdapterSystem]);
+standalone_installer_from_new!(EventDistributionSystem, Delta);
 
 impl EventDistributionSystem {
   pub fn new(world: &mut specs::World) -> EventDistributionSystem {

@@ -5,6 +5,8 @@ extern crate client_network as network;
 extern crate common;
 extern crate pubsub;
 extern crate client_state as state;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use state::{Delta, OwnEntity};
 use common::protocol::{ClientNetworkEvent, SnapshotEvent};
@@ -33,6 +35,8 @@ pub struct System {
   partial_snapshot: FragmentBuffer,
   snapshot_event_sub_token: SubscriberToken<SnapshotEvent>,
 }
+declare_dependencies!(System, [network::EventDistributionSystem]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

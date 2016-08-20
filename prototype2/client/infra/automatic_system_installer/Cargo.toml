@@ -1,0 +1,14 @@
+[package]
+name = "automatic_system_installer"
+version = "0.1.0"
+authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[dependencies]
+itertools = "*"
+specs = "0.7.0"
+
+[dependencies.system_installer]
+path = "../system_installer"
+
+[dependencies.dag]
+path = "../dag"

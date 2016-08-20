@@ -16,3 +16,6 @@ path = "../client_state"
 
 [dependencies.pause]
 path = "../pause"
+
+[dependencies.automatic_system_installer]
+path = "../../infra/automatic_system_installer"

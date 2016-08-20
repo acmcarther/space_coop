@@ -56,6 +56,16 @@ version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "automatic_system_installer"
+version = "0.1.0"
+dependencies = [
+ "dag 0.1.0",
+ "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "system_installer 0.1.0",
+]
+
+[[package]]
 name = "bitflags"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -94,6 +104,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "camera"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "client_state 0.1.0",
  "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -144,6 +155,7 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "camera 0.1.0",
  "client_network 0.1.0",
  "client_player 0.1.0",
@@ -151,6 +163,8 @@ dependencies = [
  "common 0.1.0",
  "console 0.1.0",
  "debug 0.1.0",
+ "flame 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "flamer 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_device_gl 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_window_glutin 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -171,6 +185,7 @@ dependencies = [
 name = "client_network"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "common 0.1.0",
  "flate2 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -188,6 +203,7 @@ dependencies = [
 name = "client_player"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "camera 0.1.0",
  "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "client_state 0.1.0",
@@ -237,6 +253,7 @@ dependencies = [
 name = "console"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "client_state 0.1.0",
  "common 0.1.0",
@@ -294,9 +311,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "dag"
+version = "0.1.0"
+dependencies = [
+ "daggy 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "daggy"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "petgraph 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "debug"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "common 0.1.0",
  "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -331,6 +365,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "fixedbitset"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "flame"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "flamer"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "flame 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -640,6 +692,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "mouse_lock"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "glutin 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -652,6 +705,7 @@ dependencies = [
 name = "mutator"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "common 0.1.0",
  "console 0.1.0",
@@ -874,12 +928,21 @@ dependencies = [
 name = "pause"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "common 0.1.0",
  "glutin 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "pubsub 0.1.0",
  "specs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "petgraph"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "fixedbitset 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -968,6 +1031,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "renderer"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "camera 0.1.0",
  "cgmath 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "client_state 0.1.0",
@@ -1156,6 +1220,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "synchronization"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_network 0.1.0",
  "client_state 0.1.0",
  "common 0.1.0",
@@ -1252,6 +1317,14 @@ dependencies = [
  "syntex_pos 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "term 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "system_installer"
+version = "0.1.0"
+dependencies = [
+ "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "specs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1432,6 +1505,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "window"
 version = "0.1.0"
 dependencies = [
+ "automatic_system_installer 0.1.0",
  "client_state 0.1.0",
  "glutin 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.4.17 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -31,6 +31,8 @@ pub struct System {
   executed_commands_sub_token: SubscriberToken<ExecutedCommand>,
   interpreter: Interpreter,
 }
+declare_dependencies!(System, [::input::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

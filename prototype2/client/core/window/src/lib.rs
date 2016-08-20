@@ -3,6 +3,7 @@ extern crate glutin;
 extern crate itertools;
 extern crate pubsub;
 extern crate client_state as state;
+extern crate automatic_system_installer;
 
 use state::Delta;
 use pubsub::PubSubStore;
@@ -12,6 +13,9 @@ use pubsub::PubSubStore;
  *
  * This service is currently unused because of an osx issue forcing polling to happen on the main
  * thread.
+ *
+ * NOTE: This system is unused -- its essentially reimplemented verbatim in the engine in the main
+ * thread, due to a bug on macos in intercepting window events off the main thread. See issue #55.
  */
 pub struct System;
 

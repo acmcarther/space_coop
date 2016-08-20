@@ -1,9 +1,12 @@
+#![feature(type_macros)]
 extern crate itertools;
 extern crate cgmath;
 extern crate specs;
 extern crate client_state as state;
 extern crate pubsub;
 extern crate mouse_lock;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use cgmath::{Deg, Euler, Quaternion, Rotation, Vector3};
 use state::Delta;
@@ -22,6 +25,8 @@ struct CameraMoveEvent(pub i32);
 pub struct MovementSystem {
   camera_event_sub_token: SubscriberToken<CameraMoveEvent>,
 }
+declare_dependencies!(MovementSystem, [PreprocessorSystem]);
+standalone_installer_from_new!(MovementSystem, Delta);
 
 impl MovementSystem {
   pub fn new(world: &mut specs::World) -> MovementSystem {
@@ -47,6 +52,7 @@ impl specs::System<Delta> for MovementSystem {
     camera_events.drain(..).foreach(|e| camera_manipulator.rotate_camera(e));
   }
 }
+
 
 // TODO(acmcarther): Document
 struct CameraManipulator<'a> {
@@ -78,6 +84,8 @@ impl<'a> CameraManipulator<'a> {
 pub struct PreprocessorSystem {
   relative_mouse_movement_sub_token: SubscriberToken<RelativeMouseMovementEvent>,
 }
+declare_dependencies!(PreprocessorSystem, [mouse_lock::System]);
+standalone_installer_from_new!(PreprocessorSystem, Delta);
 
 impl PreprocessorSystem {
   pub fn new(world: &mut specs::World) -> PreprocessorSystem {

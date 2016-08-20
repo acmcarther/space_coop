@@ -13,6 +13,7 @@ extern crate pause;
 extern crate time;
 #[macro_use]
 extern crate lazy_static;
+extern crate automatic_system_installer;
 
 mod step_definitions;
 mod support;

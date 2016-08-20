@@ -3,6 +3,8 @@ extern crate glutin;
 extern crate itertools;
 extern crate pubsub;
 extern crate client_state as state;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use pubsub::{PubSubStore, SubscriberToken};
 
@@ -26,6 +28,9 @@ impl PauseState {
 pub struct System {
   window_event_sub_token: SubscriberToken<glutin::Event>,
 }
+// NOTE: This depends on a window emitter that lives in the main thread
+declare_dependencies!(System, []);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

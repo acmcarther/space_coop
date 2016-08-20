@@ -41,6 +41,8 @@ pub struct System {
   command_buffer: String,
   console_event_sub_token: SubscriberToken<ConsoleEvent>,
 }
+declare_dependencies!(System, [::preprocessor::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

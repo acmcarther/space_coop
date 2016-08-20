@@ -13,3 +13,6 @@ path = "../client_state"
 
 [dependencies.pubsub]
 path = "../../../pubsub"
+
+[dependencies.automatic_system_installer]
+path = "../../infra/automatic_system_installer"

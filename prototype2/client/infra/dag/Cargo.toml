@@ -1,0 +1,8 @@
+[package]
+name = "dag"
+version = "0.1.0"
+authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[dependencies]
+itertools = "0.4.17"
+daggy = "0.4.0"

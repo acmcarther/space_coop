@@ -21,6 +21,7 @@ pub extern crate client_player as player;
 pub extern crate pause;
 pub extern crate mutator;
 pub extern crate client_state as state;
+pub extern crate automatic_system_installer;
 
 pub mod engine;
 pub mod world;
@@ -57,11 +58,18 @@ pub fn start(port: u16, server_addr: SocketAddr) {
       last_time = now;
       next_time = next_time + Duration::milliseconds((time_step * 1000.0) as i64);
     } else {
-      thread::sleep(StdDuration::from_millis(2))
+      sleep(StdDuration::from_millis(2))
     }
   }
 
   // Finish up
   let dt = time::now() - last_time;
   engine.finalize(&dt);
+
+  // Dump the report to disk
+  // flame::dump_html(&mut File::create("flame-graph.html").unwrap()).unwrap();
+}
+
+fn sleep(d: StdDuration) {
+  thread::sleep(d)
 }

@@ -4,6 +4,8 @@ extern crate console;
 extern crate pubsub;
 extern crate client_state as state;
 extern crate common;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use state::Delta;
 use console::{Command, ConsoleLog};
@@ -30,6 +32,8 @@ type AspectStorageWrite<'a, T> = specs::Storage<T,
 pub struct System {
   commands_sub_token: SubscriberToken<Command>,
 }
+declare_dependencies!(System, [console::InvokeSystem]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

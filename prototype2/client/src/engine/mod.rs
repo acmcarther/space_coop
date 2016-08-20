@@ -25,25 +25,8 @@ use state::Delta;
 use world::World;
 use pubsub::PubSubStore;
 use state::ExitFlag;
-
-// Window input implicit priority: infinity
-pub const NETWORK_IO_PRIORITY: specs::Priority = 100;
-pub const NETWORK_EVENT_DISTRIBUTION_PRIORITY: specs::Priority = 90;
-pub const PAUSE_PRIORITY: specs::Priority = 85;
-pub const PLAYER_PREPROCESSOR_PRIORITY: specs::Priority = 77;
-pub const MOUSE_LOCK_PRIORITY: specs::Priority = 77;
-pub const CONSOLE_PREPROCESSOR_PRIORITY: specs::Priority = 77;
-pub const CAMERA_PREPROCESSOR_PRIORITY: specs::Priority = 76;
-pub const PLAYER_MOVE_PRIORITY: specs::Priority = 65;
-pub const CAMERA_MOVE_PRIORITY: specs::Priority = 65;
-pub const CONSOLE_INPUT_PRIORITY: specs::Priority = 65;
-pub const CONSOLE_INVOKER_PRIORITY: specs::Priority = 64;
-pub const MUTATOR_PRIORITY: specs::Priority = 63;
-pub const NETWORK_CONNECTION_PRIORITY: specs::Priority = 60;
-pub const STATE_SNAPSHOT_PRIORITY: specs::Priority = 50;
-pub const NETWORK_KEEP_ALIVE_PRIORITY: specs::Priority = 5;
-pub const DEBUG_PRIORITY: specs::Priority = 1;
-// Renderer implicit priority: 0
+use automatic_system_installer::AutoInstaller;
+use itertools::Itertools;
 
 pub struct Engine {
   pub planner: specs::Planner<Delta>,
@@ -70,69 +53,31 @@ impl Engine {
     // ECS stuff
     let mut world = World::new(window).world;
 
-    // Instantiate systems with their pubsub and other resources
+    // Specially initialize the network adapter
     let network_adapter_system =
       network::AdapterSystem::new(port, server_addr, network_kill_receiver, &mut world);
-    let network_event_distribution_system = network::EventDistributionSystem::new(&mut world);
-    let network_connection_system = network::ConnectionSystem::new(&mut world);
-    let pause_system = pause::System::new(&mut world);
-    let player_preprocessor_system = player::PreprocessorSystem::new(&mut world);
-    let mouse_lock_system = mouse_lock::System::new(&mut world);
-    let camera_preprocessor_system = camera::PreprocessorSystem::new(&mut world);
-    let console_preprocessor_system = console::PreprocessorSystem::new(&mut world);
-    let player_move_system = player::MoveSystem::new(&mut world);
-    let camera_move_system = camera::MovementSystem::new(&mut world);
-    let console_input_system = console::InputSystem::new(&mut world);
-    let console_invoker_system = console::InvokeSystem::new(&mut world);
-    let mutator_system = mutator::System::new(&mut world);
-    let synchronization_system = synchronization::System::new(&mut world);
-    let network_keep_alive_system = network::KeepAliveSystem::new(&mut world);
-    let debug_system = debug::System::new(&mut world);
 
-    // Insert systems into planner
-    let mut planner = specs::Planner::new(world, 2 /* Threads, arbitrary */);
-    planner.add_system(network_adapter_system,
-                       network::AdapterSystem::name(),
-                       NETWORK_IO_PRIORITY);
-    planner.add_system(network_event_distribution_system,
-                       network::EventDistributionSystem::name(),
-                       NETWORK_EVENT_DISTRIBUTION_PRIORITY);
-    planner.add_system(network_connection_system,
-                       network::ConnectionSystem::name(),
-                       NETWORK_CONNECTION_PRIORITY);
-    planner.add_system(pause_system, pause::System::name(), PAUSE_PRIORITY);
-    planner.add_system(player_preprocessor_system,
-                       player::PreprocessorSystem::name(),
-                       PLAYER_PREPROCESSOR_PRIORITY);
-    planner.add_system(mouse_lock_system,
-                       mouse_lock::System::name(),
-                       MOUSE_LOCK_PRIORITY);
-    planner.add_system(camera_preprocessor_system,
-                       camera::PreprocessorSystem::name(),
-                       CAMERA_PREPROCESSOR_PRIORITY);
-    planner.add_system(console_preprocessor_system,
-                       console::PreprocessorSystem::name(),
-                       CONSOLE_PREPROCESSOR_PRIORITY);
-    planner.add_system(player_move_system,
-                       player::MoveSystem::name(),
-                       PLAYER_MOVE_PRIORITY);
-    planner.add_system(camera_move_system,
-                       camera::MovementSystem::name(),
-                       CAMERA_MOVE_PRIORITY);
-    planner.add_system(console_input_system,
-                       console::InputSystem::name(),
-                       CONSOLE_INPUT_PRIORITY);
-    planner.add_system(console_invoker_system,
-                       console::InvokeSystem::name(),
-                       CONSOLE_INVOKER_PRIORITY);
-    planner.add_system(mutator_system, mutator::System::name(), MUTATOR_PRIORITY);
-    planner.add_system(synchronization_system,
-                       synchronization::System::name(),
-                       STATE_SNAPSHOT_PRIORITY);
-    planner.add_system(network_keep_alive_system,
-                       network::KeepAliveSystem::name(),
-                       NETWORK_KEEP_ALIVE_PRIORITY);
-    planner.add_system(debug_system, "debug", DEBUG_PRIORITY);
+    // Automatic system installation
+    // TODO: chain these off each other when non-lexical borrows land
+    // https://github.com/rust-lang/rust/issues/21906/
+    let mut installer = AutoInstaller::with_world(world);
+    installer.auto_install_instance(network_adapter_system);
+    installer.auto_install::<network::EventDistributionSystem>();
+    installer.auto_install::<network::ConnectionSystem>();
+    installer.auto_install::<pause::System>();
+    installer.auto_install::<player::PreprocessorSystem>();
+    installer.auto_install::<mouse_lock::System>();
+    installer.auto_install::<camera::PreprocessorSystem>();
+    installer.auto_install::<console::PreprocessorSystem>();
+    installer.auto_install::<player::MoveSystem>();
+    installer.auto_install::<camera::MovementSystem>();
+    installer.auto_install::<console::InputSystem>();
+    installer.auto_install::<console::InvokeSystem>();
+    installer.auto_install::<mutator::System>();
+    installer.auto_install::<synchronization::System>();
+    installer.auto_install::<network::KeepAliveSystem>();
+    installer.auto_install::<debug::System>();
+    let planner = installer.apply(5 /* Threads, arbitrary */);
 
     Engine {
       planner: planner,
@@ -147,30 +92,30 @@ impl Engine {
   }
 
   pub fn tick(&mut self, dt: &time::Duration) {
-    use itertools::Itertools;
-
-    // Do the window poll in main thread (because of OSX issue)
-    {
-      let w = self.planner.mut_world();
-      let (window, mut glutin_events) = (w.write_resource::<glutin::Window>(),
-                                         w.fetch_publisher::<glutin::Event>());
-      window.poll_events().into_iter().foreach(|e| glutin_events.push(e));
-    }
-
-
-    // Spin all services
-    self.planner.dispatch(Delta {
-      dt: dt.clone(),
-      now: time::now(),
-    });
-
-    // This lives here because the renderer is not Send
+    self.poll_window();
+    self.dispatch_once(dt.clone());
     self.render();
 
     // Check for that exit signal
     if let ExitFlag(true) = *self.planner.mut_world().read_resource::<ExitFlag>() {
       self.running = false;
     }
+  }
+
+  pub fn poll_window(&mut self) {
+    let w = self.planner.mut_world();
+    let (window, mut glutin_events) = (w.write_resource::<glutin::Window>(),
+                                       w.fetch_publisher::<glutin::Event>());
+    window.poll_events().into_iter().foreach(|e| glutin_events.push(e));
+  }
+
+  pub fn dispatch_once(&mut self, dt: time::Duration) {
+    // Spin all services
+    self.planner.dispatch(Delta {
+      dt: dt.clone(),
+      now: time::now(),
+    });
+
   }
 
   pub fn render(&mut self) {

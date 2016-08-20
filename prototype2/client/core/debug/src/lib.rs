@@ -3,6 +3,8 @@ extern crate itertools;
 
 extern crate common;
 extern crate client_state as state;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use state::Delta;
 use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};
@@ -17,6 +19,11 @@ pub struct DebugMessage(pub String);
 pub struct System {
   frames_waited: u32,
 }
+// TODO: I'd like to be able to say "this depend on everything" or "this runs
+// last". I could just depend on something I know runs last, but thats crappy
+// and brittle
+declare_dependencies!(System, []);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

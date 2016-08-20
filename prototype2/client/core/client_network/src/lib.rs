@@ -8,6 +8,8 @@ extern crate flate2;
 extern crate common;
 extern crate client_state as state;
 extern crate pubsub;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 mod defragmentation;
 mod system;

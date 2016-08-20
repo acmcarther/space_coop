@@ -8,7 +8,7 @@ use camera::CameraPos;
 use std::ops::Deref;
 
 pub fn register_steps(c: &mut CucumberRegistrar<ClientWorld>) {
-  Then!(c,
+  When!(c,
         "^the camera is at (\\d+), (\\d+), (\\d+)$",
         |_, world: &mut ClientWorld, (d1, d2, d3): (i32, i32, i32)| {
           let mut pos = world.planner.mut_world().write_resource::<CameraPos>();

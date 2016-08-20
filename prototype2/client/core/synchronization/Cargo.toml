@@ -18,3 +18,6 @@ path = "../client_network"
 
 [dependencies.client_state]
 path = "../client_state"
+
+[dependencies.automatic_system_installer]
+path = "../../infra/automatic_system_installer"

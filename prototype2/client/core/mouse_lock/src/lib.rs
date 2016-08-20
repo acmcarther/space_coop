@@ -4,6 +4,8 @@ extern crate pubsub;
 extern crate glutin;
 extern crate client_state as state;
 extern crate pause;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use pubsub::{PubSubStore, SubscriberToken};
 use state::Delta;
@@ -18,6 +20,9 @@ pub struct RelativeMouseMovementEvent {
 pub struct System {
   window_event_sub_token: SubscriberToken<glutin::Event>,
 }
+// NOTE: This depends on a window emitter that lives in the main thread
+declare_dependencies!(System, [pause::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

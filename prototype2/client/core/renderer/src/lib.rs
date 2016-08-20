@@ -15,6 +15,7 @@ extern crate pause;
 extern crate debug;
 extern crate camera;
 extern crate client_state as state;
+extern crate automatic_system_installer;
 
 pub mod opengl;
 pub mod system;

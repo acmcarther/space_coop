@@ -7,6 +7,8 @@ extern crate pubsub;
 extern crate glutin;
 extern crate pause;
 extern crate client_state as state;
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
 
 use state::Delta;
 use common::protocol::ClientNetworkEvent::{self, DomainEvent};
@@ -29,6 +31,8 @@ enum MoveEvent {
 pub struct MoveSystem {
   move_event_sub_token: SubscriberToken<MoveEvent>,
 }
+declare_dependencies!(MoveSystem, [PreprocessorSystem, camera::MovementSystem]);
+standalone_installer_from_new!(MoveSystem, Delta);
 
 impl MoveSystem {
   pub fn new(world: &mut specs::World) -> MoveSystem {
@@ -102,6 +106,9 @@ impl<'a> PlayerManipulator<'a> {
 pub struct PreprocessorSystem {
   window_event_sub_token: SubscriberToken<glutin::Event>,
 }
+// NOTE: This depends on a window emitter that lives in the main thread
+declare_dependencies!(PreprocessorSystem, [pause::System]);
+standalone_installer_from_new!(PreprocessorSystem, Delta);
 
 impl PreprocessorSystem {
   pub fn new(world: &mut specs::World) -> PreprocessorSystem {

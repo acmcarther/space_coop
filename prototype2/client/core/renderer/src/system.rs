@@ -16,6 +16,9 @@ use state::OwnEntity;
 use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use opengl::OpenGlRenderer;
 
+// NOTE: This isn't a "real" system. It's not Send, so it has to be invoked in
+// the main thread. It is expected to be run at the end of the tick, but thats
+// not really a hard requirement.
 pub struct System {
   renderer: OpenGlRenderer,
 }
