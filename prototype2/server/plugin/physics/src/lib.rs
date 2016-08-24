@@ -16,6 +16,10 @@ use aspects::CollisionAspect;
 use ncollide::shape::{Ball, Plane, Cuboid};
 use nalgebra::Translation;
 use nalgebra::Rotation;
+use nalgebra::Matrix3;
+use nalgebra::Isometry3;
+use nalgebra::Rotation3;
+use nalgebra::RotationMatrix;
 use nphysics3d::world::World;
 use nphysics3d::object::{RigidBody, RigidBodyHandle};
 use nphysics3d::math::Vector;
@@ -93,8 +97,31 @@ impl specs::System<Delta> for System {
           ModelType::Icosphere0 | ModelType::Icosphere1 | ModelType::Icosphere2 | ModelType::Icosphere3 => RigidBody::new_dynamic(Ball::new(1.0), 1.0, 0.3, 0.6),
         };
 
-        entity.append_rotation(&Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
-        entity.append_translation(&Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
+        // Special case nonsense to get around PhysicalAspect getting nonsense for its
+        // instantiation
+        // TODO:
+        let rot_mat = if physical.ang == (0.0, 0.0, 0.0) {
+          Rotation3::new(Vector::new(0.0, 0.0, 0.0))
+        } else {
+          let mat = Matrix3::new(
+            physical.ang_rich[0],
+            physical.ang_rich[1],
+            physical.ang_rich[2],
+            physical.ang_rich[3],
+            physical.ang_rich[4],
+            physical.ang_rich[5],
+            physical.ang_rich[6],
+            physical.ang_rich[7],
+            physical.ang_rich[8]);
+
+          unsafe { Rotation3::new_with_matrix(mat) }
+        };
+
+        //entity.set_rotation(Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
+        let transform = Isometry3::new_with_rotation_matrix(Vector::new(0.0, 0.0, 0.0), rot_mat);
+        entity.set_transformation(transform);
+        //entity.set_rotation(rot_mat);
+        entity.set_translation(Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
         entity.set_lin_vel(Vector::new(physical.vel.0, physical.vel.2, physical.vel.1));
         entity.set_ang_vel(Vector::new(physical.ang_vel.0, physical.ang_vel.1, physical.ang_vel.2));
 
@@ -121,7 +148,13 @@ impl specs::System<Delta> for System {
         aspect.ang.0 = handle.borrow().position().rotation().x;
         aspect.ang.1 = handle.borrow().position().rotation().y;
         aspect.ang.2 = handle.borrow().position().rotation().z;
-        /**/
+        {
+          let rot_mat = handle.borrow().position().clone().to_rotation_matrix();
+          let mat = rot_mat.submatrix();
+          //aspect.ang_rich = [mat.m11, mat.m21, mat.m31, mat.m12, mat.m22, mat.m32, mat.m13, mat.m23, mat.m33];
+          aspect.ang_rich = [mat.m11, mat.m12, mat.m13, mat.m21, mat.m22, mat.m23, mat.m31, mat.m32, mat.m33];
+          /**/
+        }
         self.world.remove_rigid_body(&handle);
       });
 

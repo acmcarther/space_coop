@@ -13,7 +13,7 @@ use gfx_device_gl;
 use debug;
 use pause;
 use console;
-use cgmath::{Matrix4, Rad};
+use cgmath::{Matrix3, Matrix4, Rad};
 use cgmath::Euler;
 use cgmath::Transform;
 use cgmath::SquareMatrix;
@@ -120,8 +120,15 @@ impl OpenGlRenderer {
                    0.0, 1.02, 0.0,  0.0,
                    0.0, 0.0, 1.02, 0.0,
                    x, y, (z + 1.0), 1.0);
-    let (rx, ry, rz) = physical_aspect.ang;
-    let rotation = Matrix4::from(Euler::new(Rad::new(-rx), Rad::new(-rz), Rad::new(-ry)));
+    // let (rx, ry, rz) = physical_aspect.ang;
+    let a = physical_aspect.ang_rich;
+    // let rotation = Matrix4::from(Euler::new(Rad::new(-rx), Rad::new(-rz),
+    // Rad::new(-ry)));
+    let rotation_3 = 
+                     //Matrix3::new(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+                    Matrix3::new(-1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, -1.0, 0.0) *
+                    Matrix3::new(a[0], a[3], a[6], a[1], a[4], a[7], a[2], a[5], a[8]);
+    let rotation = Matrix4::from(rotation_3);
     let model = translation.concat(&rotation);
 
     let &mut (ref mut data, ref slice) = self.models.get_mut(&render_aspect.model).unwrap();

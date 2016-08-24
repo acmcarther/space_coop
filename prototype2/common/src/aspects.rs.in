@@ -42,16 +42,17 @@ pub struct PhysicalAspect {
   pub vel: (f32, f32, f32),
   pub ang: (f32, f32, f32),
   pub ang_vel: (f32, f32, f32),
+  pub ang_rich: [f32; 9],
   pub anchored: bool
 }
 
 impl PhysicalAspect{
   pub fn new(pos: (f32, f32, f32), vel: (f32, f32, f32), anchored: bool) -> PhysicalAspect {
-    PhysicalAspect { pos: pos, vel: vel, ang: (0.0, 0.0, 0.0), ang_vel: (0.0, 0.0, 0.0), anchored: anchored }
+    PhysicalAspect { pos: pos, vel: vel, ang: (0.0, 0.0, 0.0), ang_vel: (0.0, 0.0, 0.0), ang_rich: [0.0; 9], anchored: anchored }
   }
 
   pub fn duplicate_with_pos(&self, pos: (f32, f32, f32)) -> PhysicalAspect {
-    PhysicalAspect { pos: pos, vel: self.vel.clone(), ang: self.ang.clone(), ang_vel: self.ang_vel.clone(), anchored: self.anchored.clone() }
+    PhysicalAspect { pos: pos, vel: self.vel.clone(), ang: self.ang.clone(), ang_vel: self.ang_vel.clone(), ang_rich: [0.0; 9], anchored: self.anchored.clone() }
   }
 }
 
