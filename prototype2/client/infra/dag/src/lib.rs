@@ -8,7 +8,7 @@ use itertools::Itertools;
 
 use std::collections::HashMap;
 use std::convert::From;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Error, Formatter};
 use std::hash::Hash;
 
 pub trait DagConstraints: Clone + Debug + Hash + Eq {}
@@ -86,13 +86,16 @@ impl<I: DagConstraints> Dag<I> {
              system_name,
              other_name);
     println!("The existing dag was:");
-    self.print();
+    println!("{}", self);
 
     panic!("Dag cycle error! Check stdout for the offending nodes and dag");
   }
+}
 
+
+impl<I: DagConstraints> Display for Dag<I> {
   /// Print the dag with the system names
-  pub fn print(&self) {
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
     let name_to_idx = &self.name_to_idx;
     let internal_dag = &self.internal_dag;
     let mut idx_to_name = HashMap::new();
@@ -100,15 +103,21 @@ impl<I: DagConstraints> Dag<I> {
       idx_to_name.insert(v, k);
     });
 
-    println!("");
+    writeln!(formatter, "").unwrap();
     name_to_idx.iter().foreach(|(k, v)| {
-      println!("\"{}\": [", alias_name(k, &self.name_to_alias));
+      writeln!(formatter, "\"{}\": [", alias_name(k, &self.name_to_alias)).unwrap();
       internal_dag.children(v.clone())
         .iter(&internal_dag)
         .map(|(_, n)| idx_to_name.get(&n).unwrap())
-        .foreach(|name| println!("  \"{}\"", alias_name(name.clone(), &self.name_to_alias)));
-      println!("]");
+        .foreach(|name| {
+          writeln!(formatter,
+                   "  \"{}\"",
+                   alias_name(name.clone(), &self.name_to_alias))
+            .unwrap();
+        });
+      writeln!(formatter, "]").unwrap();
     });
+    Ok(())
   }
 }
 
@@ -125,14 +134,6 @@ pub struct PriorityMap<I: DagConstraints> {
 impl<I: DagConstraints> PriorityMap<I> {
   pub fn get(&self, name: &I) -> Option<usize> {
     self.priorities.get(name).cloned()
-  }
-
-  pub fn print(&self) {
-    let mut priority_set = self.priorities.clone().into_iter().collect::<Vec<(I, usize)>>();
-    priority_set.sort_by_key(|&(_, v)| v);
-    priority_set.into_iter()
-      .map(|(n, v)| (alias_name(&n, &self.name_to_alias), v))
-      .foreach(|(n, v)| println!("{}: {}", v, n));
   }
 }
 
@@ -153,7 +154,7 @@ impl<I: DagConstraints> From<Dag<I>> for PriorityMap<I> {
       Some(_) => {
         let mut priorities: HashMap<I, usize> = HashMap::new();
         // Toposort the nodes (deps before their dependents).
-        let mut nodes = daggy::petgraph::algo::toposort(dag.internal_dag.graph());
+        let nodes = daggy::petgraph::algo::toposort(dag.internal_dag.graph());
         nodes.into_iter()
           .enumerate()
           .map(|(idx, item)| (idx, idx_to_name.get(&item).unwrap()))
@@ -170,6 +171,20 @@ impl<I: DagConstraints> From<Dag<I>> for PriorityMap<I> {
       priorities: priorities,
       name_to_alias: dag.name_to_alias,
     }
+  }
+}
+
+impl<I: DagConstraints> Display for PriorityMap<I> {
+  fn fmt(&self, formatter: &mut Formatter) -> Result<(), Error> {
+    let mut priority_set = self.priorities.clone().into_iter().collect::<Vec<(I, usize)>>();
+    priority_set.sort_by_key(|&(_, v)| v);
+    priority_set.reverse();
+    priority_set.into_iter()
+      .map(|(n, v)| (alias_name(&n, &self.name_to_alias), v))
+      .foreach(|(n, _)| {
+        writeln!(formatter, "{}", n).unwrap();
+      });
+    Ok(())
   }
 }
 

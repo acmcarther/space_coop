@@ -1,3 +1,4 @@
+#![feature(try_from)]
 extern crate time;
 extern crate specs;
 extern crate itertools;
@@ -29,10 +30,50 @@ pub mod world;
 use std::thread;
 use std::net::SocketAddr;
 use std::time::Duration as StdDuration;
+use std::convert::{From, TryFrom};
+use std::fs::File;
+use std::io::Write;
+use automatic_system_installer::PriorityMap;
 
 use time::Duration;
 
 use engine::Engine;
+
+pub enum DependencyMode {
+  Dag,
+  List,
+}
+pub struct InvalidMode;
+
+pub fn dependencies(output_file: String, mode: DependencyMode) {
+  let dag = Engine::dependency_dag();
+  let mut file = File::create(output_file).unwrap();
+
+  match mode {
+    DependencyMode::Dag => {
+      let dag_str = dag.to_string();
+      file.write(dag_str.as_bytes()).expect("Could not write file");
+    },
+    DependencyMode::List => {
+      let priority_map = PriorityMap::from(dag);
+      let priority_list = priority_map.to_string();
+      file.write(priority_list.as_bytes()).expect("Could not write file");
+    },
+  }
+}
+
+impl TryFrom<String> for DependencyMode {
+  type Err = InvalidMode;
+  fn try_from(s: String) -> Result<DependencyMode, InvalidMode> {
+    use std::ops::Deref;
+
+    match s.deref() {
+      "dag" => Ok(DependencyMode::Dag),
+      "list" => Ok(DependencyMode::List),
+      _ => Err(InvalidMode),
+    }
+  }
+}
 
 /**
  * A function to begin running the client

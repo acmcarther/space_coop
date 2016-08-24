@@ -4,7 +4,7 @@ extern crate system_installer;
 extern crate dag;
 
 use std::any::{Any, TypeId};
-use dag::{Dag, PriorityMap};
+pub use dag::{Dag, PriorityMap};
 use std::convert::From;
 
 use itertools::Itertools;
@@ -45,7 +45,6 @@ impl<T> AutoInstaller<T> {
       world: world,
       dependency_set: Dag::new(),
     }
-
   }
 
   pub fn new() -> AutoInstaller<T> {
@@ -54,6 +53,10 @@ impl<T> AutoInstaller<T> {
       world: specs::World::new(),
       dependency_set: Dag::new(),
     }
+  }
+
+  pub fn take_dag(self) -> Dag<TypeId> {
+    self.dependency_set
   }
 
   pub fn mut_world(&mut self) -> &mut specs::World {

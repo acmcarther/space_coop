@@ -1,3 +1,5 @@
+pub mod systems;
+
 use std::net::SocketAddr;
 use std::sync::mpsc::{self, Sender};
 
@@ -9,15 +11,7 @@ use gfx_window_glutin;
 use gfx;
 
 use network;
-use console;
-use pause;
-use debug;
-use camera;
 use renderer;
-use synchronization;
-use player;
-use mutator;
-use mouse_lock;
 
 use renderer::opengl::OpenGlRenderer;
 use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
@@ -25,7 +19,8 @@ use state::Delta;
 use world::World;
 use pubsub::PubSubStore;
 use state::ExitFlag;
-use automatic_system_installer::AutoInstaller;
+use automatic_system_installer::{AutoInstaller, Dag};
+use std::any::TypeId;
 use itertools::Itertools;
 
 pub struct Engine {
@@ -38,6 +33,12 @@ pub struct Engine {
 }
 
 impl Engine {
+  pub fn dependency_dag() -> Dag<TypeId> {
+    let mut auto_installer = AutoInstaller::new();
+    systems::install_auto_systems(&mut auto_installer);
+    auto_installer.take_dag()
+  }
+
   pub fn new(port: u16, server_addr: SocketAddr) -> Engine {
     // One time init gfx stuff
     let builder = glutin::WindowBuilder::new()
@@ -62,21 +63,7 @@ impl Engine {
     // https://github.com/rust-lang/rust/issues/21906/
     let mut installer = AutoInstaller::with_world(world);
     installer.auto_install_instance(network_adapter_system);
-    installer.auto_install::<network::EventDistributionSystem>();
-    installer.auto_install::<network::ConnectionSystem>();
-    installer.auto_install::<pause::System>();
-    installer.auto_install::<player::PreprocessorSystem>();
-    installer.auto_install::<mouse_lock::System>();
-    installer.auto_install::<camera::PreprocessorSystem>();
-    installer.auto_install::<console::PreprocessorSystem>();
-    installer.auto_install::<player::MoveSystem>();
-    installer.auto_install::<camera::MovementSystem>();
-    installer.auto_install::<console::InputSystem>();
-    installer.auto_install::<console::InvokeSystem>();
-    installer.auto_install::<mutator::System>();
-    installer.auto_install::<synchronization::System>();
-    installer.auto_install::<network::KeepAliveSystem>();
-    installer.auto_install::<debug::System>();
+    systems::install_auto_systems(&mut installer);
     let planner = installer.apply(5 /* Threads, arbitrary */);
 
     Engine {
