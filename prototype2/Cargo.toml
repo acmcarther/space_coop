@@ -21,3 +21,5 @@ path = "./server"
 [[bin]]
 name = "space_coop"
 path = "./src/bin.rs"
+
+[workspace]
