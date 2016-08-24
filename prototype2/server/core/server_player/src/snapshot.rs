@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 
 use network::{Fragmentable, OutboundEvent};
 use common::protocol::ServerNetworkEvent;
-use common::world::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use aspects::{ControllerAspect, PlayerAspect};
 use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};

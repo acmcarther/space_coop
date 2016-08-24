@@ -1,6 +1,6 @@
 use common::model::ModelType;
 use common::network;
-use common::world::{RenderAspect, SynchronizedAspect};
+use common::aspects::{RenderAspect, SynchronizedAspect};
 
 use time::Tm;
 

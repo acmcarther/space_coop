@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::collections::HashMap;
 
 use common::protocol::ClientEvent;
-use common::world::{PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
 use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};

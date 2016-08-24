@@ -12,7 +12,7 @@ use console::{Command, ConsoleLog};
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
 use state::ExitFlag;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
-use common::world::{PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
 use common::protocol::{ClientEvent, ClientNetworkEvent};
 use common::model::ModelType;
 use specs::Join;

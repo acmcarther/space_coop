@@ -6,7 +6,7 @@ use flate2::read::GzDecoder;
 use itertools::Itertools;
 
 use common::util::Newness;
-use common::world::CommonWorld;
+use common::aspects::CommonWorld;
 use common::protocol::StateFragment;
 
 /**

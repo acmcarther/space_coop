@@ -7,7 +7,7 @@ extern crate client_state as state;
 extern crate automatic_system_installer;
 
 use state::Delta;
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect};
 
 const FRAME_WAIT: u32 = 60;
 

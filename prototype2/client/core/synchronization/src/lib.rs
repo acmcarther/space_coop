@@ -10,11 +10,11 @@ extern crate automatic_system_installer;
 
 use state::{Delta, OwnEntity};
 use common::protocol::{ClientNetworkEvent, SnapshotEvent};
-use common::world::CommonWorld;
+use common::aspects::CommonWorld;
 use network::FragmentBuffer;
 use network::Defragmentable;
 use itertools::Itertools;
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use std::mem;
 use std::collections::{HashMap, HashSet};
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};

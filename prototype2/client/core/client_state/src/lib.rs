@@ -2,7 +2,7 @@ extern crate itertools;
 extern crate common;
 extern crate time;
 
-use common::world::SynchronizedAspect;
+use common::aspects::SynchronizedAspect;
 
 #[derive(Debug, Clone)]
 pub struct ExitFlag(pub bool);

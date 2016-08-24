@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
 
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 use common::protocol::ServerNetworkEvent;
 use network::OutboundEvent;

@@ -1,4 +1,4 @@
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 use specs;
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};

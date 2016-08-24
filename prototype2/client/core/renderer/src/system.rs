@@ -13,7 +13,7 @@ use camera;
 use glutin;
 use debug;
 use state::OwnEntity;
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use opengl::OpenGlRenderer;
 
 // NOTE: This isn't a "real" system. It's not Send, so it has to be invoked in

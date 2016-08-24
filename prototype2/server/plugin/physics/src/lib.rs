@@ -9,7 +9,7 @@ extern crate aspects;
 extern crate server_state as state;
 extern crate pubsub;
 
-use common::world::{DisabledAspect, PhysicalAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect};
 use common::model::ModelType;
 use state::Delta;
 use aspects::CollisionAspect;
@@ -19,6 +19,7 @@ use nalgebra::Rotation;
 use nphysics3d::world::World;
 use nphysics3d::object::{RigidBody, RigidBodyHandle};
 use nphysics3d::math::Vector;
+use std::ops::{Deref, DerefMut};
 
 /**
  * Simulates the world.
@@ -26,11 +27,50 @@ use nphysics3d::math::Vector;
  * Inputs: Physicals, Collisions
  * Outputs: Physicals
  */
-pub struct System;
+pub struct System {
+  world: World<f32>,
+}
+
+// Lets us make physics sync
+pub struct InternalWorld(World<f32>);
+
+// System must never be used outside specs
+// NOTE: This gets around nphysics::world::World not being send
+//
+// Even though we're sending this across thread boundaries, theres never more than one thread
+// posessing the types in question (Rc).
+//
+// Jank as heck -- I wish physics used Arc
+unsafe impl Send for System {}
+
+impl Deref for InternalWorld {
+  type Target = World<f32>;
+  fn deref(&self) -> &World<f32> {
+    &self.0
+  }
+}
+
+impl DerefMut for InternalWorld {
+  fn deref_mut(&mut self) -> &mut World<f32> {
+    &mut self.0
+  }
+}
 
 impl System {
   pub fn new(_: &mut specs::World) -> System {
-    System
+    // Configure world
+    let mut world = World::new();
+    world.set_gravity(Vector::new(0.0, -0.981, 0.0));
+
+    // Add base plane
+    let plane_geometry = Plane::new(Vector::new(0.0, 1.0, 0.0));
+    let plane = RigidBody::new_static(plane_geometry, 0.3, 0.6);
+
+    world.add_rigid_body(plane);
+
+    System {
+      world: world
+    }
   }
 }
 
@@ -42,16 +82,6 @@ impl specs::System<Delta> for System {
 
     let (mut physicals, collisions, disabled) =
       arg.fetch(|w| (w.write::<PhysicalAspect>(), w.read::<CollisionAspect>(), w.read::<DisabledAspect>()));
-
-    // Configure world
-    let mut world = World::new();
-    world.set_gravity(Vector::new(0.0, -0.981, 0.0));
-
-    // Add base plane
-    let plane_geometry = Plane::new(Vector::new(0.0, 1.0, 0.0));
-    let plane = RigidBody::new_static(plane_geometry, 0.3, 0.6);
-
-    world.add_rigid_body(plane);
 
     let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
     let sim_objects = (&mut physicals, &collisions, disabled.not())
@@ -68,12 +98,12 @@ impl specs::System<Delta> for System {
         entity.set_lin_vel(Vector::new(physical.vel.0, physical.vel.2, physical.vel.1));
         entity.set_ang_vel(Vector::new(physical.ang_vel.0, physical.ang_vel.1, physical.ang_vel.2));
 
-        let handle = world.add_rigid_body(entity);
+        let handle = self.world.add_rigid_body(entity);
         (physical, handle)
       })
       .collect::<Vec<(&mut PhysicalAspect, RigidBodyHandle<f32>)>>();
 
-      world.step(dt_s);
+      self.world.step(dt_s);
 
       sim_objects.into_iter().foreach(|(aspect, handle)| {
         aspect.vel.0 = handle.borrow().lin_vel().translation().x;
@@ -92,6 +122,7 @@ impl specs::System<Delta> for System {
         aspect.ang.1 = handle.borrow().position().rotation().y;
         aspect.ang.2 = handle.borrow().position().rotation().z;
         /**/
+        self.world.remove_rigid_body(&handle);
       });
 
   }

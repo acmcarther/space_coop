@@ -2,7 +2,7 @@ use specs;
 use glutin;
 
 use state::{ExitFlag, OwnEntity};
-use common::world::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 
 // TODO(acmcarther): This is awkward... "world.world"

@@ -10,9 +10,9 @@ extern crate time;
 ///
 pub mod protocol;
 
-/// Describes all game state
+/// Describes shared client/server aspects
 ///
-pub mod world;
+pub mod aspects;
 
 /// Manages Network IO
 ///

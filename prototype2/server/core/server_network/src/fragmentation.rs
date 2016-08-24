@@ -5,7 +5,7 @@ use flate2::write::GzEncoder;
 use flate2::Compression;
 
 use common::protocol::{ServerNetworkEvent, SnapshotEvent, StateFragment};
-use common::world::CommonWorld;
+use common::aspects::CommonWorld;
 
 /**
  * Indicates that the implementor can be broken into events to be transmitted over the wire

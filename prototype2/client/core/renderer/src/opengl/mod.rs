@@ -19,7 +19,7 @@ use cgmath::Transform;
 use cgmath::SquareMatrix;
 use cgmath::Matrix;
 
-use common::world::{PhysicalAspect, RenderAspect};
+use common::aspects::{PhysicalAspect, RenderAspect};
 use common::model::ModelType;
 
 use gfx::handle::{DepthStencilView, RenderTargetView};
