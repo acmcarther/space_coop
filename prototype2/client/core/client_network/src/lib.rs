@@ -27,7 +27,6 @@ use std::time::Duration as StdDuration;
 
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
-use itertools::Unfold;
 
 use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, ServerPayload};
 
@@ -54,7 +53,7 @@ impl Network {
 
   pub fn recv_pending(&mut self) -> Vec<ServerNetworkEvent> {
     let server_addr = self.server_addr.clone();
-    Unfold::new((), |_| self.socket.recv().ok().and_then(|v| v))
+    itertools::unfold((), |_| self.socket.recv().ok().and_then(|v| v))
       .filter_map(|gaffer_packet| ServerPayload::from_gaffer_packet(gaffer_packet))
       .filter(|payload| payload.address == server_addr)
       .map(|payload| payload.event)

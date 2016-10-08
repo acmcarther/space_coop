@@ -11,8 +11,6 @@ gfx_device_gl = "*"
 gfx_window_glutin = "*"
 glutin = "0.6.1"
 specs = "0.7.0"
-flame = "^0.1.2"
-flamer = "^0.1.2"
 
 [dev-dependencies]
 cucumber = "0.2.3"
@@ -23,7 +21,7 @@ name = "cuke"
 path = "./features/cuke.rs"
 
 [dependencies.automatic_system_installer]
-path = "./infra/automatic_system_installer"
+path = "../common/system/automatic_system_installer"
 
 [dependencies.common]
 path = "../common"

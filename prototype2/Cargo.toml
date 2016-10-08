@@ -3,6 +3,8 @@ name = "prototype2"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
 
+[workspace]
+
 [dev-dependencies]
 cucumber = "0.2.3"
 

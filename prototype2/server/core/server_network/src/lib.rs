@@ -21,7 +21,6 @@ pub use self::fragmentation::Fragmentable;
 
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
-use itertools::Unfold;
 
 use common::protocol::{ClientPayload, ServerPayload};
 
@@ -41,7 +40,7 @@ impl Network {
   }
 
   pub fn recv_pending(&mut self) -> Vec<ClientPayload> {
-    Unfold::new((), |_| self.socket.recv().ok().and_then(|v| v))
+    itertools::unfold((), |_| self.socket.recv().ok().and_then(|v| v))
       .filter_map(|gaffer_packet| ClientPayload::from_gaffer_packet(gaffer_packet))
       .collect()
   }
