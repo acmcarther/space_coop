@@ -1,4 +1,4 @@
-use common::model::ModelType;
+use common::geometry::model::ModelType;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]

@@ -1,4 +1,4 @@
-use aspects::{SynchronizedAspect, PhysicalAspect, RenderAspect};
+use ecs::aspects::{SynchronizedAspect, PhysicalAspect, RenderAspect};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ClientNetworkEvent {

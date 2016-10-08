@@ -1,4 +1,4 @@
-use common::aspects::CommonWorld;
+use common::ecs::aspects::CommonWorld;
 use common::protocol::{ServerNetworkEvent, SnapshotEvent, StateFragment};
 use flate2::Compression;
 use flate2::write::GzEncoder;

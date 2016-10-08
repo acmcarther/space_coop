@@ -1,20 +1,24 @@
+extern crate gaffer_udp;
+extern crate serde_json;
+extern crate ecs;
+
 use gaffer_udp::GafferPacket;
-use network;
-use serde_json;
 use std::str;
 
-include!(concat!(env!("OUT_DIR"), "/protocol.rs"));
+pub type Address = std::net::SocketAddr;
+
+include!(concat!(env!("OUT_DIR"), "/lib.rs"));
 
 // TODO: Unify ServerPayload and ClientPayload types
 
 #[derive(Clone, Debug)]
 pub struct ServerPayload {
-  pub address: network::Address,
+  pub address: Address,
   pub event: ServerNetworkEvent,
 }
 
 impl ServerPayload {
-  pub fn new(address: network::Address, event: ServerNetworkEvent) -> ServerPayload {
+  pub fn new(address: Address, event: ServerNetworkEvent) -> ServerPayload {
     ServerPayload {
       address: address,
       event: event,
@@ -40,7 +44,7 @@ impl ServerPayload {
 
 #[derive(Clone, Debug)]
 pub struct ClientPayload {
-  pub address: network::Address,
+  pub address: Address,
   pub event: ClientNetworkEvent,
 }
 

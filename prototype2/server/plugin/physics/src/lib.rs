@@ -13,8 +13,8 @@ extern crate pubsub;
 extern crate automatic_system_installer;
 
 use aspects::CollisionAspect;
-use common::aspects::{DisabledAspect, PhysicalAspect};
-use common::model::ModelType;
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect};
+use common::geometry::model::ModelType;
 use nalgebra::Rotation;
 use nalgebra::Translation;
 use ncollide::shape::{Ball, Plane, Cuboid};

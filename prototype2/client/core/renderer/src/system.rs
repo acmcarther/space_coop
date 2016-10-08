@@ -1,5 +1,5 @@
 use camera;
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use console;
 use debug;
 use gfx;

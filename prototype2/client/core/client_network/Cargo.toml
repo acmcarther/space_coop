@@ -27,4 +27,4 @@ path = "../../../pubsub"
 path = "../client_state"
 
 [dependencies.automatic_system_installer]
-path = "../../../common/system/automatic_system_installer"
+path = "../../../system/automatic_system_installer"

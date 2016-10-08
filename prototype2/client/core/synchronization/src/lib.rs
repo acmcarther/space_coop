@@ -8,8 +8,8 @@ extern crate client_state as state;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-use common::aspects::CommonWorld;
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::ecs::aspects::CommonWorld;
 use common::protocol::{ClientNetworkEvent, SnapshotEvent};
 use itertools::Itertools;
 use network::Defragmentable;

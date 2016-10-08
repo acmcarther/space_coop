@@ -7,8 +7,8 @@ extern crate common;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
-use common::model::ModelType;
+use common::ecs::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::geometry::model::ModelType;
 use common::protocol::{ClientEvent, ClientNetworkEvent};
 use console::{Command, ConsoleLog};
 use itertools::Itertools;

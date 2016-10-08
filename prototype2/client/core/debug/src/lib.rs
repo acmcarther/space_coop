@@ -6,7 +6,7 @@ extern crate client_state as state;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect};
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect, RenderAspect};
 use state::Delta;
 
 const FRAME_WAIT: u32 = 60;

@@ -1,6 +1,6 @@
 use aspects::{ControllerAspect, PlayerAspect};
-use common::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect,
-                      SynchronizedAspect};
+use common::ecs::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect,
+                           SynchronizedAspect};
 use common::protocol::ServerNetworkEvent;
 use network::{Fragmentable, OutboundEvent};
 use network::SnapshotAckEvent;

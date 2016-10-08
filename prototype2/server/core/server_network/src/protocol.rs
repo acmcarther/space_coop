@@ -1,11 +1,10 @@
-use common::network;
-use common::protocol::{ServerNetworkEvent, ServerPayload};
+use common::protocol::{Address, ServerNetworkEvent, ServerPayload};
 use std::net::SocketAddr;
 
 #[derive(Clone, Debug)]
 pub enum OutboundEvent {
   Directed {
-    dest: network::Address,
+    dest: Address,
     event: ServerNetworkEvent,
   },
   Undirected(ServerNetworkEvent),

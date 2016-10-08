@@ -1,12 +1,11 @@
-use specs;
-use std::collections::HashMap;
-
-use common::protocol::ClientEvent;
-use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
-use state::Delta;
-use pubsub::{PubSubStore, SubscriberToken};
+use common::ecs::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::protocol::ClientEvent;
 use network::InputEvent;
+use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
+use std::collections::HashMap;
 
 /**
  * Handles input events for players

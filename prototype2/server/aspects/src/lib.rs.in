@@ -1,6 +1,6 @@
-use common::model::ModelType;
-use common::network;
-use common::aspects::{RenderAspect, SynchronizedAspect};
+use common::geometry::model::ModelType;
+use common::protocol::Address;
+use common::ecs::aspects::{RenderAspect, SynchronizedAspect};
 
 use time::Tm;
 
@@ -11,13 +11,13 @@ use time::Tm;
  */
 #[derive(Debug, Clone)]
 pub struct PlayerAspect {
-  pub address: network::Address,
+  pub address: Address,
   pub last_msg: Tm,
   pub connected: bool,
 }
 
 impl PlayerAspect {
-  pub fn new(address: network::Address, connected: bool) -> PlayerAspect {
+  pub fn new(address: Address, connected: bool) -> PlayerAspect {
     PlayerAspect {
       address: address,
       last_msg: time::now(),

@@ -1,5 +1,5 @@
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use common::protocol::ServerNetworkEvent;
 use network::{ConnectEvent, OutboundEvent};
 use pubsub::{PubSubStore, SubscriberToken};

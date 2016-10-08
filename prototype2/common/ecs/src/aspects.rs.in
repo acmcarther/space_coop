@@ -3,7 +3,7 @@ use specs;
 use uuid::Uuid;
 use std::fmt;
 
-use model::ModelType;
+use geometry::model::ModelType;
 
 /**
  * An aspect for an entity that can be rendered by a Renderer.

@@ -1,4 +1,4 @@
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::ecs::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use glutin;
 use specs;
 use state::{ExitFlag, OwnEntity};

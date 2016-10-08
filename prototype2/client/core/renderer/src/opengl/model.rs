@@ -83,7 +83,7 @@ pub fn build_icosphere
 }
 
 pub mod constants {
-  use common::model::Model as WorldModel;
+  use common::geometry::model::Model as WorldModel;
   use opengl::primitive3d::Vertex;
   use super::Model;
 

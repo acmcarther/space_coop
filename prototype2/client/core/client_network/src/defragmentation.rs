@@ -1,4 +1,4 @@
-use common::aspects::CommonWorld;
+use common::ecs::aspects::CommonWorld;
 use common::protocol::StateFragment;
 use common::util::Newness;
 use flate2::read::GzDecoder;
