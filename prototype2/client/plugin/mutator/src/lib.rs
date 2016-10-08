@@ -39,12 +39,7 @@ impl System {
   pub fn new(world: &mut specs::World) -> System {
     System { commands_sub_token: world.register_subscriber::<Command>() }
   }
-
-  pub fn name() -> &'static str {
-    "mutuator::System"
-  }
 }
-
 
 impl specs::System<Delta> for System {
   fn run(&mut self, arg: specs::RunArg, _: Delta) {

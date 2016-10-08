@@ -1,16 +1,17 @@
-use specs;
 
-use state::Delta;
-use time::{self, Duration, Tm};
 use Network;
-use std::net::SocketAddr;
-use std::ops::Deref;
 use common::protocol::{ClientNetworkEvent, ServerNetworkEvent, SnapshotEvent};
-use std::sync::mpsc::Receiver;
 
 use itertools::Itertools;
 
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
+use specs;
+
+use state::Delta;
+use std::net::SocketAddr;
+use std::ops::Deref;
+use std::sync::mpsc::Receiver;
+use time::{self, Duration, Tm};
 
 #[derive(Clone)]
 pub enum ConnectionEvent {
@@ -21,9 +22,7 @@ pub enum ConnectionEvent {
 
 #[derive(Clone)]
 pub enum ConnectionStatus {
-  Connected {
-    last_message: Tm,
-  },
+  Connected { last_message: Tm },
   Disconnected,
 }
 
@@ -66,10 +65,6 @@ impl AdapterSystem {
       network_kill_signal: network_kill_signal,
       client_event_sub_token: world.register_subscriber::<ClientNetworkEvent>(),
     }
-  }
-
-  pub fn name() -> &'static str {
-    "network::AdapterSystem"
   }
 }
 

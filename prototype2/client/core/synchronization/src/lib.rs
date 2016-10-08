@@ -46,10 +46,6 @@ impl System {
     }
   }
 
-  pub fn name() -> &'static str {
-    "synchronization::System"
-  }
-
   fn process_snapshots(&mut self,
                        snapshot_events: &mut Vec<SnapshotEvent>,
                        outbound_events: &mut Publisher<ClientNetworkEvent>)

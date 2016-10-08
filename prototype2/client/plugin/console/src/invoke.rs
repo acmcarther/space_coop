@@ -41,10 +41,6 @@ impl System {
       interpreter: Interpreter::new(),
     }
   }
-
-  pub fn name() -> &'static str {
-    "console::invoke"
-  }
 }
 
 

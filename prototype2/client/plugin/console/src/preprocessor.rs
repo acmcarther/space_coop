@@ -16,10 +16,6 @@ impl System {
   pub fn new(world: &mut specs::World) -> System {
     System { window_event_sub_token: world.register_subscriber::<glutin::Event>() }
   }
-
-  pub fn name() -> &'static str {
-    "console::preprocessor"
-  }
 }
 
 impl specs::System<Delta> for System {

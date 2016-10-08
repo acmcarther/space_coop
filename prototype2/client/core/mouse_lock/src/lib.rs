@@ -28,10 +28,6 @@ impl System {
   pub fn new(world: &mut specs::World) -> System {
     System { window_event_sub_token: world.register_subscriber::<glutin::Event>() }
   }
-
-  pub fn name() -> &'static str {
-    "mouse_lock::System"
-  }
 }
 
 impl specs::System<Delta> for System {

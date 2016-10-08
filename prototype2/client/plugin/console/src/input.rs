@@ -58,10 +58,6 @@ impl System {
     }
   }
 
-  pub fn name() -> &'static str {
-    "console::input"
-  }
-
   pub fn should_cap(&self) -> bool {
     let shift = self.lshifted || self.rshifted;
     (shift && !self.capsed) || (!shift && self.capsed)

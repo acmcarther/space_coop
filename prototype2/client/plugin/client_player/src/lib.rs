@@ -38,10 +38,6 @@ impl MoveSystem {
   pub fn new(world: &mut specs::World) -> MoveSystem {
     MoveSystem { move_event_sub_token: world.register_subscriber::<MoveEvent>() }
   }
-
-  pub fn name() -> &'static str {
-    "player::MovementSystem"
-  }
 }
 
 #[allow(unused_imports, unused_variables)]
@@ -113,10 +109,6 @@ standalone_installer_from_new!(PreprocessorSystem, Delta);
 impl PreprocessorSystem {
   pub fn new(world: &mut specs::World) -> PreprocessorSystem {
     PreprocessorSystem { window_event_sub_token: world.register_subscriber::<glutin::Event>() }
-  }
-
-  pub fn name() -> &'static str {
-    "player::preprocessor"
   }
 }
 

@@ -1,4 +1,3 @@
-#![feature(type_macros)]
 extern crate itertools;
 extern crate cgmath;
 extern crate specs;
@@ -32,10 +31,6 @@ impl MovementSystem {
   pub fn new(world: &mut specs::World) -> MovementSystem {
     world.add_resource::<CameraPos>(CameraPos(3.0, -10.0, 6.0));
     MovementSystem { camera_event_sub_token: world.register_subscriber::<CameraMoveEvent>() }
-  }
-
-  pub fn name() -> &'static str {
-    "camera::MovementSystem"
   }
 }
 
@@ -92,10 +87,6 @@ impl PreprocessorSystem {
     PreprocessorSystem {
       relative_mouse_movement_sub_token: world.register_subscriber::<RelativeMouseMovementEvent>(),
     }
-  }
-
-  pub fn name() -> &'static str {
-    "camera::preprocessor"
   }
 }
 

@@ -32,10 +32,6 @@ impl System {
     // Render debug information in the first frame
     System { frames_waited: FRAME_WAIT }
   }
-
-  pub fn name() -> &'static str {
-    "debug"
-  }
 }
 
 #[allow(unused_imports, unused_variables)]
