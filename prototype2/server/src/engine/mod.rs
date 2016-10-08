@@ -1,15 +1,12 @@
 pub mod systems;
 
-use time;
-
-use world::ServerWorld;
-
-use specs;
-
-use state::Delta;
-use network::AdapterSystem;
-use std::any::TypeId;
 use automatic_system_installer::{AutoInstaller, Dag};
+use network::AdapterSystem;
+use specs;
+use state::Delta;
+use std::any::TypeId;
+use time;
+use world::ServerWorld;
 
 pub struct Engine {
   pub planner: specs::Planner<Delta>,
@@ -35,7 +32,7 @@ impl Engine {
     installer.auto_install_instance(network_adapter_system);
     systems::install_auto_systems(&mut installer);
 
-    let planner = installer.apply(5, /* threads, arbitrary */);
+    let planner = installer.apply(5 /* threads, arbitrary */);
 
     Engine { planner: planner }
   }

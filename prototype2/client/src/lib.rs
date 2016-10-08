@@ -27,17 +27,15 @@ pub extern crate automatic_system_installer;
 pub mod engine;
 pub mod world;
 
-use std::thread;
-use std::net::SocketAddr;
-use std::time::Duration as StdDuration;
+use automatic_system_installer::PriorityMap;
+use engine::Engine;
 use std::convert::{From, TryFrom};
 use std::fs::File;
 use std::io::Write;
-use automatic_system_installer::PriorityMap;
-
+use std::net::SocketAddr;
+use std::thread;
+use std::time::Duration as StdDuration;
 use time::Duration;
-
-use engine::Engine;
 
 pub enum DependencyMode {
   Dag,

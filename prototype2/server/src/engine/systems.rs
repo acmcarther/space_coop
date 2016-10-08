@@ -1,9 +1,9 @@
 use automatic_system_installer::AutoInstaller;
-use state::Delta;
 
 use network;
-use player;
 use physics;
+use player;
+use state::Delta;
 
 pub fn install_auto_systems(installer: &mut AutoInstaller<Delta>) {
   installer.auto_install::<network::DistributionSystem>();

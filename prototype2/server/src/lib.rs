@@ -21,12 +21,11 @@ pub mod engine;
 ///
 pub mod world;
 
-use std::thread;
-use std::time::Duration as StdDuration;
-
-use time::Duration;
 
 use engine::Engine;
+use std::thread;
+use std::time::Duration as StdDuration;
+use time::Duration;
 
 pub fn start(port: u16) {
   println!("Starting server on {}", port);

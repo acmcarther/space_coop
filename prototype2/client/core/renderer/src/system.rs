@@ -1,20 +1,18 @@
-use std::sync::RwLockReadGuard;
-use std::ops::Not;
-
-use specs;
+use camera;
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use console;
+use debug;
 use gfx;
 use gfx::Device;
 use gfx_device_gl;
 use gfx_device_gl::{CommandBuffer, Resources};
-
-use console;
-use pause;
-use camera;
 use glutin;
-use debug;
-use state::OwnEntity;
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use opengl::OpenGlRenderer;
+use pause;
+use specs;
+use state::OwnEntity;
+use std::ops::Not;
+use std::sync::RwLockReadGuard;
 
 // NOTE: This isn't a "real" system. It's not Send, so it has to be invoked in
 // the main thread. It is expected to be run at the end of the tick, but thats

@@ -1,15 +1,11 @@
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
-
 use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-
 use common::protocol::ServerNetworkEvent;
 use network::{ConnectEvent, OutboundEvent};
-
-use std::collections::HashMap;
-
+use pubsub::{PubSubStore, SubscriberToken};
 use specs;
 use state::Delta;
-use pubsub::{PubSubStore, SubscriberToken};
+use std::collections::HashMap;
 
 /**
  * Manages connecting and disconnecting player events. Can update and create new players.
@@ -24,7 +20,8 @@ use pubsub::{PubSubStore, SubscriberToken};
 pub struct System {
   connection_event_sub_token: SubscriberToken<ConnectEvent>,
 }
-declare_dependencies!(System, [::network::DistributionSystem, ::health_check::System]);
+declare_dependencies!(System,
+                      [::network::DistributionSystem, ::health_check::System]);
 standalone_installer_from_new!(System, Delta);
 
 impl System {

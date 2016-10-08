@@ -7,9 +7,9 @@ extern crate pause;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
+use pause::PauseState;
 use pubsub::{PubSubStore, SubscriberToken};
 use state::Delta;
-use pause::PauseState;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RelativeMouseMovementEvent {

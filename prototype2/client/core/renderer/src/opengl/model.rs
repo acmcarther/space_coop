@@ -1,14 +1,12 @@
+use cgmath::{Matrix4, SquareMatrix};
 use gfx;
-use gfx_device_gl;
-
+use gfx::Factory;
 use gfx::handle::{DepthStencilView, RenderTargetView};
 use gfx::handle::ShaderResourceView;
-use gfx::Factory;
 use gfx::traits::FactoryExt;
-use cgmath::{Matrix4, SquareMatrix};
-
-use opengl::primitive3d::{ColorFormat, DepthFormat /* Locals */};
+use gfx_device_gl;
 use opengl::primitive3d::{self, Vertex};
+use opengl::primitive3d::{ColorFormat, DepthFormat /* Locals */};
 
 #[derive(Debug)]
 pub struct Model {
@@ -85,9 +83,9 @@ pub fn build_icosphere
 }
 
 pub mod constants {
-  use super::Model;
-  use opengl::primitive3d::Vertex;
   use common::model::Model as WorldModel;
+  use opengl::primitive3d::Vertex;
+  use super::Model;
 
   pub fn icosphere(iterations: u32) -> Model {
     let world_model = WorldModel::icosphere(iterations);

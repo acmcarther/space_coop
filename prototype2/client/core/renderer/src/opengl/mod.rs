@@ -2,28 +2,24 @@ pub mod shader;
 pub mod model;
 pub mod primitive3d;
 
-use std::collections::HashMap;
-
-use gfx;
-use gfx_text;
-use glutin;
-use gfx_window_glutin;
-use gfx_device_gl;
-
-use debug;
-use pause;
-use console;
+use cgmath;
 use cgmath::{Matrix4, Rad};
 use cgmath::Euler;
-use cgmath::Transform;
-use cgmath::SquareMatrix;
 use cgmath::Matrix;
-
+use cgmath::SquareMatrix;
+use cgmath::Transform;
 use common::aspects::{PhysicalAspect, RenderAspect};
 use common::model::ModelType;
-
+use console;
+use debug;
+use gfx;
 use gfx::handle::{DepthStencilView, RenderTargetView};
-use cgmath;
+use gfx_device_gl;
+use gfx_text;
+use gfx_window_glutin;
+use glutin;
+use pause;
+use std::collections::HashMap;
 
 /**
  * A renderer using an OpenGl window to draw the state of the world
@@ -71,7 +67,7 @@ impl OpenGlRenderer {
                                                          &mut factory,
                                                          box_texture_view.clone(),
                                                          main_color.clone(),
-                                                         main_depth.clone());;
+                                                         main_depth.clone());
     let (ico1_slice, ico1_data) = model::build_icosphere(1,
                                                          &mut factory,
                                                          box_texture_view.clone(),

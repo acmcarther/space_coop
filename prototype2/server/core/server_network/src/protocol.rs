@@ -1,7 +1,6 @@
-use std::net::SocketAddr;
-
 use common::network;
 use common::protocol::{ServerNetworkEvent, ServerPayload};
+use std::net::SocketAddr;
 
 #[derive(Clone, Debug)]
 pub enum OutboundEvent {

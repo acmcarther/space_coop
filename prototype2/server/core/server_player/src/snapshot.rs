@@ -1,16 +1,14 @@
-use std::collections::{HashMap, HashSet};
-
-use specs;
-
-use std::net::SocketAddr;
-
-use network::{Fragmentable, OutboundEvent};
-use common::protocol::ServerNetworkEvent;
-use common::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 use aspects::{ControllerAspect, PlayerAspect};
-use state::Delta;
-use pubsub::{PubSubStore, SubscriberToken};
+use common::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect,
+                      SynchronizedAspect};
+use common::protocol::ServerNetworkEvent;
+use network::{Fragmentable, OutboundEvent};
 use network::SnapshotAckEvent;
+use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
+use std::collections::{HashMap, HashSet};
+use std::net::SocketAddr;
 
 /**
  * Manages the broadcast of state snapshots, and the receipt of ack for those snapshots

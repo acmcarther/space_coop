@@ -3,12 +3,10 @@ extern crate specs;
 extern crate system_installer;
 extern crate dag;
 
-use std::any::{Any, TypeId};
 pub use dag::{Dag, PriorityMap};
-use std::convert::From;
-
 use itertools::Itertools;
-
+use std::any::{Any, TypeId};
+use std::convert::From;
 pub use system_installer::*;
 
 /// A trait that systems who'd like to be automatically installable must
@@ -135,9 +133,9 @@ macro_rules! standalone_installer_from_new {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use specs;
   use std::any::TypeId;
+  use super::*;
 
   macro_rules! null_system {
     ($thing:ty, $msg:expr) => {

@@ -1,27 +1,25 @@
 pub mod systems;
 
-use std::net::SocketAddr;
-use std::sync::mpsc::{self, Sender};
-
-use gfx_device_gl;
-use glutin;
-use specs;
-use time;
-use gfx_window_glutin;
+use automatic_system_installer::{AutoInstaller, Dag};
 use gfx;
 
+use gfx_device_gl;
+use gfx_window_glutin;
+use glutin;
+use itertools::Itertools;
 use network;
+use pubsub::PubSubStore;
 use renderer;
-
 use renderer::opengl::OpenGlRenderer;
 use renderer::opengl::primitive3d::{ColorFormat, DepthFormat};
+use specs;
 use state::Delta;
-use world::World;
-use pubsub::PubSubStore;
 use state::ExitFlag;
-use automatic_system_installer::{AutoInstaller, Dag};
 use std::any::TypeId;
-use itertools::Itertools;
+use std::net::SocketAddr;
+use std::sync::mpsc::{self, Sender};
+use time;
+use world::World;
 
 pub struct Engine {
   pub planner: specs::Planner<Delta>,

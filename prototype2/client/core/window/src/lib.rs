@@ -5,8 +5,8 @@ extern crate pubsub;
 extern crate client_state as state;
 extern crate automatic_system_installer;
 
-use state::Delta;
 use pubsub::PubSubStore;
+use state::Delta;
 
 /**
  * Dumps window inputs from glutin

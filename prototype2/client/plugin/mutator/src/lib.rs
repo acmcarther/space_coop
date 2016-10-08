@@ -7,16 +7,16 @@ extern crate common;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use state::Delta;
+use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
+use common::model::ModelType;
+use common::protocol::{ClientEvent, ClientNetworkEvent};
 use console::{Command, ConsoleLog};
+use itertools::Itertools;
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
+use specs::Join;
+use state::Delta;
 use state::ExitFlag;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
-use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
-use common::protocol::{ClientEvent, ClientNetworkEvent};
-use common::model::ModelType;
-use specs::Join;
-use itertools::Itertools;
 
 type AspectStorageRead<'a, T> = specs::Storage<T,
                                                RwLockReadGuard<'a, specs::Allocator>,

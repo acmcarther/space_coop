@@ -8,17 +8,17 @@ extern crate client_state as state;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use state::{Delta, OwnEntity};
-use common::protocol::{ClientNetworkEvent, SnapshotEvent};
-use common::aspects::CommonWorld;
-use network::FragmentBuffer;
-use network::Defragmentable;
-use itertools::Itertools;
 use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-use std::mem;
-use std::collections::{HashMap, HashSet};
-use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+use common::aspects::CommonWorld;
+use common::protocol::{ClientNetworkEvent, SnapshotEvent};
+use itertools::Itertools;
+use network::Defragmentable;
+use network::FragmentBuffer;
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
+use state::{Delta, OwnEntity};
+use std::collections::{HashMap, HashSet};
+use std::mem;
+use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
 type AspectStorageRead<'a, T> = specs::Storage<T,
                                                RwLockReadGuard<'a, specs::Allocator>,

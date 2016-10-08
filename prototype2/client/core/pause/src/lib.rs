@@ -7,7 +7,6 @@ extern crate client_state as state;
 extern crate automatic_system_installer;
 
 use pubsub::{PubSubStore, SubscriberToken};
-
 use state::Delta;
 
 #[derive(Clone, Eq, PartialEq, Debug)]

@@ -1,13 +1,11 @@
-use specs;
-use itertools::Itertools;
-
 use Network;
-
-use state::Delta;
-use common::protocol::ClientPayload;
 use aspects::PlayerAspect;
+use common::protocol::ClientPayload;
+use itertools::Itertools;
 use protocol::OutboundEvent;
 use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
 
 /**
  * Manages the network adapter, broadcasting pending outgoing events and accepting incoming events

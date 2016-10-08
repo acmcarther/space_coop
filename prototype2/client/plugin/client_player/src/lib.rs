@@ -10,12 +10,12 @@ extern crate client_state as state;
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use state::Delta;
-use common::protocol::ClientNetworkEvent::{self, DomainEvent};
-use common::protocol::ClientEvent::SelfMove;
 use cgmath::{InnerSpace, Vector2};
+use common::protocol::ClientEvent::SelfMove;
+use common::protocol::ClientNetworkEvent::{self, DomainEvent};
 use pause::PauseState;
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
+use state::Delta;
 
 #[derive(Clone)]
 enum MoveEvent {

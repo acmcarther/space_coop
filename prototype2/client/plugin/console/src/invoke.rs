@@ -1,10 +1,9 @@
-use specs;
-
-use state::Delta;
 use input::ExecutedCommand;
-use std::collections::vec_deque::VecDeque;
-use pubsub::{PubSubStore, SubscriberToken};
 use primitive_interpreter::{Command, Interpreter, InterpreterResult};
+use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
+use std::collections::vec_deque::VecDeque;
 
 pub struct ConsoleLog {
   messages: VecDeque<String>,

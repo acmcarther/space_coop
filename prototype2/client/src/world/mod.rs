@@ -1,9 +1,7 @@
-use specs;
-use glutin;
-
-use state::{ExitFlag, OwnEntity};
 use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-
+use glutin;
+use specs;
+use state::{ExitFlag, OwnEntity};
 
 // TODO(acmcarther): This is awkward... "world.world"
 pub struct World {

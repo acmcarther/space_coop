@@ -5,7 +5,6 @@ use daggy::NodeIndex;
 use daggy::Walker;
 use daggy::petgraph::graph::DefIndex;
 use itertools::Itertools;
-
 use std::collections::HashMap;
 use std::convert::From;
 use std::fmt::{Debug, Display, Error, Formatter};

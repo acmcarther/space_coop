@@ -9,9 +9,9 @@ extern crate mouse_lock;
 extern crate automatic_system_installer;
 
 use cgmath::{Deg, Euler, Quaternion, Rotation, Vector3};
-use state::Delta;
-use pubsub::{PubSubStore, SubscriberToken};
 use mouse_lock::RelativeMouseMovementEvent;
+use pubsub::{PubSubStore, SubscriberToken};
+use state::Delta;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct CameraPos(pub f32, pub f32, pub f32);

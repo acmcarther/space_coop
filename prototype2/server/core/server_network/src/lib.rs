@@ -18,17 +18,14 @@ mod distribution;
 mod adapter;
 mod fragmentation;
 
-pub use protocol::OutboundEvent;
 pub use adapter::System as AdapterSystem;
-pub use distribution::System as DistributionSystem;
+use common::protocol::{ClientPayload, ServerPayload};
 pub use distribution::{ConnectEvent, HealthyEvent, InputEvent, SnapshotAckEvent};
-
-pub use self::fragmentation::Fragmentable;
-
+pub use distribution::System as DistributionSystem;
 use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
-
-use common::protocol::{ClientPayload, ServerPayload};
+pub use protocol::OutboundEvent;
+pub use self::fragmentation::Fragmentable;
 
 
 /**

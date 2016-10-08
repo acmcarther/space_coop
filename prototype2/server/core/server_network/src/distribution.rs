@@ -1,11 +1,9 @@
-use specs;
-
 use common::protocol::{ClientPayload, ClientEvent};
-use std::net::SocketAddr;
-use pubsub::{PubSubStore, SubscriberToken};
-use state::Delta;
-
 use itertools::Itertools;
+use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
+use std::net::SocketAddr;
 
 #[derive(Debug, Clone)]
 pub enum ConnectEvent {

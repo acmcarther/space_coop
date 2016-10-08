@@ -1,7 +1,6 @@
-use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
-
-use specs;
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
+use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
+use specs;
 
 pub struct ServerWorld {
   pub world: specs::World,

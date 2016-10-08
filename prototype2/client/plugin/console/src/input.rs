@@ -1,12 +1,11 @@
-use specs;
-
+use charsets::{CharAction, CharEvent, CharMotion};
 use glutin;
 use glutin::Event::KeyboardInput;
-use std::convert::From;
-use charsets::{CharAction, CharEvent, CharMotion};
-use std::mem;
-use state::Delta;
 use pubsub::{PubSubStore, Publisher, SubscriberToken};
+use specs;
+use state::Delta;
+use std::convert::From;
+use std::mem;
 
 #[derive(Clone)]
 pub struct ConsoleEvent(glutin::Event);

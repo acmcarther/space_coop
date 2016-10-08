@@ -1,11 +1,9 @@
-use specs;
 use glutin;
-
-use pause::PauseState;
-use state::Delta;
-use pubsub::{PubSubStore, SubscriberToken};
-
 use input::ConsoleEvent;
+use pause::PauseState;
+use pubsub::{PubSubStore, SubscriberToken};
+use specs;
+use state::Delta;
 
 pub struct System {
   window_event_sub_token: SubscriberToken<glutin::Event>,

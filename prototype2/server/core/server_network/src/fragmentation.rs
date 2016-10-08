@@ -1,11 +1,9 @@
-use std::io::Write;
-
-use serde_json;
-use flate2::write::GzEncoder;
-use flate2::Compression;
-
-use common::protocol::{ServerNetworkEvent, SnapshotEvent, StateFragment};
 use common::aspects::CommonWorld;
+use common::protocol::{ServerNetworkEvent, SnapshotEvent, StateFragment};
+use flate2::Compression;
+use flate2::write::GzEncoder;
+use serde_json;
+use std::io::Write;
 
 /**
  * Indicates that the implementor can be broken into events to be transmitted over the wire

@@ -1,13 +1,11 @@
-use std::io::Read;
-use std::mem;
-
-use serde_json;
-use flate2::read::GzDecoder;
-use itertools::Itertools;
-
-use common::util::Newness;
 use common::aspects::CommonWorld;
 use common::protocol::StateFragment;
+use common::util::Newness;
+use flate2::read::GzDecoder;
+use itertools::Itertools;
+use serde_json;
+use std::io::Read;
+use std::mem;
 
 /**
  * Represents a partial state snapshot as received from the server.

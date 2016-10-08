@@ -14,9 +14,9 @@ impl Shader {
 }
 
 pub mod constants {
-  use super::*;
   use std::fs::File;
   use std::io::Read;
+  use super::*;
 
   fn shader(path: &str) -> Shader {
     let glsl_150v: Vec<u8> =

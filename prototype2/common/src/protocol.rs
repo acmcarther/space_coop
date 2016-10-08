@@ -1,9 +1,7 @@
-use std::str;
-
 use gaffer_udp::GafferPacket;
-use serde_json;
-
 use network;
+use serde_json;
+use std::str;
 
 include!(concat!(env!("OUT_DIR"), "/protocol.rs"));
 

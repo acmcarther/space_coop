@@ -1,12 +1,12 @@
 extern crate specs;
 extern crate itertools;
 
-use std::marker::PhantomData;
+use itertools::Itertools;
+use std::any::Any;
 use std::any::TypeId;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::sync::RwLockWriteGuard;
-use std::any::Any;
-use itertools::Itertools;
 
 
 /// ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22,8 +22,8 @@ use itertools::Itertools;
 pub trait PubSubStore {
   fn fetch_publisher<'a, T: Clone + Any + Send + Sync>(&'a self) -> Publisher<'a, T>;
   fn fetch_subscriber<'a, T: Clone + Any + Send + Sync>(&'a self,
-                                                       token: &SubscriberToken<T>)
-                                                       -> Subscriber<'a, T>;
+                                                        token: &SubscriberToken<T>)
+                                                        -> Subscriber<'a, T>;
   fn register_subscriber<T: Clone + Any + Send + Sync>(&mut self) -> SubscriberToken<T>;
 }
 
@@ -54,8 +54,8 @@ impl PubSubStore for specs::World {
 
   /// Attempt to retrieve the subscriber corresponding to this token
   fn fetch_subscriber<'a, T: Clone + Any + Send + Sync>(&'a self,
-                                                       token: &SubscriberToken<T>)
-                                                       -> Subscriber<'a, T> {
+                                                        token: &SubscriberToken<T>)
+                                                        -> Subscriber<'a, T> {
 
     Subscriber {
       receivers: acquire_raw_containers::<T>(self),
@@ -152,9 +152,9 @@ pub enum PubSubError {
 
 #[cfg(test)]
 mod test {
+  use itertools::Itertools;
   use specs;
   use super::*;
-  use itertools::Itertools;
 
 
   #[test]

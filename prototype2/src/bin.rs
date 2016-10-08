@@ -2,11 +2,11 @@
 extern crate prototype2;
 extern crate clap;
 
-use std::str::FromStr;
-use std::net::ToSocketAddrs;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use clap::AppSettings::SubcommandRequired;
 use std::convert::TryFrom;
+use std::net::ToSocketAddrs;
+use std::str::FromStr;
 
 static EXAMPLE_SERVER_COMMAND: &'static str = "space_coop server -p 8888";
 static EXAMPLE_CLIENT_COMMAND: &'static str = "space_coop client -p 9999 -s 192.168.0.1:8888";

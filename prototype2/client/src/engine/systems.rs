@@ -1,15 +1,14 @@
 use automatic_system_installer::AutoInstaller;
-use state::Delta;
-
-use network;
-use console;
-use pause;
-use debug;
 use camera;
-use synchronization;
-use player;
-use mutator;
+use console;
+use debug;
 use mouse_lock;
+use mutator;
+use network;
+use pause;
+use player;
+use state::Delta;
+use synchronization;
 
 pub fn install_auto_systems(installer: &mut AutoInstaller<Delta>) {
   installer.auto_install::<network::EventDistributionSystem>();
