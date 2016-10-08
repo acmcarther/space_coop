@@ -1,29 +1,14 @@
 use specs;
 use time::Duration;
 
-use std::net::SocketAddr;
 use std::collections::HashMap;
 
 use aspects::PlayerAspect;
 use state::Delta;
 
-use connection::ConnectEvent;
 use itertools::Itertools;
 use pubsub::{PubSubStore, SubscriberToken};
-
-#[derive(Debug, Clone)]
-pub struct HealthyEvent(SocketAddr);
-
-impl HealthyEvent {
-  pub fn new(address: SocketAddr) -> HealthyEvent {
-    HealthyEvent(address)
-  }
-
-  pub fn address(&self) -> &SocketAddr {
-    let &HealthyEvent(ref addr) = self;
-    addr
-  }
-}
+use network::{ConnectEvent, HealthyEvent};
 
 /**
  * Accepts address-specific health events to update player's connection status
@@ -34,6 +19,8 @@ impl HealthyEvent {
 pub struct System {
   healthy_event_sub_token: SubscriberToken<HealthyEvent>,
 }
+declare_dependencies!(System, [::network::DistributionSystem]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

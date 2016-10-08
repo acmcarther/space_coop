@@ -34,3 +34,6 @@ path = "./core/server_player"
 
 [dependencies.physics]
 path = "./plugin/physics"
+
+[dependencies.automatic_system_installer]
+path = "../common/system/automatic_system_installer"

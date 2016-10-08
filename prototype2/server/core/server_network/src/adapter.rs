@@ -19,6 +19,7 @@ pub struct System {
   network: Network,
   outbound_event_sub_token: SubscriberToken<OutboundEvent>,
 }
+declare_dependencies!(System, []);
 
 impl System {
   pub fn new(port: u16, world: &mut specs::World) -> System {

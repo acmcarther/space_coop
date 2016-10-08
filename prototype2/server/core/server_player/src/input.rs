@@ -1,5 +1,4 @@
 use specs;
-use std::net::SocketAddr;
 use std::collections::HashMap;
 
 use common::protocol::ClientEvent;
@@ -7,21 +6,7 @@ use common::aspects::{PhysicalAspect, RenderAspect, SynchronizedAspect};
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
 use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};
-
-#[derive(Debug, Clone)]
-pub struct InputEvent {
-  pub address: SocketAddr,
-  pub event: ClientEvent,
-}
-
-impl InputEvent {
-  pub fn new(address: SocketAddr, event: ClientEvent) -> InputEvent {
-    InputEvent {
-      address: address,
-      event: event,
-    }
-  }
-}
+use network::InputEvent;
 
 /**
  * Handles input events for players
@@ -32,6 +17,8 @@ impl InputEvent {
 pub struct System {
   input_event_sub_token: SubscriberToken<InputEvent>,
 }
+declare_dependencies!(System, [::network::DistributionSystem, ::physics::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

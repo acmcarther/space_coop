@@ -10,12 +10,18 @@ extern crate server_state as state;
 extern crate aspects;
 extern crate pubsub;
 
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
+
 mod protocol;
+mod distribution;
 mod adapter;
 mod fragmentation;
 
 pub use protocol::OutboundEvent;
 pub use adapter::System as AdapterSystem;
+pub use distribution::System as DistributionSystem;
+pub use distribution::{ConnectEvent, HealthyEvent, InputEvent, SnapshotAckEvent};
 
 pub use self::fragmentation::Fragmentable;
 
@@ -23,6 +29,7 @@ use gaffer_udp::GafferPacket;
 use gaffer_udp::non_blocking::GafferSocket;
 
 use common::protocol::{ClientPayload, ServerPayload};
+
 
 /**
  * Manages the connection to the game clients

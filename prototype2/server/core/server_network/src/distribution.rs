@@ -1,11 +1,63 @@
 use specs;
 
-use common::protocol::ClientPayload;
-use player::{ConnectEvent, HealthyEvent, InputEvent, SnapshotAckEvent};
+use common::protocol::{ClientPayload, ClientEvent};
+use std::net::SocketAddr;
 use pubsub::{PubSubStore, SubscriberToken};
 use state::Delta;
 
 use itertools::Itertools;
+
+#[derive(Debug, Clone)]
+pub enum ConnectEvent {
+  Connect(SocketAddr),
+  Disconnect(SocketAddr),
+}
+
+#[derive(Debug, Clone)]
+pub struct HealthyEvent(SocketAddr);
+
+impl HealthyEvent {
+  pub fn new(address: SocketAddr) -> HealthyEvent {
+    HealthyEvent(address)
+  }
+
+  pub fn address(&self) -> &SocketAddr {
+    let &HealthyEvent(ref addr) = self;
+    addr
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct InputEvent {
+  pub address: SocketAddr,
+  pub event: ClientEvent,
+}
+
+impl InputEvent {
+  pub fn new(address: SocketAddr, event: ClientEvent) -> InputEvent {
+    InputEvent {
+      address: address,
+      event: event,
+    }
+  }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub struct SnapshotAckEvent {
+  address: SocketAddr,
+  idx: u16,
+}
+
+impl SnapshotAckEvent {
+  pub fn new(address: SocketAddr, idx: u16) -> SnapshotAckEvent {
+    SnapshotAckEvent {
+      address: address,
+      idx: idx,
+    }
+  }
+}
+
 
 /**
  * Directs ClientPayloads to the individual event buses
@@ -16,6 +68,8 @@ use itertools::Itertools;
 pub struct System {
   client_payload_sub_token: SubscriberToken<ClientPayload>,
 }
+declare_dependencies!(System, [::adapter::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

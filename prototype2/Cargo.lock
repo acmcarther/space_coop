@@ -952,6 +952,7 @@ name = "physics"
 version = "0.1.0"
 dependencies = [
  "aspects 0.1.0",
+ "automatic_system_installer 0.1.0",
  "common 0.1.0",
  "itertools 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1138,6 +1139,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "aspects 0.1.0",
+ "automatic_system_installer 0.1.0",
  "common 0.1.0",
  "itertools 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "physics 0.1.0",
@@ -1156,6 +1158,7 @@ name = "server_network"
 version = "0.1.0"
 dependencies = [
  "aspects 0.1.0",
+ "automatic_system_installer 0.1.0",
  "common 0.1.0",
  "flate2 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "gaffer_udp 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1172,8 +1175,10 @@ name = "server_player"
 version = "0.1.0"
 dependencies = [
  "aspects 0.1.0",
+ "automatic_system_installer 0.1.0",
  "common 0.1.0",
  "itertools 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "physics 0.1.0",
  "pubsub 0.1.0",
  "server_network 0.1.0",
  "server_state 0.1.0",

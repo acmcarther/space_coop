@@ -10,6 +10,9 @@ extern crate server_network as network;
 extern crate server_player as player;
 extern crate physics;
 
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
+
 /// Manages main loop and coordination of application components
 ///
 pub mod engine;

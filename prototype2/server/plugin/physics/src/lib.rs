@@ -9,6 +9,9 @@ extern crate aspects;
 extern crate server_state as state;
 extern crate pubsub;
 
+#[macro_use(declare_dependencies, standalone_installer_from_new)]
+extern crate automatic_system_installer;
+
 use common::aspects::{DisabledAspect, PhysicalAspect};
 use common::model::ModelType;
 use state::Delta;
@@ -30,6 +33,8 @@ use std::ops::{Deref, DerefMut};
 pub struct System {
   world: World<f32>,
 }
+declare_dependencies!(System, []);
+standalone_installer_from_new!(System, Delta);
 
 // Lets us make physics sync
 pub struct InternalWorld(World<f32>);

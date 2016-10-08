@@ -1,23 +1,15 @@
-use std::net::SocketAddr;
-
 use aspects::{CollisionAspect, ControllerAspect, PlayerAspect};
 
 use common::aspects::{DisabledAspect, PhysicalAspect, RenderAspect, SynchronizedAspect};
 
 use common::protocol::ServerNetworkEvent;
-use network::OutboundEvent;
+use network::{ConnectEvent, OutboundEvent};
 
 use std::collections::HashMap;
 
 use specs;
 use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};
-
-#[derive(Debug, Clone)]
-pub enum ConnectEvent {
-  Connect(SocketAddr),
-  Disconnect(SocketAddr),
-}
 
 /**
  * Manages connecting and disconnecting player events. Can update and create new players.
@@ -32,6 +24,8 @@ pub enum ConnectEvent {
 pub struct System {
   connection_event_sub_token: SubscriberToken<ConnectEvent>,
 }
+declare_dependencies!(System, [::network::DistributionSystem, ::health_check::System]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

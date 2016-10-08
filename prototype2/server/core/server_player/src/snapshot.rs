@@ -10,23 +10,7 @@ use common::aspects::{CommonWorld, DisabledAspect, PhysicalAspect, RenderAspect,
 use aspects::{ControllerAspect, PlayerAspect};
 use state::Delta;
 use pubsub::{PubSubStore, SubscriberToken};
-
-
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub struct SnapshotAckEvent {
-  address: SocketAddr,
-  idx: u16,
-}
-
-impl SnapshotAckEvent {
-  pub fn new(address: SocketAddr, idx: u16) -> SnapshotAckEvent {
-    SnapshotAckEvent {
-      address: address,
-      idx: idx,
-    }
-  }
-}
+use network::SnapshotAckEvent;
 
 /**
  * Manages the broadcast of state snapshots, and the receipt of ack for those snapshots
@@ -38,6 +22,8 @@ pub struct System {
   snapshot_idx: u16,
   snapshot_ack_sub_token: SubscriberToken<SnapshotAckEvent>,
 }
+declare_dependencies!(System, [::network::DistributionSystem]);
+standalone_installer_from_new!(System, Delta);
 
 impl System {
   pub fn new(world: &mut specs::World) -> System {

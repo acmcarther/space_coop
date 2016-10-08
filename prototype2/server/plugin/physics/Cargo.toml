@@ -21,3 +21,6 @@ path = "../../aspects"
 
 [dependencies.server_state]
 path = "../../server_state"
+
+[dependencies.automatic_system_installer]
+path = "../../../common/system/automatic_system_installer"

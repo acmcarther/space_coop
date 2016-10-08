@@ -22,3 +22,9 @@ path = "../server_network"
 
 [dependencies.server_state]
 path = "../../server_state"
+
+[dependencies.physics]
+path = "../../plugin/physics"
+
+[dependencies.automatic_system_installer]
+path = "../../../common/system/automatic_system_installer"
