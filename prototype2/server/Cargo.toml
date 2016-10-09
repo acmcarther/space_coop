@@ -13,6 +13,7 @@ itertools = "0.4.6"
 itertools = "*"
 time = "0.1.35"
 specs = "0.7.0"
+igd = "0.5.1"
 
 [dependencies.common]
 path = "../common"

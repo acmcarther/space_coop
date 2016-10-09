@@ -25,7 +25,12 @@ fn main() {
         .help("Server's port")
         .takes_value(true)
         .default_value("7090")
-        .value_name("PORT")))
+        .value_name("PORT"))
+      .arg(Arg::with_name("use upnp")
+        .short("u")
+        .long("use_upnp")
+        .takes_value(false)
+        .help("Use UPNP to automatically port forward")))
     .subcommand(SubCommand::with_name("client")
       .usage(EXAMPLE_CLIENT_COMMAND)
       .arg(Arg::with_name("port")
@@ -66,7 +71,8 @@ fn main() {
     .get_matches();
 
   if let Some(server_matches) = matches.subcommand_matches("server") {
-    prototype2::server::start(port_from(&server_matches))
+    prototype2::server::start(port_from(&server_matches),
+                              server_matches.occurrences_of("use upnp") > 0)
   } else if let Some(client_matches) = matches.subcommand_matches("client") {
     prototype2::client::start(port_from(&client_matches), addr_from(&client_matches))
   } else if let Some(client_deps_matches) = matches.subcommand_matches("client-deps") {
