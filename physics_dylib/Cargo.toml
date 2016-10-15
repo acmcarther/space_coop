@@ -1,27 +1,24 @@
 [package]
-name = "physics"
+name = "physics_dylib"
 version = "0.1.0"
 authors = ["Alex McArther <acmcarther@gmail.com>"]
+
+[lib]
+crate-type = ["dylib"]
 
 [dependencies]
 itertools = "*"
 specs = "0.7.0"
+libloading = "0.3.1"
 nalgebra = "0.8.2"
 nphysics3d = "0.4.*"
 ncollide = "0.9.1"
-libloading = "0.3.1"
 
 [dependencies.common]
-path = "../../../common"
-
-[dependencies.pubsub]
-path = "../../../pubsub"
+path = "../prototype2/common"
 
 [dependencies.aspects]
-path = "../../aspects"
+path = "../prototype2/server/aspects"
 
 [dependencies.server_state]
-path = "../../server_state"
-
-[dependencies.automatic_system_installer]
-path = "../../../system/automatic_system_installer"
+path = "../prototype2/server/server_state"

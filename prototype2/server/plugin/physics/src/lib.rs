@@ -8,21 +8,20 @@ extern crate common;
 extern crate aspects;
 extern crate server_state as state;
 extern crate pubsub;
+extern crate libloading;
 
 #[macro_use(declare_dependencies, standalone_installer_from_new)]
 extern crate automatic_system_installer;
 
-use aspects::CollisionAspect;
-use common::ecs::aspects::{DisabledAspect, PhysicalAspect};
-use common::geometry::model::ModelType;
-use nalgebra::Rotation;
-use nalgebra::Translation;
-use ncollide::shape::{Ball, Plane, Cuboid};
+use libloading::Library;
+use ncollide::shape::Plane;
 use nphysics3d::math::Vector;
-use nphysics3d::object::{RigidBody, RigidBodyHandle};
+use nphysics3d::object::RigidBody;
 use nphysics3d::world::World;
 use state::Delta;
+use std::fs;
 use std::ops::{Deref, DerefMut};
+use std::time::SystemTime;
 
 /**
  * Simulates the world.
@@ -32,9 +31,13 @@ use std::ops::{Deref, DerefMut};
  */
 pub struct System {
   world: World<f32>,
+  physics_dylib: Option<Library>,
+  physics_dylib_last_modified: SystemTime,
 }
 declare_dependencies!(System, []);
 standalone_installer_from_new!(System, Delta);
+
+const LIB_PATH: &'static str = "../physics_dylib/target/debug/libphysics_dylib.so";
 
 // Lets us make physics sync
 pub struct InternalWorld(World<f32>);
@@ -74,66 +77,40 @@ impl System {
 
     world.add_rigid_body(plane);
 
-    System { world: world }
+    let mut physics_dylib = Library::new(LIB_PATH).unwrap();
+
+    System {
+      world: world,
+      physics_dylib: Some(physics_dylib),
+      physics_dylib_last_modified: SystemTime::now(),
+    }
+  }
+
+  fn try_reload(&mut self) {
+    let mut last_modified = fs::metadata(LIB_PATH).unwrap().modified().unwrap();
+
+    if last_modified > self.physics_dylib_last_modified {
+      let physics_dylib = self.physics_dylib.take();
+      drop(physics_dylib);
+
+      self.physics_dylib = Some(Library::new(LIB_PATH).unwrap());
+    } else {
+    }
   }
 }
 
 impl specs::System<Delta> for System {
   fn run(&mut self, arg: specs::RunArg, delta: Delta) {
-    use specs::Join;
-    use itertools::Itertools;
-    use std::ops::Not;
+    self.try_reload();
 
-    let (mut physicals, collisions, disabled) = arg.fetch(|w| {
-      (w.write::<PhysicalAspect>(), w.read::<CollisionAspect>(), w.read::<DisabledAspect>())
-    });
-
-    let dt_s = (delta.dt.num_milliseconds() as f32) / 1000.0;
-    let sim_objects = (&mut physicals, &collisions, disabled.not())
-      .iter()
-      .map(|(physical, collision, _)| {
-
-        let mut entity = match collision.model {
-          ModelType::Cube => {
-            RigidBody::new_dynamic(Cuboid::new(Vector::new(1.0, 1.0, 1.0)), 1.0, 0.3, 0.6)
-          },
-          ModelType::Icosphere0 |
-          ModelType::Icosphere1 |
-          ModelType::Icosphere2 |
-          ModelType::Icosphere3 => RigidBody::new_dynamic(Ball::new(1.0), 1.0, 0.3, 0.6),
+    match self.physics_dylib {
+      None => panic!("No physics dylib"),
+      Some(ref mut dylib) => {
+        let dylib_fn = unsafe {
+          dylib.get::<fn(specs::RunArg, Delta, &mut World<f32>)>(b"run_physics_system").unwrap()
         };
-
-        entity.append_rotation(&Vector::new(physical.ang.0, physical.ang.1, physical.ang.2));
-        entity.append_translation(&Vector::new(physical.pos.0, physical.pos.2, physical.pos.1));
-        entity.set_lin_vel(Vector::new(physical.vel.0, physical.vel.2, physical.vel.1));
-        entity.set_ang_vel(Vector::new(physical.ang_vel.0, physical.ang_vel.1, physical.ang_vel.2));
-
-        let handle = self.world.add_rigid_body(entity);
-        (physical, handle)
-      })
-      .collect::<Vec<(&mut PhysicalAspect, RigidBodyHandle<f32>)>>();
-
-    self.world.step(dt_s);
-
-    sim_objects.into_iter().foreach(|(aspect, handle)| {
-      aspect.vel.0 = handle.borrow().lin_vel().translation().x;
-      aspect.vel.1 = handle.borrow().lin_vel().translation().z;
-      aspect.vel.2 = handle.borrow().lin_vel().translation().y;
-
-      aspect.pos.0 = handle.borrow().position().translation().x;
-      aspect.pos.1 = handle.borrow().position().translation().z;
-      aspect.pos.2 = handle.borrow().position().translation().y;
-
-      aspect.ang_vel.0 = handle.borrow().ang_vel().x;
-      aspect.ang_vel.1 = handle.borrow().ang_vel().y;
-      aspect.ang_vel.2 = handle.borrow().ang_vel().z;
-
-      aspect.ang.0 = handle.borrow().position().rotation().x;
-      aspect.ang.1 = handle.borrow().position().rotation().y;
-      aspect.ang.2 = handle.borrow().position().rotation().z;
-      //
-      self.world.remove_rigid_body(&handle);
-    });
-
+        dylib_fn(arg, delta, &mut self.world);
+      },
+    }
   }
 }

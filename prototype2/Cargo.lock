@@ -626,6 +626,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "libloading"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "target_build_utils 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "libz-sys"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -973,6 +984,7 @@ dependencies = [
  "automatic_system_installer 0.1.0",
  "common 0.1.0",
  "itertools 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libloading 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ncollide 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "nphysics3d 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1641,6 +1653,7 @@ dependencies = [
 "checksum lazy_static 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "49247ec2a285bb3dcb23cbd9c35193c025e7251bfce77c1d5da97e6362dffe7f"
 "checksum libc 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)" = "408014cace30ee0f767b1c4517980646a573ec61a57957aeeabcac8ac0a02e8d"
 "checksum libloading 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "eceb2637ee9a27c7f19764048a9f377e40e3a70a322722f348e6bc7704d565f2"
+"checksum libloading 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "84816a8c6ed8163dfe0dbdd2b09d35c6723270ea77a4c7afa4bedf038a36cb99"
 "checksum libz-sys 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "40f2df7730b5d29426c3e44ce4d088d8c5def6471c2c93ba98585b89fb201ce6"
 "checksum log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "ab83497bf8bf4ed2a74259c1c802351fcd67a65baa86394b6ba73c36f4838054"
 "checksum malloc_buf 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
